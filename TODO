@@ -1,0 +1,27 @@
+
+
+BUGS/ISSUES:
+  BIC conflict with nlme (S3/S4)
+
+SHORT-TERM:
+test!
+make relist work/test
+documentation:
+  - vignette?
+  - document methods better
+
+WISHLIST:
+analytic derivatives
+OR relist
+
+document argument handling
+
+  start must be a named vector or a named list
+       [OR?? inherit from parnames(minuslogl)?]
+  if start is not a list (i.e. a numeric vector)
+  set vecpar TRUE
+  convert start to a list
+
+  if missing and default.start is TRUE use formals(minuslogl) 
+  [why?]
+

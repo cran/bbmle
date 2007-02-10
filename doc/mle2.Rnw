@@ -1,0 +1,371 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc} % for UTF-8/single quotes from sQuote()
+\author{Ben Bolker}
+\title{Maximum likelihood estimation and analysis
+  with the {\tt bbmle} package}
+\newcommand{\code}[1]{{\tt #1}}
+\date{\today}
+\begin{document}
+\bibliographystyle{plain}
+\maketitle
+
+<<results=hide,echo=FALSE>>=
+library(Hmisc)
+@ 
+
+The \code{bbmle} package, designed to make it easier to
+do maximum likelihood estimation and analysis in R,
+extends and modifies the \code{mle} function and class
+in the \code{stats4} package that comes with R by default;
+\code{mle} is in turn a wrapper around the \code{optim}
+function in base R.
+The maximum-likelihood-estimation function and class
+in \code{bbmle} are both called \code{mle2}, to avoid
+confusion and conflict with the original functions in
+the \code{stats4} package.  The major differences between
+\code{mle} and \code{mle2} are:
+\begin{itemize}
+\item \code{mle2} is slightly
+   more robust, with additional warnings (e.g.
+  if the Hessian can't be computed by finite differences,
+  \code{mle2} returns a fit with a missing Hessian rather
+  than stopping with an error)
+\item \code{mle2} uses a \code{data} argument to allow different
+  data to be passed to the negative log-likelihood function
+\item formula interface
+\item \code{bbmle} defines {\tt anova}, {\tt AIC}, and {\tt BIC} methods for
+  \code{mle2} objects, as well as
+  \code{AICtab}, \code{BICtab}, \code{AICctab}
+  functions for producing summary tables of information criteria for a 
+  set of models
+\end{itemize}
+
+\section{Example}
+
+This example will use the classic data set on
+\emph{Orobanche} germination from \cite{Crowder1978}
+(you can also use
+\code{glm(...,family="quasibinomial")} or
+the \code{aod} package to analyze these data).
+
+
+\subsection{Test basic fit to simulated beta-binomial data}
+
+First, generate a single beta-binomially distributed
+set of points as a simple test.
+
+Implement beta-binomial distribution (density and random-deviate function):
+<<>>=
+dbetabinom <- function(x,mu,size,theta,log=FALSE) {
+  v <- lchoose(size,x)-lbeta(theta*(1-mu),theta*mu)+lbeta(size-x+theta*(1-mu),x+theta*mu)
+  if (log) v else exp(v)
+}
+
+rbetabinom <- function(n,mu,size,theta) {
+  a <- theta*mu
+  b <- theta*(1-mu)
+  rbinom(n,size=size,prob=rbeta(n,a,b))
+}
+@  
+
+Generate random deviates from a random beta-binomial:
+<<>>=
+set.seed(1001)
+x1 = rbetabinom(n=1000,mu=0.1,size=50,theta=10)
+@ 
+
+Load the package:
+<<>>=
+library(bbmle)
+@ 
+
+Construct a simple negative log-likelihood function:
+<<>>=
+mtmp <- function(mu,size,theta) {
+  -sum(dbetabinom(x1,mu,size,theta,log=TRUE))
+}
+@ 
+
+Fit the model:
+
+<<>>=
+m0 <- mle2(mtmp,start=list(mu=0.2,theta=9),data=list(size=50))
+m0
+@ 
+
+The \code{summary} method for \code{mle2} objects
+shows the parameters; approximate standard
+errors (based on quadratic approximation to the curvature at
+the maximum likelihood estimate); and a test
+of the parameter difference from zero based on
+this standard error and on an assumption of normality.
+
+<<>>=
+summary(m0)
+@ 
+
+Construct the likelihood profile (you can
+apply e.g. \code{confint} directly to \code{m0},
+but if you're going to work with the likelihood
+profile (e.g. plotting, or looking for confidence
+intervals at several different $\alpha$ values)
+then it is more efficient to compute the profile
+once):
+
+<<cache=TRUE>>=
+p0 <- profile(m0)
+@ 
+
+Compare the confidence interval estimates based on
+a spline fit to the profile (the default)
+and based on the quadratic approximation.
+<<>>=
+confint(p0)
+confint(m0,method="quad")
+@ 
+
+The curvature-based confidence
+limits are very close to the profile confidence
+limits.
+
+Plot the profiles:
+<<fig=TRUE,width=8>>=
+par(mfrow=c(1,2))
+plot(p0,plot.confstr=TRUE)
+@ 
+
+By default, the plot method for 
+likelihood profiles displays the square root of the
+the deviance
+(twice the difference in negative
+log-likelihood), so it will
+be {\sf V}-shaped
+for cases where the quadratic approximation works well
+(as in this case).
+(For a better visual estimate of whether the profile
+is quadratic, use \code{absVal=FALSE}.)
+
+You can also request confidence intervals
+calculated using \code{uniroot}, which may be more exact when
+the profile is not smooth enough to be modeled accurately
+by a spline.  However, this method is
+also more sensitive to numeric problems; in this
+case it works poorly because we have not constrained
+the parameters to be in the required ranges
+($0<\mu<1$, $0<\theta$).
+
+Instead of defining an
+explicit function for \code{minuslogl}, 
+we can use the formula interface.
+The formula interface assumes that
+the density function given (1) has \code{x} as
+its first argument (if the distribution is multivariate,
+then \code{x} should be a matrix of observations)
+and (2) has a \code{log} argument that will return
+the log-probability or log-probability density
+if \code{log=TRUE}.
+<<>>=
+m0f <- mle2(x1~dbetabinom(mu,size=50,theta),
+            start=list(mu=0.2,theta=9))
+@ 
+
+It's convenient to use the formula interface
+to try out likelihood estimation on the
+transformed parameters:
+<<>>=
+m0cf <- mle2(x1~dbetabinom(mu=plogis(lmu),size=50,theta=exp(ltheta)),
+            start=list(lmu=0,ltheta=2))
+confint(m0cf,method="uniroot")
+confint(m0cf,method="spline")
+@ 
+
+In this case the answers from \code{uniroot}
+and \code{spline} (default) methods barely
+differ.
+
+\subsection{Using real data}
+Get data from Crowder 1978 \cite{Crowder1978},
+as incorporated in the {\tt aod} package:
+<<>>=
+library(aod)
+data(orob1)
+@ 
+
+Now construct a negative log-likelihood
+function that differentiates among groups:
+<<>>=
+ml1 <- function(mu1,mu2,mu3,theta,x) {
+  mu <- c(mu1,mu2,mu3)[as.numeric(x$dilution)]
+  size <- x$n
+  -sum(dbetabinom(x$y,mu,size,theta,log=TRUE))
+}
+@ 
+
+Results from \cite{Crowder1978}:
+<<echo=FALSE,results=tex>>=
+crowder.results <- matrix(c(0.132,0.871,0.839,78.424,0.027,0.028,0.032,-34.991,
+                            rep(NA,7),-34.829,
+                            rep(NA,7),-56.258),
+                          dimnames=list(c("prop diffs","full model","homog model"),
+                            c("mu1","mu2","mu3","theta","sd.mu1","sd.mu2","sd.mu3","NLL")),
+                          byrow=TRUE,nrow=3)
+latex(crowder.results,file="",table.env=FALSE,title="model")
+@
+                            
+<<>>=
+m1 <- mle2(ml1,start=list(mu1=0.5,mu2=0.5,mu3=0.5,theta=1),
+    data=list(x=orob1))
+m1
+@ 
+
+The result warns us that the optimization has not
+converged; we also don't match
+Crowder's results for $\theta$ exactly.
+We can fix this by setting \code{parscale} appropriately.
+
+<<cache=TRUE>>=
+m2 <- mle2(ml1,start=as.list(coef(m1)),
+          control=list(parscale=coef(m1)),
+          data=list(x=orob1))
+@ 
+
+<<>>=
+m2
+@ 
+
+Calculate likelihood profile:
+<<cache=TRUE>>=
+p2 <- profile(m2)
+@ 
+
+Get the curvature-based parameter standard
+deviations (which are what Crowder used,
+rather than likelihood profiles):
+<<>>=
+round(sqrt(diag(vcov(m2))),3)
+@ 
+We are slightly off Crowder's numbers --- rounding
+error?
+
+Crowder also defines a variance (overdispersion) parameter
+$\sigma^2=1/(1+\theta)$.
+<<>>=
+sqrt(1/(1+coef(m2)["theta"]))
+@ 
+
+Using the delta method to get the standard deviation of
+$\sigma$:
+<<>>=
+library(emdbook)
+sqrt(deltavar(sqrt(1/(1+theta)),meanval=coef(m2)["theta"],
+         vars="theta",Sigma=vcov(m2)[4,4]))
+@ 
+
+Another way to fit in terms of $\sigma$ rather than $\theta$
+is to compute $\theta=1/\sigma^2-1$ on the fly in a
+formula:
+
+<<>>=
+m2b <- mle2(y~dbetabinom(mu,size=n,theta=1/sigma^2-1),
+            data=orob1,
+            parameters=list(mu~dilution,sigma~1),
+            start=list(mu=0.5,sigma=0.1))
+round(sqrt(diag(vcov(m2b))),3)["sigma"]
+p2b <- profile(m2b)
+@ 
+
+As might be expected since the standard deviation
+of $\sigma$ is large, the quadratic approximation is
+not actually very good:
+
+<<>>=
+r1 <- rbind(confint(p2)["theta",],
+      confint(m2,method="quad")["theta",])
+rownames(r1) <- c("spline","quad")
+r1
+@ 
+
+Plot the profile:
+<<fig=TRUE>>=
+plot(p2,which="theta",plot.confstr=TRUE)
+@ 
+
+Now fit a homogeneous model:
+<<>>=
+ml0 <- function(mu,theta,x) {
+  size <- x$n
+  -sum(dbetabinom(x$y,mu,size,theta,log=TRUE))
+}
+m0 <- mle2(ml0,start=list(mu=0.5,theta=100),
+          data=list(x=orob1))
+@ 
+
+The log-likelihood matches Crowder's result:
+<<>>=
+logLik(m0)
+@ 
+
+It will be easier to specify all three of the models
+fitted by Crowder (homogeneous, probabilities differing
+by group, probabilities and overdispersion differing
+by group) using the formulat interface:
+
+<<>>=
+m0f <- mle2(y~dbetabinom(mu,size=n,theta),
+            parameters=list(mu~1,theta~1),
+            data=orob1,
+            start=list(mu=0.5,theta=100))
+m2f <- mle2(y~dbetabinom(mu,size=n,theta),
+            parameters=list(mu~dilution,theta~1),
+            data=orob1,
+            start=list(mu=0.5,theta=78.424))
+m3f <- mle2(y~dbetabinom(mu,size=n,theta),
+            parameters=list(mu~dilution,theta~dilution),
+            data=orob1,
+            start=list(mu=0.5,theta=78.424))
+@ 
+
+\code{anova} runs a likelihood ratio test on nested
+models:
+<<>>=
+anova(m0f,m2f,m3f)
+@ 
+
+The various \code{ICtab} commands produce tables of
+information criteria, optionally sorted and
+with model weights.
+<<>>=
+AICtab(m0f,m2f,m3f,weights=TRUE,delta=TRUE,sort=TRUE)
+BICtab(m0f,m2f,m3f,delta=TRUE,nobs=nrow(orob1),sort=TRUE,weights=TRUE)
+AICctab(m0f,m2f,m3f,delta=TRUE,nobs=nrow(orob1),sort=TRUE,weights=TRUE)
+@ 
+
+\section*{Additions/enhancements/differences from \code{stats4::mle}}
+\begin{itemize}
+\item{anova method}
+\item{warnings on convergence failure}
+\item{more robust to non-positive-definite Hessian}
+\item{when profiling fails because better value is
+    found, report new values}
+\item{can take named vectors as well as lists as
+    starting parameter vectors}
+\item{added optional arguments to AIC
+    (corr, nobs, delta), BIC, confint 
+    (method=c("spline","uniroot","quad"))}
+\item{more options for colors and line types
+    in profile plots}
+\item{mle.options()}
+\item{data= argument}
+\item{handling of names in argument lists}
+\end{itemize}
+
+Wish list:
+\begin{itemize}
+\item{variable-length chunks in argument list}
+\item{limited automatic differentiation
+    (add capability for common distributions)}
+\item{ability to use alternate optimizers (e.g. nlmin/b)}
+\end{itemize}
+
+\bibliography{mle2}
+\end{document}
