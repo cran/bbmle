@@ -1,0 +1,18 @@
+0.2: added parnames, parnames<-
+minor fix to allow "profiles" of 1-parameter models
+  (skip fdHess call)
+minor change to print method for mle results
+tweaking "vecpar" (to allow parameter vectors in objective function)
+removed fdHess/nlme dependency
+
+0.3: enhanced anova method, works with print.anova
+tweaked namedrop() code -- ??
+
+0.4 change AIC to AICc for corrections
+    add AICtab for weights, delta, sort ... options
+
+    expose error messages occuring within profile()
+    uniroot tries harder to find a valid endpoint
+    truncate terms in anova.mle at 80 characters
+
+0.5 fix AICc bug!  (was deviance+2*k*(k+1)/(n-k-1), not AIC+2*k*(k+1)/(n-k-1)
