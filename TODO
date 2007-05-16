@@ -1,20 +1,20 @@
-
-
 BUGS/ISSUES:
+
   BIC conflict with nlme (S3/S4)
 
-SHORT-TERM:
-test!
-make relist work/test
-documentation:
-  - vignette?
-  - document methods better
+  calling profile, etc. on mle objects
+created inside a function doesn't work
+
+  should print warning immediately if convergence fails
+
+TO DO:
+  more documentation
 
 WISHLIST:
 analytic derivatives
-OR relist
+relist
 
-document argument handling
+document argument handling:
 
   start must be a named vector or a named list
        [OR?? inherit from parnames(minuslogl)?]

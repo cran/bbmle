@@ -23,3 +23,15 @@ tweaked namedrop() code -- ??
     change internal structure of data evaluation
     worked on vignette
     added optimizer slot (stub)
+
+0.7 better df extraction in ICtab
+    minor bug fix for AICc (allows AICc of nls objects)
+    handle models with -1 in formula better:
+	starting values set "all equal"
+    made ANOVA formula line-length accessible
+    added skip.hessian and trace arguments to mle2
+    messed around with BIC definition -- attempt at consistency with nlme
+    added rudimentary support for nlminb, constrOptim
+    nlme now required for fdHess (which is required for
+	nlminb since it doesn't compute a finite-diff
+	Hessian)

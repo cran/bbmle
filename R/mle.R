@@ -1,5 +1,5 @@
 require(methods)  ## for independence from stats4
-## require(nlme) ## for fdHess() ## OBSOLETE
+require(nlme) ## for fdHess() ## argh.  BIC conflict.
 
 setClass("mle2", representation(call = "language",
                                 coef = "numeric",
@@ -27,7 +27,7 @@ setClass("slice.mle2", representation(profile="list",
 setIs("profile.mle2", "slice.mle2")
 
 calc_mle2_function <- function(formula,parameters,
-                               start,data=NULL) {
+                               start,data=NULL,trace=FALSE) {
   RHS <- formula[[3]]
   ddistn <- as.character(RHS[[1]])
   ## need to check on variable order:
@@ -35,10 +35,17 @@ calc_mle2_function <- function(formula,parameters,
   ##   not start?
   parnames <- as.list(names(start))
   names(parnames) <- names(start)
+  ## hack
+  call.to.char <- function(x) {
+    x = as.list(x)
+    if (length(x)>1) x <- x[c(2,1,3)]
+    paste(sapply(x,as.character),collapse="")
+  }
   if (!missing(parameters)) {
     vars <- as.character(sapply(parameters,"[[",2))
     if (length(parameters)>1) {
-      models <- as.character(sapply(parameters,"[[",3))
+      models <-  sapply(parameters,function(z) call.to.char(z[[3]]))
+       ## as.character(sapply(parameters,"[[",3))
     } else {
       models <- as.character(parameters)
     }
@@ -58,9 +65,15 @@ calc_mle2_function <- function(formula,parameters,
         parnames[[vname]] <- pnames ## insert into parameter names
         vpos0 <- which(names(start)==vname)
         vposvals <- cumsum(sapply(parnames,length))
+        ## fill out start vectors with zeros or replicates as appropriate
         if (length(start[[vname]])==1) {
-          start[[vname]] <- c(start[[vname]],rep(0,length(pnames)-1))
+          if (length(grep("-1",models[i])>0)) {
+            start[[vname]] <- rep(start[[vname]],length(pnames))
+          } else {
+            start[[vname]] <- c(start[[vname]],rep(0,length(pnames)-1))
+          }
         }
+        ## fix: what if parameters are already correctly specified?
         startpos <- if (vpos0==1) 1 else vposvals[vpos0-1]+1
         vpos[[vname]] <- startpos:vposvals[vpos0]
         mmats[[vname]] <- mmat
@@ -75,9 +88,9 @@ calc_mle2_function <- function(formula,parameters,
   arglist1 <- c(list(x=formula[[2]]),arglist,list(log=TRUE))
   arglist1  ## codetools check kluge
   fn <- function() {
+    ## is there a better way to do this?
+    pars <- unlist(as.list(match.call())[-1])
     if (!is.null(parameters)) {
-      ## is there a better way to do this?
-      pars <- unlist(as.list(match.call())[-1])
       ## browser()
       for (i in seq(along=parameters)) {
         assign(vars[i],mmats[[i]] %*% pars[vpos[[i]]])
@@ -87,6 +100,8 @@ calc_mle2_function <- function(formula,parameters,
     r <- -sum(do.call(ddistn,arglist1))
     ## doesn't work yet -- need to eval arglist in the right env ...
     ## if (debugfn) cat(unlist(arglist),r,"\n")
+    ## browser()
+    if (trace) cat(pars,r,"\n")
     r
   }
   npars <- length(parnames)
@@ -95,7 +110,8 @@ calc_mle2_function <- function(formula,parameters,
   formals(fn) <- flist
   list(fn=fn,start=start,parameters=parameters,
        fdata=list(vars=vars,mmats=mmats,vpos=vpos,
-         arglist1=arglist1,ddistn=ddistn,parameters=parameters))
+         arglist1=arglist1,ddistn=ddistn,parameters=parameters),
+       parnames=parnames)
 }
 
 ## need logic that will identify correctly when
@@ -110,10 +126,12 @@ mle2 <- function(minuslogl,
                  eval.only = FALSE,
                  vecpar = FALSE,
                  parameters=NULL,
+                 skip.hessian=FALSE,
+                 trace=FALSE,
                  ...) {
   if (missing(method)) method <- mle2.options("optim.method")
   if (missing(optimizer)) optimizer <- mle2.options("optimizer")
-  if (optimizer != "optim") stop("only optim() is currently supported")
+  ## if (optimizer != "optim") stop("only optim() is currently supported")
   if (inherits(minuslogl,"formula")) {
     pf <- function(f) {if (is.null(f)) "" else paste(f[2],"~",
                                                      gsub(" ","",as.character(f[3])),sep="")}
@@ -123,7 +141,7 @@ mle2 <- function(minuslogl,
       formula <- paste(pf(minuslogl),paste(sapply(parameters,pf),collapse=", "),sep=": ")
     }
     tmp <- calc_mle2_function(minuslogl,parameters,
-                              start,data)
+                              start,data,trace)
     minuslogl <- tmp$fn
     start <- tmp$start
     fdata <- tmp$fdata
@@ -214,23 +232,53 @@ mle2 <- function(minuslogl,
     oout <- list(par=start, value=objectivefunction(start),
                  hessian = matrix(NA,nrow=length(start),ncol=length(start)))
   } else {
-    oout <- optim(start, objectivefunction, method=method, hessian=TRUE, ...)
+    oout <- switch(optimizer,
+                   optim = optim(par=start,
+                     fn=objectivefunction, method=method, hessian=!skip.hessian, ...),
+                   nlminb = nlminb(start=start,
+                     objective=objectivefunction, hessian=NULL, ...),
+                   constrOptim = constrOptim(theta=start,
+                     f=objectivefunction, method=method, ...),
+                   stop("unknown optimizer (choices are 'optim', 'nlminb', and 'constrOptim')")
+                 )
+  }
+  optimval <- switch(optimizer,
+                     optim= , constrOptim="value",
+                     nlminb="objective")
+  if (optimizer=="nlminb") {
+    names(oout$par) <- names(start)
+  }
+  ## HACK: constrOptim doesn't handle optim() arguments very well so use default
+  ## hessian=FALSE and compute them later
+  if (optimizer %in% c("nlminb","constrOptim") && !skip.hessian) {
+    oout$hessian <- nlme::fdHess(oout$par,objectivefunction)$Hessian
+    oout$hessian[lower.tri(oout$hessian)] <- t(oout$hessian)[lower.tri(oout$hessian)]
+    ## print(oout$hessian)
+  }
+  ##  } else {
+  ## oout <- optim(start, objectivefunction, method=method, hessian=!skip.hessian, ...)
+  if (skip.hessian) {
+    oout$hessian = matrix(NA,nrow=length(start),ncol=length(start))
   }
   ## skip hessian calculation if 0 varying parameters
   ##if (length(oout$par)) oout$hessian <- fdHess(pars=oout$par,fun=f)$Hessian
   coef <- oout$par
   nc <- names(coef)
-  if (length(coef)) {
-    tmphess <- try(solve(oout$hessian))
-    if (class(tmphess)=="try-error") {
-      vcov <- matrix(NA,length(coef),length(coef))
-      warning("couldn't invert Hessian")
-    } else vcov <- tmphess
+  if (skip.hessian) {
+    vcov <- matrix(NA,length(coef),length(coef))
   } else {
-    vcov <- matrix(numeric(0),0,0)
+    if (length(coef)) {
+      tmphess <- try(solve(oout$hessian))
+      if (class(tmphess)=="try-error") {
+        vcov <- matrix(NA,length(coef),length(coef))
+        warning("couldn't invert Hessian")
+      } else vcov <- tmphess
+    } else {
+      vcov <- matrix(numeric(0),0,0)
+    }
   }
   dimnames(vcov) <- list(nc,nc)
-  min <-  oout$value
+  min <-  oout[[optimval]]
   ##  if (named)
   fullcoef[nstart[order(oo)]] <- coef
   ## else fullcoef <- coef
@@ -289,17 +337,19 @@ setMethod("profile", "mle2",
           function (fitted, which = 1:p, maxsteps = 100,
                     alpha = 0.01, zmax = sqrt(qchisq(1 - alpha/2, p)),
                     del = zmax/5, trace = FALSE, skiperrs=TRUE, ...) {
-          ## fitted: mle2 object
-          ## which: which parameters to profile
-          ## maxsteps: steps to take looking for zmax
-          ## alpha: max alpha level
-          ## zmax: log-likelihood difference
-          ## del: stepsize
-  Pnames <- names(fitted@coef)
-  p <- length(Pnames)
-  if (is.character(which)) which <- match(which,Pnames)
-  if (any(is.na(which))) stop("parameters not found in model coefficients")
-  onestep <- function(step)
+            ## fitted: mle2 object
+            ## which: which parameters to profile
+            ## maxsteps: steps to take looking for zmax
+            ## alpha: max alpha level
+            ## zmax: log-likelihood difference
+            ## del: stepsize
+            if (fitted@optimizer=="constrOptim")
+              stop("profiling not yet working for constrOptim -- sorry")
+            Pnames <- names(fitted@coef)
+            p <- length(Pnames)
+            if (is.character(which)) which <- match(which,Pnames)
+            if (any(is.na(which))) stop("parameters not found in model coefficients")
+            onestep <- function(step)
     {
         bi <- B0[i] + sgn * step * del * std.err[i]
         fix <- list(bi)
@@ -410,7 +460,11 @@ ICtab <- function(...,type=c("AIC","BIC","AICc"),
                 AIC=sapply(L,AIC),
                 BIC=sapply(L,BIC,nobs=nobs),
                 AICc=sapply(L,AICc,nobs=nobs))
-  df <- sapply(L,attr,"df")
+  getdf <- function(x) {
+    if (!is.null(df <- attr(x,"df"))) return(df)
+    else if (!is.null(df <- attr(logLik(x),"df"))) return(df)
+  }
+  df <- sapply(L,getdf)
   tab <- data.frame(IC=ICs,df=df)
   names(tab)[1] <- type
   dIC <- ICs-min(ICs)
@@ -503,7 +557,7 @@ function(object, ..., nobs){
 
 setMethod("AICc", signature(object="ANY"),
 function(object, ..., nobs){
-  AICc(object=logLik(object, ..., nobs))
+  AICc(object=logLik(object, ..., nobs=nobs))
 })
 
 setMethod("AIC", "mle2",
@@ -522,29 +576,33 @@ setMethod("AIC", "mle2",
 ##trace
 
 ## copied from stats4
-setGeneric("BIC", function(object, ..., nobs) standardGeneric("BIC"))
+setGeneric("BIC", function(object, ...) standardGeneric("BIC"))
 
 setMethod("BIC", signature(object="logLik"),
-          function(object, ..., nobs){
-            ## browser()
-            if (missing(nobs)) {
-              if (is.null(attr(object,"nobs")))
-                stop("number of observations not specified")
-              nobs <- attr(object,"nobs")
+          function(object, ...){
+            args = list(...)
+            nobs = args[["nobs"]]
+            args[["nobs"]] <- NULL
+            if (is.null(attr(object,"nobs"))) attr(object,"nobs") <- nobs
+            nobs <- attr(object,"nobs")
+            if (is.null(nobs)) {
+              stop("can't determine number of observations")
             }
-            ## cat("***",nobs,"\n")
             -2 * c(object) + attr(object, "df") * log(nobs)
           })
 
 setMethod("BIC", signature(object="ANY"),
-function(object, ..., nobs){
-    BIC(object=logLik(object, ..., nobs))
-})
+          function(object, ...){
+            BIC(object=logLik(object, ...))
+          })
 
 setMethod("BIC", "mle2",
-          function (object, ..., nobs) 
-          {
+          function (object, ...) {
             L <- list(...)
+            if ("nobs" %in% names(L)) {
+              nobs = L$nobs
+              L[["nobs"]] <- NULL
+            } else nobs <- NULL
             if (length(L)) {
               L <- c(list(object),L)
               logLiks <- lapply(L, logLik)
@@ -553,10 +611,10 @@ setMethod("BIC", "mle2",
               data.frame(BIC=BICs,df=df)
             }
             else BIC(logLik(object), nobs = nobs)
-})
+          })
 
 setMethod("anova","mle2",
-function(object,...) {
+function(object,...,width=80) {
   mlist <- c(list(object),list(...))
   ## get names from previous call
   mnames <- sapply(sys.call(sys.parent())[-1],deparse)
@@ -569,14 +627,14 @@ function(object,...) {
     terms=sapply(mlist,function(x) as.character(x@formula))
   }
   mterms <- paste("Model ",1:length(mnames),": ",mnames,", ",terms,sep="")
-  trunc.term <- function(s,len=80) {
+  trunc.term <- function(s,len) {
     ## cat("***",nchar(s),length(grep("\\+",s)),"\n",sep=" ")    
     if ((nchar(s)<len) || (length(grep("\\+",s))==0)) return(s)
     ## cat("abc\n")
     lens <- cumsum(sapply(strsplit(s,"\\+")[[1]],nchar)+1)
     paste(substr(s,1,max(lens[lens<len])-1),"+...",sep="")
   }
-  mterms <- sapply(mterms,trunc.term)
+  mterms <- sapply(mterms,trunc.term,len=width)
   heading <- paste("Likelihood Ratio Tests",
                    paste(mterms,
                          collapse="\n"),
@@ -836,30 +894,31 @@ function (object, ...)
         warning("extra arguments discarded")
     val <- -object@min
     attr(val, "df") <- length(object@coef)
+    attr(val, "nobs") <- attr(object,"nobs")
     class(val) <- "logLik"
     val
-})
+  })
 
 setMethod("vcov", "mle2", function (object, ...) { object@vcov } )
 
 setMethod("update", "mle2", function (object, ..., evaluate = TRUE)
 {
-    call <- object@call
-    extras <- match.call(expand.dots = FALSE)$...
-    if (length(extras) > 0) {
-        existing <- !is.na(match(names(extras), names(call)))
-        for (a in names(extras)[existing]) call[[a]] <- extras[[a]]
-        if (any(!existing)) {
-            call <- c(as.list(call), extras[!existing])
-            call <- as.call(call)
-        }
+  call <- object@call
+  extras <- match.call(expand.dots = FALSE)$...
+  if (length(extras) > 0) {
+    existing <- !is.na(match(names(extras), names(call)))
+    for (a in names(extras)[existing]) call[[a]] <- extras[[a]]
+    if (any(!existing)) {
+      call <- c(as.list(call), extras[!existing])
+      call <- as.call(call)
     }
-    if (evaluate) eval(call, parent.frame()) else call
-  })
+  }
+  if (evaluate) eval(call, parent.frame()) else call
+})
 
 
 mle2.options <- function(...) {
-  single <- FALSE
+single <- FALSE
   args <- list(...)
   setvals <- !is.null(names(args))
   if (!length(args)) args <- names(.Mle2.options)
@@ -876,7 +935,7 @@ mle2.options <- function(...) {
     value <- .Mle2.options[names(args)]
   } else value <- .Mle2.options[unlist(args)]
   if (single) value <- value[[1]]
-  if (setvals) invisible(value) else value
+if (setvals) invisible(value) else value
 }
 
 
@@ -975,7 +1034,7 @@ function (fitted, which = 1:p, maxsteps = 100,
 ##   v is a vector, l is the original list
 ##      to use as a template
 relist <- function(v,l) {
-  if (is.list(v)) v <- unlist(v)
+if (is.list(v)) v <- unlist(v)
   if (!all(sapply(l,mode)=="numeric")) {
     stop("can't relist non-numeric values")
   }
@@ -991,7 +1050,7 @@ relist <- function(v,l) {
       z=x; names(z)=names(y); z
     }
   },l2,l,SIMPLIFY=FALSE)
-  names(l3) <- names(l)
+names(l3) <- names(l)
   l3
 }
 
@@ -1013,12 +1072,12 @@ namedrop <- function(x) {
 }
 
 "parnames<-" <- function(obj,value) {
-  attr(obj,"parnames") <- value
+attr(obj,"parnames") <- value
   obj
 }
 
 parnames <- function(obj) {
-  attr(obj,"parnames")
+attr(obj,"parnames")
 }
 
 ## bayesfactor <- function(obj,method="laplace",log=FALSE,
@@ -1035,3 +1094,23 @@ parnames <- function(obj) {
 ##      do.call("logprior",c(as.list(coef(obj)),obj@data))
 ##   if (log) r else exp(r)
 ## }
+
+
+
+### TEST OF NLMINB
+if (FALSE) {
+x <- 0:10
+y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
+mle2(y~dpois(lambda=ymax/(1+x/xhalf)),start=list(ymax=25,xhalf=3.06),
+     optimizer="nlminb",fixed=list(ymax=38.76),lower=c(0,0),trace=TRUE)
+
+f = calc_mle2_function(y~dpois(lambda=ymax/(1+x/xhalf)),start=list(ymax=25,xhalf=3.06))
+f2 = function(xhalf) {
+  -sum(dpois(y,38.76/(1+x/xhalf),log=TRUE))
+}
+optim(f2,par=3.06,method="BFGS")
+## optim(f2,par=3.06,method="L-BFGS-B",lower=0) ## error
+nlminb(objective=f2,start=3.06)
+nlminb(objective=f2,start=3.06,lower=0)
+nlminb(objective=f2,start=3.06,lower=1e-8)
+}

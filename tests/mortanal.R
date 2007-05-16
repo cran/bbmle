@@ -1,5 +1,7 @@
 library(bbmle)
 
+## goby data in dump format
+
 x <- structure(list(indiv = structure(as.integer(c(20, 77, 79, 21, 
 33, 40, 11, 28, 43, 85, 56, 49, 29, 37, 57, 36, 66, 65, 19, 69, 
 47, 60, 23, 25, 39, 84, 12, 5, 76, 55, 32, 10, 75, 4, 78, 80, 
