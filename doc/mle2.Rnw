@@ -13,10 +13,10 @@
 library(Hmisc)
 @ 
 
-The \code{bbmle} package, designed to make it easier to
-do maximum likelihood estimation and analysis in R,
+The \code{bbmle} package, designed to simplify
+maximum likelihood estimation and analysis in R,
 extends and modifies the \code{mle} function and class
-in the \code{stats4} package that comes with R by default;
+in the \code{stats4} package that comes with R by default.
 \code{mle} is in turn a wrapper around the \code{optim}
 function in base R.
 The maximum-likelihood-estimation function and class
@@ -32,8 +32,15 @@ the \code{stats4} package.  The major differences between
   than stopping with an error)
 \item \code{mle2} uses a \code{data} argument to allow different
   data to be passed to the negative log-likelihood function
-\item formula interface
-\item \code{bbmle} defines {\tt anova}, {\tt AIC}, and {\tt BIC} methods for
+\item \code{mle2} has a formula interface like that
+ of (e.g.) \code{gls} in the \code{nlme} package.
+  For relatively simple models the formula for the
+  maximum likelihood can be written in-line, rather than
+  defining a negative log-likelihood function.  The formula
+  interface also simplifies fitting models with
+  categorical variables.  
+\item \code{bbmle} defines \code{anova}, \code{AIC}, \code{AICc}, 
+  and \code{BIC} methods for
   \code{mle2} objects, as well as
   \code{AICtab}, \code{BICtab}, \code{AICctab}
   functions for producing summary tables of information criteria for a 
@@ -47,7 +54,6 @@ This example will use the classic data set on
 (you can also use
 \code{glm(...,family="quasibinomial")} or
 the \code{aod} package to analyze these data).
-
 
 \subsection{Test basic fit to simulated beta-binomial data}
 
@@ -185,7 +191,7 @@ differ.
 
 \subsection{Using real data}
 Get data from Crowder 1978 \cite{Crowder1978},
-as incorporated in the {\tt aod} package:
+as incorporated in the \code{aod} package:
 <<>>=
 library(aod)
 data(orob1)
@@ -276,7 +282,7 @@ p2b <- profile(m2b)
 
 As might be expected since the standard deviation
 of $\sigma$ is large, the quadratic approximation is
-not actually very good:
+poor:
 
 <<>>=
 r1 <- rbind(confint(p2)["theta",],
@@ -359,12 +365,17 @@ AICctab(m0f,m2f,m3f,delta=TRUE,nobs=nrow(orob1),sort=TRUE,weights=TRUE)
 \item{handling of names in argument lists}
 \end{itemize}
 
-Wish list:
+Wish/Bug/To do list:
 \begin{itemize}
-\item{variable-length chunks in argument list}
-\item{limited automatic differentiation
-    (add capability for common distributions)}
-\item{ability to use alternate optimizers (e.g. nlmin/b)}
+\item BUG: \code{mle2} fits that are obtained within a function
+  can't be used for subsequent profiles etc. (environment issue)
+\item minor WISH: \code{nobs} information (for \code{BIC} and \code{AICc}
+  can probably be extracted from \code{lm} and \code{nls} objects
+\item WISH: better documentation, especially for S4 methods
+\item WISH: variable-length chunks in argument list
+\item WISH: limited automatic differentiation
+    (add capability for common distributions)
+\item WISH: ability to use alternate optimizers (e.g. nlmin/b, constrOptim)
 \end{itemize}
 
 \bibliography{mle2}

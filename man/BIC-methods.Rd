@@ -41,13 +41,15 @@
   }
 }
 \usage{
-\S4method{BIC}{ANY,mle2,logLik}(object,...,nobs)
+\S4method{BIC}{ANY,mle2,logLik}(object,...)
 }
 \arguments{
   \item{object}{A \code{logLik} or \code{mle2} object}
   \item{...}{An optional list of additional \code{logLik}
-    or \code{mle2} objects (fitted to the same data set)}
-  \item{nobs}{Number of observations}
+    or \code{mle2} objects (fitted to the same data set).
+    If the number of attributes has not been included as an attribute of
+    the fit or of the log-likelihood, it can specified as
+    \code{nobs=} in this list.}
 }
 \details{
   Further arguments to \code{BIC} can be specified
@@ -62,4 +64,14 @@
 }
 \note{This is implemented in an ugly way and could
   probably be improved!}
+\examples{
+  x <- 0:10
+  y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
+  (fit <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
+  start=list(ymax=25,xhalf=3)))
+  (fit2 <- mle2(y~dpois(lambda=(x+1)*slope),
+  start=list(slope=1)))
+  BIC(fit,nobs=length(x))
+  BIC(fit,fit2,nobs=length(x))
+  }
 \keyword{methods}
