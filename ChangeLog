@@ -35,3 +35,18 @@ tweaked namedrop() code -- ??
     nlme now required for fdHess (which is required for
 	nlminb since it doesn't compute a finite-diff
 	Hessian)
+
+0.7.5 change "ll" to "LL" in examples for clarity
+    tweaked anova reporting of models (wrap instead of truncating)
+    added (undocumented) show.points option to profile plot
+	to display actual locations of profile evaluation
+    tweaked profile to behave better when profiling variables
+	with constraints (upper, lower)
+    moved vignette to inst/doc where it belongs
+    ICtab hack to protect against package:aod definition of AIC(logLik)
+    added submit stub
+    tweaked slice.mle2-class docs for consistency
+    fiddled with vignette
+    preliminary code to allow non-monotonic profiles
+    preliminary add nlm to list of optimizers (untested)
+    add aod, Hmisc, emdbook to VignetteDepends and Suggests:

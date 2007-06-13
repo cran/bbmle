@@ -1,5 +1,5 @@
 require(methods)  ## for independence from stats4
-require(nlme) ## for fdHess() ## argh.  BIC conflict.
+## require(nlme) ## for fdHess() ## argh.  BIC conflict.
 
 setClass("mle2", representation(call = "language",
                                 coef = "numeric",
@@ -122,6 +122,7 @@ mle2 <- function(minuslogl,
                  optimizer,
                  fixed=NULL,
                  data=NULL,
+                 subset=NULL,
                  default.start=TRUE, 
                  eval.only = FALSE,
                  vecpar = FALSE,
@@ -235,21 +236,25 @@ mle2 <- function(minuslogl,
     oout <- switch(optimizer,
                    optim = optim(par=start,
                      fn=objectivefunction, method=method, hessian=!skip.hessian, ...),
+                   nlm = nlm(f=objectivefunction, hessian=!skip.hessian, ...),
                    nlminb = nlminb(start=start,
                      objective=objectivefunction, hessian=NULL, ...),
                    constrOptim = constrOptim(theta=start,
                      f=objectivefunction, method=method, ...),
-                   stop("unknown optimizer (choices are 'optim', 'nlminb', and 'constrOptim')")
+                   stop("unknown optimizer (choices are 'optim', 'nlm', 'nlminb', and 'constrOptim')")
                  )
   }
   optimval <- switch(optimizer,
                      optim= , constrOptim="value",
+                     nlm="minimum",
                      nlminb="objective")
+  if (optimizer=="nlm") oout$par <- oout$estimate
   if (optimizer=="nlminb") {
     names(oout$par) <- names(start)
   }
-  ## HACK: constrOptim doesn't handle optim() arguments very well so use default
-  ## hessian=FALSE and compute them later
+  ## HACK: constrOptim doesn't handle optim() arguments very well
+  ## so use default hessian=FALSE and compute them later
+  ## n.b. this is not using parscale information
   if (optimizer %in% c("nlminb","constrOptim") && !skip.hessian) {
     oout$hessian <- nlme::fdHess(oout$par,objectivefunction)$Hessian
     oout$hessian[lower.tri(oout$hessian)] <- t(oout$hessian)[lower.tri(oout$hessian)]
@@ -348,98 +353,125 @@ setMethod("profile", "mle2",
             Pnames <- names(fitted@coef)
             p <- length(Pnames)
             if (is.character(which)) which <- match(which,Pnames)
-            if (any(is.na(which))) stop("parameters not found in model coefficients")
-            onestep <- function(step)
-    {
-        bi <- B0[i] + sgn * step * del * std.err[i]
-        fix <- list(bi)
-        names(fix) <- p.i
-        if (is.null(call$fixed)) call$fixed <- fix
-        else call$fixed <- c(eval(call$fixed),fix)
-        if (skiperrs) {
-          pfit <- try(eval.parent(call, 2), silent=TRUE)
-        } else {
-          pfit <- eval.parent(call, 2)
-        }
-        if(skiperrs && inherits(pfit, "try-error")) {
-          warning(paste("Error encountered in profile:",pfit))
-          return(NA)
-        }
-        else {
-            zz <- 2*(pfit@min - fitted@min)
-            ri <- pv0
-            ri[, names(pfit@coef)] <- pfit@coef
-            ri[, p.i] <- bi
-            if (zz > -0.001)
-                zz <- max(zz, 0)
-            else {
-              cat("Profiling has found a better solution, so original fit had not converged:\n")
-              cat("New minimum=",pfit@min,"\n")
-              cat("Parameter values:\n")
-              print(pfit@fullcoef)
-              stop("try restarting fit from values above")
-            }
-            z <- sgn * sqrt(zz)
-            pvi <<- rbind(pvi, ri)
-            zi <<- c(zi, z)
-        }
-        if (trace) cat(bi, z, "\n")
-        z
-      } ## end onestep
-    ## Profile the likelihood around its maximum
-    ## Based on profile.glm in MASS
-    summ <- summary(fitted)
-    std.err <- summ@coef[, "Std. Error"]
-    Pnames <- names(B0 <- fitted@coef)
-    pv0 <- t(as.matrix(B0))
-    p <- length(Pnames)
-    prof <- vector("list", length = length(which))
-    names(prof) <- Pnames[which]
-    call <- fitted@call
-    call$minuslogl <- fitted@minuslogl
-    ndeps <- eval.parent(call$control$ndeps)
-    parscale <- eval.parent(call$control$parscale)
-    for (i in which) {
-        zi <- 0
-        pvi <- pv0
-        p.i <- Pnames[i]
-        if (!is.null(ndeps)) call$control$ndeps <- ndeps[-i]
-        if (!is.null(parscale)) call$control$parscale <- parscale[-i]
-        for (sgn in c(-1, 1)) {
-            if (trace)
-                cat("\nParameter:", p.i, c("down", "up")[(sgn + 1)/2 + 1], "\n")
-            step <- 0
-            z <- 0
-            ## This logic was a bit frail in some cases with
-            ## high parameter curvature. We should probably at least
-            ## do something about cases where the mle2 call fails
-            ## because the parameter gets stepped outside the domain.
-            ## (We now have.)
-            call$start <- as.list(B0)
-            lastz <- 0
-            while ((step <- step + 1) < maxsteps && abs(z) < zmax) {
-                z <- onestep(step)
-                if(is.na(z)) break
-                lastz <- z
-            }
-            if(abs(lastz) < zmax) {
-                ## now let's try a bit harder if we came up short
-                for(dstep in c(0.2, 0.4, 0.6, 0.8, 0.9)) {
+            if (any(is.na(which)))
+              stop("parameters not found in model coefficients")
+            onestep <- function(step,bi) {
+              if (missing(bi)) bi <- B0[i] + sgn * step * del * std.err[i]
+              fix <- list(bi)
+              names(fix) <- p.i
+              if (is.null(call$fixed)) call$fixed <- fix
+              else call$fixed <- c(eval(call$fixed),fix)
+              if (skiperrs) {
+                pfit <- try(eval.parent(call, 2), silent=TRUE)
+              } else {
+                pfit <- eval.parent(call, 2)
+              }
+              if(skiperrs && inherits(pfit, "try-error")) {
+                warning(paste("Error encountered in profile:",pfit))
+                return(NA)
+              }
+              else {
+                zz <- 2*(pfit@min - fitted@min)
+                ri <- pv0
+                ri[, names(pfit@coef)] <- pfit@coef
+                ri[, p.i] <- bi
+                if (zz > -0.001)
+                  zz <- max(zz, 0)
+                else {
+                  cat("Profiling has found a better solution, so original fit had not converged:\n")
+                  cat("New minimum=",pfit@min,"\n")
+                  cat("Parameter values:\n")
+                  print(pfit@fullcoef)
+                  stop("try restarting fit from values above")
+                }
+                z <- sgn * sqrt(zz)
+                pvi <<- rbind(pvi, ri)
+                zi <<- c(zi, z)
+              }
+              if (trace) cat(bi, z, "\n")
+              z
+            } ## end onestep
+            ## Profile the likelihood around its maximum
+            ## Based on profile.glm in MASS
+            summ <- summary(fitted)
+            std.err <- summ@coef[, "Std. Error"]
+            Pnames <- names(B0 <- fitted@coef)
+            pv0 <- t(as.matrix(B0))
+            p <- length(Pnames)
+            prof <- vector("list", length = length(which))
+            names(prof) <- Pnames[which]
+            call <- fitted@call
+            call$minuslogl <- fitted@minuslogl
+            ndeps <- eval.parent(call$control$ndeps)
+            parscale <- eval.parent(call$control$parscale)
+            upper <- eval.parent(call$upper)
+            lower <- eval.parent(call$lower)
+            ## cat("upper\n")
+            ## print(upper)
+            for (i in which) {
+              zi <- 0
+              pvi <- pv0
+              p.i <- Pnames[i]
+              ## omit values from control vectors:
+              ##   is this necessary/correct?
+              ## FIXME: if lower, upper are set then the profile should
+              ##    respect that!
+              if (!is.null(ndeps)) call$control$ndeps <- ndeps[-i]
+              if (!is.null(parscale)) call$control$parscale <- parscale[-i]
+              if (!is.null(upper)) call$upper <- upper[-i]
+              if (!is.null(lower)) call$lower <- lower[-i]
+              for (sgn in c(-1, 1)) {
+                if (trace)
+                  cat("\nParameter:", p.i, c("down", "up")[(sgn + 1)/2 + 1], "\n")
+                step <- 0
+                z <- 0
+                ## This logic was a bit frail in some cases with
+                ## high parameter curvature. We should probably at least
+                ## do something about cases where the mle2 call fails
+                ## because the parameter gets stepped outside the domain.
+                ## (We now have.)
+                call$start <- as.list(B0)
+                lastz <- 0
+                lbound <- if (!is.null(lower)) lower[i] else -Inf
+                ubound <- if (!is.null(upper)) upper[i] else Inf
+                while ((step <- step + 1) < maxsteps && abs(z) < zmax) {
+                  curval <- B0[i] + sgn * step * del * std.err[i]
+                  if ((sgn==-1 & curval<lbound) ||
+                      (sgn==1 && curval>ubound)) break
+                  z <- onestep(step)
+                  if(is.na(z)) break
+                  lastz <- z
+                }
+                if(abs(lastz) < zmax) {
+                  ## now let's try a bit harder if we came up short
+                  for(dstep in c(0.2, 0.4, 0.6, 0.8, 0.9)) {
+                    curval <- B0[i] + sgn * (step-1+dstep) * del * std.err[i]
+                    if ((sgn==-1 & curval<lbound) ||
+                      (sgn==1 && curval>ubound)) break
                     z <- onestep(step - 1 + dstep)
                     if(is.na(z) || abs(z) > zmax) break
+                    lastz <- z
+                  }
+                  if ((abs(lastz) < zmax) &&
+                      ((sgn==-1 && lbound>-Inf) || (sgn==1 && ubound<Inf))) {
+                    ## bounded and didn't make it, try at boundary
+                    if (sgn==-1 && B0[i]>lbound) onestep(bi=lbound)
+                    if (sgn==1  && B0[i]<ubound) onestep(bi=ubound)
+                  }
+                } else if(length(zi) < 5) { # try smaller steps
+                  mxstep <- step - 1
+                  step <- 0.5
+                  while ((step <- step + 1) < mxstep) {
+                    onestep(step)
+                  }
                 }
-            } else if(length(zi) < 5) { # try smaller steps
-                mxstep <- step - 1
-                step <- 0.5
-                while ((step <- step + 1) < mxstep) onestep(step)
+              }
+              si <- order(pvi[, i])
+              prof[[p.i]] <- data.frame(z = zi[si])
+              prof[[p.i]]$par.vals <- pvi[si,, drop=FALSE]
             }
-        }
-        si <- order(pvi[, i])
-        prof[[p.i]] <- data.frame(z = zi[si])
-        prof[[p.i]]$par.vals <- pvi[si,, drop=FALSE]
-    }
-    new("profile.mle2", profile = prof, summary = summ)
-  })
+            new("profile.mle2", profile = prof, summary = summ)
+          })
 
 
 ICtab <- function(...,type=c("AIC","BIC","AICc"),
@@ -460,6 +492,8 @@ ICtab <- function(...,type=c("AIC","BIC","AICc"),
                 AIC=sapply(L,AIC),
                 BIC=sapply(L,BIC,nobs=nobs),
                 AICc=sapply(L,AICc,nobs=nobs))
+  ## hack: protect against aod method
+  if (is.matrix(ICs)) ICs <- ICs["AIC",]  
   getdf <- function(x) {
     if (!is.null(df <- attr(x,"df"))) return(df)
     else if (!is.null(df <- attr(logLik(x),"df"))) return(df)
@@ -614,34 +648,49 @@ setMethod("BIC", "mle2",
           })
 
 setMethod("anova","mle2",
-function(object,...,width=80) {
-  mlist <- c(list(object),list(...))
-  ## get names from previous call
-  mnames <- sapply(sys.call(sys.parent())[-1],deparse)
-  ltab <- as.matrix(do.call("rbind",lapply(mlist,
-                                 function(x) c("Tot Df"=length(x@coef),
-                                               Deviance=-2*logLik(x)))))
-  if (is.null(object@formula)) {
-    terms=sapply(mlist,function(x)paste(names(x@coef),collapse="+"))
-  } else {
-    terms=sapply(mlist,function(x) as.character(x@formula))
-  }
-  mterms <- paste("Model ",1:length(mnames),": ",mnames,", ",terms,sep="")
-  trunc.term <- function(s,len) {
-    ## cat("***",nchar(s),length(grep("\\+",s)),"\n",sep=" ")    
-    if ((nchar(s)<len) || (length(grep("\\+",s))==0)) return(s)
-    ## cat("abc\n")
-    lens <- cumsum(sapply(strsplit(s,"\\+")[[1]],nchar)+1)
-    paste(substr(s,1,max(lens[lens<len])-1),"+...",sep="")
-  }
-  mterms <- sapply(mterms,trunc.term,len=width)
+          function(object,...,width=getOption("width"),
+                   exdent=10) {
+            mlist <- c(list(object),list(...))
+            ## get names from previous call
+            mnames <- sapply(sys.call(sys.parent())[-1],deparse)
+            ltab <- as.matrix(do.call("rbind",
+                                      lapply(mlist,
+                                             function(x) {
+                                               c("Tot Df"=length(x@coef),
+                                                 Deviance=-2*logLik(x))
+                                             })))
+            terms=sapply(mlist,
+              function(obj) {
+                if (is.null(obj@formula) || obj@formula=="") {
+                  mfun <- obj@call$minuslogl
+                  mfun <- paste("[",if (is.name(mfun)) {
+                    as.character(mfun)
+                  } else { "..." },
+                                "]",sep="")
+                  paste(mfun,": ",paste(names(obj@coef),
+                                        collapse="+"),sep="")
+                } else {
+                  as.character(obj@formula)
+                }
+              })
+            mterms <- paste("Model ",
+                            1:length(mnames),": ",mnames,", ",terms,sep="")
+            mterms <- strwrapx(mterms,width=width,exdent=exdent,
+                               wordsplit="[ \n\t]")
+  ## trunc.term <- function(s,len) {
+  ##     ## cat("***",nchar(s),length(grep("\\+",s)),"\n",sep=" ")    
+  ##     if ((nchar(s)<len) || (length(grep("\\+",s))==0)) return(s)
+  ##     ## cat("abc\n")
+  ##     lens <- cumsum(sapply(strsplit(s,"\\+")[[1]],nchar)+1)
+  ##     paste(substr(s,1,max(lens[lens<len])-1),"+...",sep="")
+  ##   }
+  ## WRAP here
   heading <- paste("Likelihood Ratio Tests",
                    paste(mterms,
                          collapse="\n"),
                    sep="\n")
-  
   ltab <- cbind(ltab,Chisq=abs(c(NA,diff(ltab[,"Deviance"]))),
-                     Df=abs(c(NA,diff(ltab[,"Tot Df"]))))
+                Df=abs(c(NA,diff(ltab[,"Tot Df"]))))
   ltab <- cbind(ltab,"Pr(>Chisq)"=c(NA,pchisq(ltab[,"Chisq"][-1],
                        ltab[,"Df"][-1],lower.tail=FALSE)))
   rownames(ltab) <- 1:nrow(ltab)
@@ -656,7 +705,8 @@ function (x, levels, which=1:p, conf = c(99, 95, 90, 80, 50)/100, nseg = 50,
           col.minval="green", lty.minval=2,
           col.conf="magenta", lty.conf=2,
           col.prof="blue", lty.prof=1,
-          xlabs=nm, ylab="score",
+          xlabs=nm, ylab="z",
+          show.points=FALSE,
           main, xlim, ylim, ...)
 {
     ## Plot profiled likelihood
@@ -697,46 +747,61 @@ function (x, levels, which=1:p, conf = c(99, 95, 90, 80, 50)/100, nseg = 50,
       yvals <- obj[[i]]$par.vals[,nm[i],drop=FALSE]
       sp <- splines::interpSpline(yvals, obj[[i]]$z,
                                   na.action=na.omit)
-      bsp <- try(splines::backSpline(sp))
-      bsp.OK <- (class(bsp)[1]=="try-error")
+      bsp <- try(splines::backSpline(sp),silent=TRUE)
+      bsp.OK <- (class(bsp)[1]!="try-error")
       if (bsp.OK) {
         predfun <- function(y) { predict(bsp,y)$y }
-      } else {
-        appfun1 <- approxfun(obj[[i]]$z,yvals)
-        predfun <- function(y) { appfun1(y) }
+      } else { ## backspline failed
+        warning("non-monotonic profile: confidence limits may be unreliable")
+        ## what do we do?
+        ## attempt to use uniroot
+        predfun <- function(y) {
+          pfun0 = function(z1) {
+            t1 = try(uniroot(function(z) {
+              predict(sp,z)$y-z1
+            }, range(obj[[i]]$par.vals[,i])),silent=TRUE)
+            if (class(t1)[1]=="try-error") NA else t1$root
+          }
+          sapply(y,pfun0)
+        }
       }
       ## </FIXME>
       if (no.xlim) xlim <- predfun(c(-mlev, mlev))
       if (is.na(xlim[1]))
-          xlim[1] <- min(yvals)  ## ???
-        if (is.na(xlim[2]))
-          xlim[2] <- max(yvals)
-        xvals <- obj[[i]]$par.vals[,nm[i]]
-        if (absVal) {
-          if (!add) {
-            if (no.ylim) ylim <- c(0,mlev)
-            plot(abs(z) ~ xvals, data = obj[[i]], xlab = nm[i],
-                 ylim = ylim, xlim = xlim, ylab = expression(abs(z)),
-                 type = "n", main=main, ...)
-          }
-          avals <- rbind(as.data.frame(predict(sp)),
-                         data.frame(x = drop(yvals), y = obj[[i]]$z))
-          avals$y <- abs(avals$y)
-          lines(avals[order(avals$x), ], col = col.prof, lty=lty.prof)
-        } else {
+        xlim[1] <- min(obj[[i]]$par.vals[, i])
+      if (is.na(xlim[2]))
+        xlim[2] <- max(obj[[i]]$par.vals[, i])
+      xvals <- obj[[i]]$par.vals[,nm[i]]
+      if (absVal) {
+        if (!add) {
+          if (no.ylim) ylim <- c(0,mlev)
+          plot(abs(z) ~ xvals, data = obj[[i]],
+               xlab = nm[i],
+               ylab = if (missing(ylab)) expression(abs(z)) else ylab,
+               xlim = xlim, ylim = ylim,
+               type = "n", main=main, ...)
+        }
+        avals <- rbind(as.data.frame(predict(sp)),
+                       data.frame(x = drop(yvals), y = obj[[i]]$z))
+        avals$y <- abs(avals$y)
+        lines(avals[order(avals$x), ], col = col.prof, lty=lty.prof)
+        if (show.points) points(yvals,abs(obj[[i]]$z))
+      } else { ## not absVal
           if (!add) {
             if (no.ylim) ylim <- c(-mlev,mlev)
             plot(z ~ xvals, data = obj[[i]], xlab = nm[i],
-                 ylim = ylim, xlim = xlim, ylab = expression(z),
+                 ylim = ylim, xlim = xlim,
+                 ylab = if (missing(ylab)) expression(z) else ylab,
                  type = "n", main=main, ...)
           }
           lines(predict(sp), col = col.prof, lty=lty.prof)
+          if (show.points) points(yvals,obj[[i]]$z)
         }
       x0 <- predfun(0)
       abline(v = x0, h=0, col = col.minval, lty = lty.minval)
-      for (i in 1:length(levels)) {
-        lev <- levels[i]
-        confstr.lev <- confstr[i]
+      for (j in 1:length(levels)) {
+        lev <- levels[j]
+        confstr.lev <- confstr[j]
         ## Note: predict may return NA if we didn't profile
           ## far enough in either direction. That's OK for the
           ## "h" part of the plot, but the horizontal line made
@@ -753,9 +818,9 @@ function (x, levels, which=1:p, conf = c(99, 95, 90, 80, 50)/100, nseg = 50,
             lines(c(x0,pred[2]), rep(lev, 2), type = "l", col = col.conf, lty = lty.conf)
             lines(c(pred[1],x0), rep(-lev, 2), type = "l", col = col.conf, lty = lty.conf)
           }
-          if (plot.confstr) {
-            text(labels=confstr.lev,x=x0,y=lev,col=col.conf)
-          }
+        if (plot.confstr) {
+          text(labels=confstr.lev,x=x0,y=lev,col=col.conf)
+        }
       } ## loop over levels
     } ## loop over variables
     ## par(opar)
@@ -769,12 +834,12 @@ function (object, parm, level = 0.95, trace=FALSE, ...)
   if (is.character(parm)) parm <- match(parm,Pnames)
   if (any(is.na(parm))) stop("parameters not found in model coefficients")
   ## Calculate confidence intervals based on likelihood
-    ## profiles
-    of <- object@summary
-    pnames <- rownames(of@coef)
-    if (missing(parm))
-        parm <- seq(along=pnames)
-    if (is.character(parm))
+  ## profiles
+  of <- object@summary
+  pnames <- rownames(of@coef)
+  if (missing(parm))
+    parm <- seq(along=pnames)
+  if (is.character(parm))
         parm <- match(parm, pnames, nomatch = 0)
     a <- (1 - level)/2
     a <- c(a, 1 - a)
@@ -901,7 +966,8 @@ function (object, ...)
 
 setMethod("vcov", "mle2", function (object, ...) { object@vcov } )
 
-setMethod("update", "mle2", function (object, ..., evaluate = TRUE)
+setMethod("update", "mle2",
+function (object, ..., evaluate = TRUE)
 {
   call <- object@call
   extras <- match.call(expand.dots = FALSE)$...
@@ -919,10 +985,10 @@ setMethod("update", "mle2", function (object, ..., evaluate = TRUE)
 
 mle2.options <- function(...) {
 single <- FALSE
-  args <- list(...)
+args <- list(...)
   setvals <- !is.null(names(args))
   if (!length(args)) args <- names(.Mle2.options)
-  if (all(unlist(lapply(args, is.character)))) 
+if (all(unlist(lapply(args, is.character)))) 
      args <- as.list(unlist(args))
   if (length(args) == 1) {
     if (is.list(args[[1]]) | is.null(args[[1]])) 
@@ -934,7 +1000,7 @@ single <- FALSE
     .Mle2.options[names(args)] <<- args
     value <- .Mle2.options[names(args)]
   } else value <- .Mle2.options[unlist(args)]
-  if (single) value <- value[[1]]
+   if (single) value <- value[[1]]
 if (setvals) invisible(value) else value
 }
 
@@ -1035,7 +1101,7 @@ function (fitted, which = 1:p, maxsteps = 100,
 ##      to use as a template
 relist <- function(v,l) {
 if (is.list(v)) v <- unlist(v)
-  if (!all(sapply(l,mode)=="numeric")) {
+if (!all(sapply(l,mode)=="numeric")) {
     stop("can't relist non-numeric values")
   }
   lens = sapply(l,length)
@@ -1055,7 +1121,7 @@ names(l3) <- names(l)
 }
 
 namedrop <- function(x) {
-  if (!is.list(x)) x
+if (!is.list(x)) x
   for (i in seq(along=x)) {
     ## cat(i,length(x),"\n")
     n = names(x[[i]])
@@ -1080,22 +1146,6 @@ parnames <- function(obj) {
 attr(obj,"parnames")
 }
 
-## bayesfactor <- function(obj,method="laplace",log=FALSE,
-##      logprior) {
-##   if (missing(logprior)) {
-##     logprior <- function() { 0 }
-##     formals(logprior) <- formals(obj@minuslogl)
-##     warning("bayes factor computed with improper prior")
-##   }
-##   v <- vcov(obj)
-##   d <- nrow(v)
-##   logdet = c(determinant(v,logarithm=TRUE)$modulus)
-##   r <- d/2*log(2*pi) + 1/2*logdet+c(logLik(obj))+
-##      do.call("logprior",c(as.list(coef(obj)),obj@data))
-##   if (log) r else exp(r)
-## }
-
-
 
 ### TEST OF NLMINB
 if (FALSE) {
@@ -1104,7 +1154,8 @@ y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
 mle2(y~dpois(lambda=ymax/(1+x/xhalf)),start=list(ymax=25,xhalf=3.06),
      optimizer="nlminb",fixed=list(ymax=38.76),lower=c(0,0),trace=TRUE)
 
-f = calc_mle2_function(y~dpois(lambda=ymax/(1+x/xhalf)),start=list(ymax=25,xhalf=3.06))
+f = calc_mle2_function(y~dpois(lambda=ymax/(1+x/xhalf)),
+  start=list(ymax=25,xhalf=3.06))
 f2 = function(xhalf) {
   -sum(dpois(y,38.76/(1+x/xhalf),log=TRUE))
 }
@@ -1114,3 +1165,104 @@ nlminb(objective=f2,start=3.06)
 nlminb(objective=f2,start=3.06,lower=0)
 nlminb(objective=f2,start=3.06,lower=1e-8)
 }
+
+strwrapx <- function(x, width = 0.9 * getOption("width"),
+indent = 0, exdent = 0, 
+prefix = "", simplify = TRUE,
+    parsplit= "\n[ \t\n]*\n", wordsplit = "[ \t\n]") 
+{
+    if (!is.character(x)) 
+      x <- as.character(x)
+    indentString <- paste(rep.int(" ", indent), collapse = "")
+    exdentString <- paste(rep.int(" ", exdent), collapse = "")
+    y <- list()
+    ## split at "+" locations
+    plussplit = function(w) {
+      lapply(w,
+             function(z) {
+               plusloc = which(strsplit(z,"")[[1]]=="+")
+               plussplit =
+                 apply(cbind(c(1,plusloc+1),
+                             c(plusloc,nchar(z,type="width"))),
+                       1,
+                       function(b) substr(z,b[1],b[2]))
+               plussplit
+             })}
+    ## ugh!
+    z <- lapply(strsplit(x, parsplit),
+                function(z) { lapply(strsplit(z,wordsplit),
+                                   function(x) unlist(plussplit(x)))
+                })
+    ## print(str(lapply(strsplit(x,parsplit),strsplit,wordsplit)))
+    ## print(str(z))
+    for (i in seq_along(z)) {
+        yi <- character(0)
+        for (j in seq_along(z[[i]])) {
+            words <- z[[i]][[j]]
+            nc <- nchar(words, type = "w")
+            if (any(is.na(nc))) {
+                nc0 <- nchar(words)
+                nc[is.na(nc)] <- nc0[is.na(nc)]
+            }
+            if (any(nc == 0)) {
+                zLenInd <- which(nc == 0)
+                zLenInd <- zLenInd[!(zLenInd %in% (grep("\\.$", 
+                  words) + 1))]
+                if (length(zLenInd) > 0) {
+                  words <- words[-zLenInd]
+                  nc <- nc[-zLenInd]
+                }
+            }
+            if (length(words) == 0) {
+                yi <- c(yi, "", prefix)
+                next
+            }
+            currentIndex <- 0
+            lowerBlockIndex <- 1
+            upperBlockIndex <- integer(0)
+            lens <- cumsum(nc + 1)
+            first <- TRUE
+            maxLength <- width - nchar(prefix, type = "w") - 
+                indent
+            while (length(lens) > 0) {
+                k <- max(sum(lens <= maxLength), 1)
+                if (first) {
+                  first <- FALSE
+                  maxLength <- maxLength + indent - exdent
+                }
+                currentIndex <- currentIndex + k
+                if (nc[currentIndex] == 0) 
+                  upperBlockIndex <- c(upperBlockIndex, currentIndex - 
+                    1)
+                else upperBlockIndex <- c(upperBlockIndex, currentIndex)
+                if (length(lens) > k) {
+                  if (nc[currentIndex + 1] == 0) {
+                    currentIndex <- currentIndex + 1
+                    k <- k + 1
+                  }
+                  lowerBlockIndex <- c(lowerBlockIndex, currentIndex + 
+                    1)
+                }
+                if (length(lens) > k) 
+                  lens <- lens[-(1:k)] - lens[k]
+                else lens <- NULL
+            }
+            nBlocks <- length(upperBlockIndex)
+            s <- paste(prefix, c(indentString, rep.int(exdentString, 
+                nBlocks - 1)), sep = "")
+            for (k in (1:nBlocks)) {
+              s[k] <- paste(s[k],
+                            paste(words[lowerBlockIndex[k]:upperBlockIndex[k]], 
+                                  collapse = " "), sep = "")
+            }
+            s = gsub("\\+ ","+",s)  ## kluge
+            yi <- c(yi, s, prefix)
+        }
+        y <- if (length(yi)) 
+            c(y, list(yi[-length(yi)]))
+        else c(y, "")
+    }
+    if (simplify) 
+        y <- unlist(y)
+    y
+  }

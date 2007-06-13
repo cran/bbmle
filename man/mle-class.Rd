@@ -1,14 +1,10 @@
 \name{mle2-class}
 \docType{class}
 \alias{mle2-class}
-\alias{slice.mle2-class}
-\alias{summary.mle2-class}
 \alias{coef,mle2-method}
-\alias{coef,summary.mle2-method}
 \alias{confint,mle2-method}
 \alias{profile,mle2-method}
 \alias{show,mle2-method}
-\alias{show,summary.mle2-method}
 \alias{slice,mle2-method}
 \alias{summary,mle2-method}
 \alias{update,mle2-method}
@@ -49,7 +45,7 @@
     \item{update}{\code{signature(object = "mle2")}:  Update fit.}
     \item{vcov}{\code{signature(object = "mle2")}: Extract
       variance-covariance matrix.}
-    \item{plot}{\code{signature(object="profile.mle2,missing")}}:
+    \item{plot}{\code{signature(object="profile.mle2,missing")}: Plot profile. }
   }
 }
 \keyword{classes}
