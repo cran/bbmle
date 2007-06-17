@@ -1,5 +1,11 @@
 \documentclass{article}
+%\VignetteIndexEntry{Examples for enhanced mle code}
+%\VignettePackage{bbmle}
+%\VignetteDepends{aod}
+%\VignetteDepends{Hmisc}
+%\VignetteDepends{emdbook}
 \usepackage[utf8]{inputenc} % for UTF-8/single quotes from sQuote()
+\usepackage{url}
 \author{Ben Bolker}
 \title{Maximum likelihood estimation and analysis
   with the {\tt bbmle} package}
@@ -11,6 +17,7 @@
 
 <<results=hide,echo=FALSE>>=
 library(Hmisc)
+options(width=70)
 @ 
 
 The \code{bbmle} package, designed to simplify
@@ -44,8 +51,13 @@ the \code{stats4} package.  The major differences between
   \code{mle2} objects, as well as
   \code{AICtab}, \code{BICtab}, \code{AICctab}
   functions for producing summary tables of information criteria for a 
-  set of models
+  set of models.
 \end{itemize}
+
+Other packages with similar functionality (extending
+GLMs in various ways) are \code{aod} and \code{vgam} (on CRAN), 
+\code{gnlr} and \code{gnlr3} in Jim Lindsey's \code{gnlm} package
+(\url{http://popgen.unimaas.nl/~jlindsey/rcode.html}).
 
 \section{Example}
 
@@ -60,7 +72,9 @@ the \code{aod} package to analyze these data).
 First, generate a single beta-binomially distributed
 set of points as a simple test.
 
-Implement beta-binomial distribution (density and random-deviate function):
+Implement beta-binomial distribution (density and random-deviate 
+function --- these functions are also available in the
+\code{emdbook} package, and in Jim Lindsey's \code{rmutil} package).
 <<>>=
 dbetabinom <- function(x,mu,size,theta,log=FALSE) {
   v <- lchoose(size,x)-lbeta(theta*(1-mu),theta*mu)+lbeta(size-x+theta*(1-mu),x+theta*mu)
@@ -92,8 +106,9 @@ mtmp <- function(mu,size,theta) {
 }
 @ 
 
-Fit the model:
-
+Fit the model --- use \code{data} to pass the \code{size}
+parameter (since it wasn't hard-coded in the \code{mtmp}
+function):
 <<>>=
 m0 <- mle2(mtmp,start=list(mu=0.2,theta=9),data=list(size=50))
 m0
@@ -111,7 +126,7 @@ summary(m0)
 @ 
 
 Construct the likelihood profile (you can
-apply e.g. \code{confint} directly to \code{m0},
+apply \code{confint} directly to \code{m0},
 but if you're going to work with the likelihood
 profile (e.g. plotting, or looking for confidence
 intervals at several different $\alpha$ values)
@@ -123,16 +138,19 @@ p0 <- profile(m0)
 @ 
 
 Compare the confidence interval estimates based on
-a spline fit to the profile (the default)
-and based on the quadratic approximation.
+inverting a spline fit to the profile (the default);
+based on the quadratic approximation at the
+maximum likelihood estimate; and based on
+root-finding to find the exact point where the
+profile crosses the critical level.
+
 <<>>=
 confint(p0)
 confint(m0,method="quad")
+confint(m0,method="uniroot")
 @ 
 
-The curvature-based confidence
-limits are very close to the profile confidence
-limits.
+All three types of confidence limits are similar.
 
 Plot the profiles:
 <<fig=TRUE,width=8>>=
@@ -155,14 +173,11 @@ You can also request confidence intervals
 calculated using \code{uniroot}, which may be more exact when
 the profile is not smooth enough to be modeled accurately
 by a spline.  However, this method is
-also more sensitive to numeric problems; in this
-case it works poorly because we have not constrained
-the parameters to be in the required ranges
-($0<\mu<1$, $0<\theta$).
+also more sensitive to numeric problems.
 
 Instead of defining an
 explicit function for \code{minuslogl}, 
-we can use the formula interface.
+we can also use the formula interface.
 The formula interface assumes that
 the density function given (1) has \code{x} as
 its first argument (if the distribution is multivariate,
@@ -200,7 +215,7 @@ data(orob1)
 Now construct a negative log-likelihood
 function that differentiates among groups:
 <<>>=
-ml1 <- function(mu1,mu2,mu3,theta,x) {
+ML1 <- function(mu1,mu2,mu3,theta,x) {
   mu <- c(mu1,mu2,mu3)[as.numeric(x$dilution)]
   size <- x$n
   -sum(dbetabinom(x$y,mu,size,theta,log=TRUE))
@@ -219,7 +234,7 @@ latex(crowder.results,file="",table.env=FALSE,title="model")
 @
                             
 <<>>=
-m1 <- mle2(ml1,start=list(mu1=0.5,mu2=0.5,mu3=0.5,theta=1),
+m1 <- mle2(ML1,start=list(mu1=0.5,mu2=0.5,mu3=0.5,theta=1),
     data=list(x=orob1))
 m1
 @ 
@@ -230,7 +245,7 @@ Crowder's results for $\theta$ exactly.
 We can fix this by setting \code{parscale} appropriately.
 
 <<cache=TRUE>>=
-m2 <- mle2(ml1,start=as.list(coef(m1)),
+m2 <- mle2(ML1,start=as.list(coef(m1)),
           control=list(parscale=coef(m1)),
           data=list(x=orob1))
 @ 
@@ -245,8 +260,8 @@ p2 <- profile(m2)
 @ 
 
 Get the curvature-based parameter standard
-deviations (which are what Crowder used,
-rather than likelihood profiles):
+deviations (which Crowder used
+rather than computing likelihood profiles):
 <<>>=
 round(sqrt(diag(vcov(m2))),3)
 @ 
@@ -296,6 +311,12 @@ Plot the profile:
 plot(p2,which="theta",plot.confstr=TRUE)
 @ 
 
+What does the profile for $\sigma$ look like?
+<<fig=TRUE>>=
+plot(p2b,which="sigma",plot.confstr=TRUE,
+     show.points=TRUE)
+@ 
+
 Now fit a homogeneous model:
 <<>>=
 ml0 <- function(mu,theta,x) {
@@ -311,10 +332,12 @@ The log-likelihood matches Crowder's result:
 logLik(m0)
 @ 
 
-It will be easier to specify all three of the models
+It's easier to 
+use the formula interface
+to specify all three of the models
 fitted by Crowder (homogeneous, probabilities differing
 by group, probabilities and overdispersion differing
-by group) using the formulat interface:
+by group):
 
 <<>>=
 m0f <- mle2(y~dbetabinom(mu,size=n,theta),
@@ -348,34 +371,67 @@ AICctab(m0f,m2f,m3f,delta=TRUE,nobs=nrow(orob1),sort=TRUE,weights=TRUE)
 
 \section*{Additions/enhancements/differences from \code{stats4::mle}}
 \begin{itemize}
-\item{anova method}
+\item{\code{anova} method}
 \item{warnings on convergence failure}
-\item{more robust to non-positive-definite Hessian}
+\item{more robust to non-positive-definite Hessian;
+  can also specify \code{skip.hessian} to skip Hessian
+  computation when it is problematic}
 \item{when profiling fails because better value is
     found, report new values}
 \item{can take named vectors as well as lists as
     starting parameter vectors}
-\item{added optional arguments to AIC
-    (corr, nobs, delta), BIC, confint 
-    (method=c("spline","uniroot","quad"))}
-\item{more options for colors and line types
-    in profile plots}
-\item{mle.options()}
-\item{data= argument}
+\item{added \code{AICc}, \code{BIC} definitions,
+    \code{ICtab} functions}
+\item{added \code{"uniroot"} and \code{"quad"}
+    options to \code{confint}}
+\item{more options for colors and line types etc etc.
+The old arguments are:
+<<eval=FALSE>>=
+function (x, levels, conf = c(99, 95, 90, 80, 50)/100, nseg = 50,
+          absVal = TRUE, ...) {}
+@ 
+The new one is:
+<<eval=FALSE>>=
+function (x, levels, which=1:p, conf = c(99, 95, 90, 80, 50)/100, nseg = 50,
+          plot.confstr = FALSE, confstr = NULL, absVal = TRUE, add = FALSE,
+          col.minval="green", lty.minval=2,
+          col.conf="magenta", lty.conf=2,
+          col.prof="blue", lty.prof=1,
+          xlabs=nm, ylab="score",
+          show.points=FALSE,
+          main, xlim, ylim, ...) {}
+@ 
+\code{which} selects (by character vector or numbers)
+which parameters to plot: \code{nseg} does nothing
+(even in the old version); \code{plot.confstr} turns on
+the labels for the confidence levels; \code{confstr} gives
+the labels; \code{add} specifies whether to add the
+profile to an existing plot; \code{col} and \code{lty}
+options specify the colors and line types for
+horizontal and vertical lines marking the minimum
+and confidence vals and the profile curve; \code{xlabs}
+gives a vector of x labels; \code{ylab} gives the y label;
+\code{show.points} specifies whether to show the raw points
+computed.
+}
+\item{\code{mle.options()}}
+\item{\code{data} argument}
 \item{handling of names in argument lists}
+\item{can use alternative optimizers (\code{nlminb}, \code{constrOptim})}
 \end{itemize}
 
-Wish/Bug/To do list:
+\section*{Bugs, wishes, to do}
 \begin{itemize}
-\item BUG: \code{mle2} fits that are obtained within a function
+\item \textbf{BUG}: \code{mle2} fits that are obtained within a function
   can't be used for subsequent profiles etc. (environment issue)
-\item minor WISH: \code{nobs} information (for \code{BIC} and \code{AICc}
-  can probably be extracted from \code{lm} and \code{nls} objects
-\item WISH: better documentation, especially for S4 methods
-\item WISH: variable-length chunks in argument list
-\item WISH: limited automatic differentiation
+\item \textbf{WISH}: \code{subset} and \code{predict}
+\item minor \textbf{WISH}: 
+  better methods for extracting \code{nobs} information
+  when possible (e.g. with formula interface)
+\item \textbf{WISH}: better documentation, especially for S4 methods
+\item \textbf{WISH}: variable-length chunks in argument list
+\item \textbf{WISH}: limited automatic differentiation
     (add capability for common distributions)
-\item WISH: ability to use alternate optimizers (e.g. nlmin/b, constrOptim)
 \end{itemize}
 
 \bibliography{mle2}

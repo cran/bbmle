@@ -1,6 +1,6 @@
 \name{mle}
-\alias{mle}
 \alias{mle2}
+\alias{mle}
 \alias{calc_mle2_function}
 \title{Maximum Likelihood Estimation}
 \description{
@@ -9,6 +9,7 @@
 \usage{
 mle2(minuslogl, start, method, optimizer,
     fixed = NULL, data=NULL,
+    subset=NULL,
 default.start=TRUE, eval.only = FALSE, vecpar=FALSE,
 parameters=NULL,
 skip.hessian=FALSE,trace=FALSE,\dots)
@@ -22,6 +23,7 @@ calc_mle2_function(formula,parameters,start,data=NULL,trace=FALSE)
   \item{fixed}{Named list.  Parameter values to keep fixed during
     optimization.}
   \item{data}{list of data to pass to minuslogl}
+  \item{subset}{logical vector for subsetting data (STUB)}
   \item{default.start}{Logical: allow default values of \code{minuslogl}
     as starting values?}
   \item{eval.only}{Logical: return value of \code{minuslogl(start)}
@@ -95,11 +97,14 @@ calc_mle2_function(formula,parameters,start,data=NULL,trace=FALSE)
 \examples{
 x <- 0:10
 y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
-ll <- function(ymax=15, xhalf=6)
+LL <- function(ymax=15, xhalf=6)
     -sum(stats::dpois(y, lambda=ymax/(1+x/xhalf), log=TRUE))
-(fit <- mle2(ll))
-mle2(ll, fixed=list(xhalf=6))
+## uses default parameters of LL
+(fit <- mle2(LL))
+mle2(LL, fixed=list(xhalf=6))
 
+(fit0 <- mle2(y~dpois(lambda=ymean),start=list(ymean=mean(y))))
+anova(fit0,fit)
 summary(fit)
 logLik(fit)
 vcov(fit)
@@ -109,14 +114,14 @@ confint(fit)
 
 ## use bounded optimization
 ## the lower bounds are really > 0, but we use >=0 to stress-test profiling
-(fit1 <- mle2(ll, method="L-BFGS-B", lower=c(0, 0)))
+(fit1 <- mle2(LL, method="L-BFGS-B", lower=c(0, 0)))
 p1 <- profile(fit1)
 plot(p1, absVal=FALSE)
 
 ## a better parameterization:
-ll2 <- function(lymax=log(15), lxhalf=log(6))
+LL2 <- function(lymax=log(15), lxhalf=log(6))
     -sum(stats::dpois(y, lambda=exp(lymax)/(1+x/exp(lxhalf)), log=TRUE))
-(fit2 <- mle2(ll2))
+(fit2 <- mle2(LL2))
 plot(profile(fit2), absVal=FALSE)
 exp(confint(fit2))
 vcov(fit2)
@@ -128,10 +133,10 @@ mle2(y~dpois(lambda=exp(lymax)/(1+x/exp(lhalf))),
 
 
 ## try bounded optimization with nlminb and constrOptim
-(fit1B <- mle2(ll, optimizer="nlminb", lower=c(1e-7, 1e-7)))
+(fit1B <- mle2(LL, optimizer="nlminb", lower=c(1e-7, 1e-7)))
 p1B <- profile(fit1B)
 confint(p1B)
-(fit1C <- mle2(ll, optimizer="constrOptim", ui = c(1,1), ci=2,
+(fit1C <- mle2(LL, optimizer="constrOptim", ui = c(1,1), ci=2,
    method="Nelder-Mead"))
 }
 

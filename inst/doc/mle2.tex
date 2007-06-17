@@ -1,20 +1,26 @@
 \documentclass{article}
+%\VignetteIndexEntry{Examples for enhanced mle code}
+%\VignettePackage{bbmle}
+%\VignetteDepends{aod}
+%\VignetteDepends{Hmisc}
+%\VignetteDepends{emdbook}
 \usepackage[utf8]{inputenc} % for UTF-8/single quotes from sQuote()
+\usepackage{url}
 \author{Ben Bolker}
 \title{Maximum likelihood estimation and analysis
   with the {\tt bbmle} package}
 \newcommand{\code}[1]{{\tt #1}}
 \date{\today}
-\usepackage{/usr/local/lib/R/share/texmf/Sweave}
+\usepackage{/usr/share/R/share/texmf/Sweave}
 \begin{document}
 \bibliographystyle{plain}
 \maketitle
 
 
-The \code{bbmle} package, designed to make it easier to
-do maximum likelihood estimation and analysis in R,
+The \code{bbmle} package, designed to simplify
+maximum likelihood estimation and analysis in R,
 extends and modifies the \code{mle} function and class
-in the \code{stats4} package that comes with R by default;
+in the \code{stats4} package that comes with R by default.
 \code{mle} is in turn a wrapper around the \code{optim}
 function in base R.
 The maximum-likelihood-estimation function and class
@@ -30,13 +36,25 @@ the \code{stats4} package.  The major differences between
   than stopping with an error)
 \item \code{mle2} uses a \code{data} argument to allow different
   data to be passed to the negative log-likelihood function
-\item formula interface
-\item \code{bbmle} defines {\tt anova}, {\tt AIC}, and {\tt BIC} methods for
+\item \code{mle2} has a formula interface like that
+ of (e.g.) \code{gls} in the \code{nlme} package.
+  For relatively simple models the formula for the
+  maximum likelihood can be written in-line, rather than
+  defining a negative log-likelihood function.  The formula
+  interface also simplifies fitting models with
+  categorical variables.  
+\item \code{bbmle} defines \code{anova}, \code{AIC}, \code{AICc}, 
+  and \code{BIC} methods for
   \code{mle2} objects, as well as
   \code{AICtab}, \code{BICtab}, \code{AICctab}
   functions for producing summary tables of information criteria for a 
-  set of models
+  set of models.
 \end{itemize}
+
+Other packages with similar functionality (extending
+GLMs in various ways) are \code{aod} and \code{vgam} (on CRAN), 
+\code{gnlr} and \code{gnlr3} in Jim Lindsey's \code{gnlm} package
+(\url{http://popgen.unimaas.nl/~jlindsey/rcode.html}).
 
 \section{Example}
 
@@ -46,18 +64,20 @@ This example will use the classic data set on
 \code{glm(...,family="quasibinomial")} or
 the \code{aod} package to analyze these data).
 
-
 \subsection{Test basic fit to simulated beta-binomial data}
 
 First, generate a single beta-binomially distributed
 set of points as a simple test.
 
-Implement beta-binomial distribution (density and random-deviate function):
+Implement beta-binomial distribution (density and random-deviate 
+function --- these functions are also available in the
+\code{emdbook} package, and in Jim Lindsey's \code{rmutil} package).
 \begin{Schunk}
 \begin{Sinput}
 > dbetabinom <- function(x, mu, size, theta, log = FALSE) {
-+     v <- lchoose(size, x) - lbeta(theta * (1 - mu), theta * mu) + 
-+         lbeta(size - x + theta * (1 - mu), x + theta * mu)
++     v <- lchoose(size, x) - lbeta(theta * (1 - mu), theta * 
++         mu) + lbeta(size - x + theta * (1 - mu), x + 
++         theta * mu)
 +     if (log) 
 +         v
 +     else exp(v)
@@ -94,8 +114,9 @@ Construct a simple negative log-likelihood function:
 \end{Sinput}
 \end{Schunk}
 
-Fit the model:
-
+Fit the model --- use \code{data} to pass the \code{size}
+parameter (since it wasn't hard-coded in the \code{mtmp}
+function):
 \begin{Schunk}
 \begin{Sinput}
 > m0 <- mle2(mtmp, start = list(mu = 0.2, theta = 9), data = list(size = 50))
@@ -133,7 +154,7 @@ mle2(minuslogl = mtmp, start = list(mu = 0.2, theta = 9), data = list(size = 50)
 Coefficients:
         Estimate Std. Error z value     Pr(z)    
 mu     0.1030974  0.0031624  32.601 < 2.2e-16 ***
-theta 10.0758090  0.6213191  16.217 < 2.2e-16 ***
+theta 10.0758090  0.6213189  16.217 < 2.2e-16 ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
 
@@ -142,7 +163,7 @@ Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’
 \end{Schunk}
 
 Construct the likelihood profile (you can
-apply e.g. \code{confint} directly to \code{m0},
+apply \code{confint} directly to \code{m0},
 but if you're going to work with the likelihood
 profile (e.g. plotting, or looking for confidence
 intervals at several different $\alpha$ values)
@@ -156,8 +177,12 @@ once):
 \end{Schunk}
 
 Compare the confidence interval estimates based on
-a spline fit to the profile (the default)
-and based on the quadratic approximation.
+inverting a spline fit to the profile (the default);
+based on the quadratic approximation at the
+maximum likelihood estimate; and based on
+root-finding to find the exact point where the
+profile crosses the critical level.
+
 \begin{Schunk}
 \begin{Sinput}
 > confint(p0)
@@ -173,13 +198,19 @@ theta 8.91708211 11.3559591
 \begin{Soutput}
            2.5 %     97.5 %
 mu    0.09689929  0.1092955
-theta 8.85804600 11.2935720
+theta 8.85804640 11.2935716
+\end{Soutput}
+\begin{Sinput}
+> confint(m0, method = "uniroot")
+\end{Sinput}
+\begin{Soutput}
+           2.5 %     97.5 %
+mu    0.09709185  0.1095099
+theta 8.91691019 11.3559746
 \end{Soutput}
 \end{Schunk}
 
-The curvature-based confidence
-limits are very close to the profile confidence
-limits.
+All three types of confidence limits are similar.
 
 Plot the profiles:
 \begin{Schunk}
@@ -190,7 +221,7 @@ Plot the profiles:
 \end{Schunk}
 \includegraphics{mle2-010}
 
-The plot method for 
+By default, the plot method for 
 likelihood profiles displays the square root of the
 the deviance
 (twice the difference in negative
@@ -198,19 +229,18 @@ log-likelihood), so it will
 be {\sf V}-shaped
 for cases where the quadratic approximation works well
 (as in this case).
+(For a better visual estimate of whether the profile
+is quadratic, use \code{absVal=FALSE}.)
 
 You can also request confidence intervals
 calculated using \code{uniroot}, which may be more exact when
 the profile is not smooth enough to be modeled accurately
 by a spline.  However, this method is
-also more sensitive to numeric problems; in this
-case it works poorly because we have not constrained
-the parameters to be in the required ranges
-($0<\mu<1$, $0<\theta$).
+also more sensitive to numeric problems.
 
 Instead of defining an
 explicit function for \code{minuslogl}, 
-we can use the formula interface.
+we can also use the formula interface.
 The formula interface assumes that
 the density function given (1) has \code{x} as
 its first argument (if the distribution is multivariate,
@@ -230,8 +260,8 @@ to try out likelihood estimation on the
 transformed parameters:
 \begin{Schunk}
 \begin{Sinput}
-> m0cf <- mle2(x1 ~ dbetabinom(mu = plogis(lmu), size = 50, theta = exp(ltheta)), 
-+     start = list(lmu = 0, ltheta = 2))
+> m0cf <- mle2(x1 ~ dbetabinom(mu = plogis(lmu), size = 50, 
++     theta = exp(ltheta)), start = list(lmu = 0, ltheta = 2))
 > confint(m0cf, method = "uniroot")
 \end{Sinput}
 \begin{Soutput}
@@ -243,7 +273,6 @@ ltheta  2.187950  2.429744
 > confint(m0cf, method = "spline")
 \end{Sinput}
 \begin{Soutput}
-Profiling...
            2.5 %    97.5 %
 lmu    -2.229963 -2.095756
 ltheta  2.187948  2.429742
@@ -256,10 +285,15 @@ differ.
 
 \subsection{Using real data}
 Get data from Crowder 1978 \cite{Crowder1978},
-as incorporated in the {\tt aod} package:
+as incorporated in the \code{aod} package:
 \begin{Schunk}
 \begin{Sinput}
 > library(aod)
+\end{Sinput}
+\begin{Soutput}
+Package aod, version 1.1-22 
+\end{Soutput}
+\begin{Sinput}
 > data(orob1)
 \end{Sinput}
 \end{Schunk}
@@ -268,7 +302,7 @@ Now construct a negative log-likelihood
 function that differentiates among groups:
 \begin{Schunk}
 \begin{Sinput}
-> ml1 <- function(mu1, mu2, mu3, theta, x) {
+> ML1 <- function(mu1, mu2, mu3, theta, x) {
 +     mu <- c(mu1, mu2, mu3)[as.numeric(x$dilution)]
 +     size <- x$n
 +     -sum(dbetabinom(x$y, mu, size, theta, log = TRUE))
@@ -300,18 +334,18 @@ homog model&$$&$$&$$&$$&$$&$$&$$&$-56.258$\\
 \end{center}                            
 \begin{Schunk}
 \begin{Sinput}
-> m1 <- mle2(ml1, start = list(mu1 = 0.5, mu2 = 0.5, mu3 = 0.5, 
+> m1 <- mle2(ML1, start = list(mu1 = 0.5, mu2 = 0.5, mu3 = 0.5, 
 +     theta = 1), data = list(x = orob1))
 > m1
 \end{Sinput}
 \begin{Soutput}
 Call:
-mle2(minuslogl = ml1, start = list(mu1 = 0.5, mu2 = 0.5, mu3 = 0.5, 
+mle2(minuslogl = ML1, start = list(mu1 = 0.5, mu2 = 0.5, mu3 = 0.5, 
     theta = 1), data = list(x = orob1))
 
 Coefficients:
        mu1        mu2        mu3      theta 
- 0.1318405  0.8706131  0.8382921 73.6011216 
+ 0.1318287  0.8706204  0.8382700 73.6958477 
 
 Log-likelihood: -34.99 
 
@@ -326,7 +360,7 @@ We can fix this by setting \code{parscale} appropriately.
 
 \begin{Schunk}
 \begin{Sinput}
-> m2 <- mle2(ml1, start = as.list(coef(m1)), control = list(parscale = coef(m1)), 
+> m2 <- mle2(ML1, start = as.list(coef(m1)), control = list(parscale = coef(m1)), 
 +     data = list(x = orob1))
 \end{Sinput}
 \end{Schunk}
@@ -337,12 +371,12 @@ We can fix this by setting \code{parscale} appropriately.
 \end{Sinput}
 \begin{Soutput}
 Call:
-mle2(minuslogl = ml1, start = as.list(coef(m1)), data = list(x = orob1), 
+mle2(minuslogl = ML1, start = as.list(coef(m1)), data = list(x = orob1), 
     control = list(parscale = coef(m1)))
 
 Coefficients:
        mu1        mu2        mu3      theta 
- 0.1322117  0.8708922  0.8393198 78.4241320 
+ 0.1322123  0.8708914  0.8393195 78.4227872 
 
 Log-likelihood: -34.99 
 \end{Soutput}
@@ -356,15 +390,15 @@ Calculate likelihood profile:
 \end{Schunk}
 
 Get the curvature-based parameter standard
-deviations (which are what Crowder used,
-rather than likelihood profiles):
+deviations (which Crowder used
+rather than computing likelihood profiles):
 \begin{Schunk}
 \begin{Sinput}
 > round(sqrt(diag(vcov(m2))), 3)
 \end{Sinput}
 \begin{Soutput}
    mu1    mu2    mu3  theta 
- 0.028  0.029  0.032 74.240 
+ 0.028  0.029  0.032 74.238 
 \end{Soutput}
 \end{Schunk}
 We are slightly off Crowder's numbers --- rounding
@@ -378,7 +412,7 @@ $\sigma^2=1/(1+\theta)$.
 \end{Sinput}
 \begin{Soutput}
     theta 
-0.1122080 
+0.1122089 
 \end{Soutput}
 \end{Schunk}
 
@@ -391,7 +425,7 @@ $\sigma$:
 +     vars = "theta", Sigma = vcov(m2)[4, 4]))
 \end{Sinput}
 \begin{Soutput}
-[1] 0.0524421
+[1] 0.05244163
 \end{Soutput}
 \end{Schunk}
 
@@ -401,20 +435,23 @@ formula:
 
 \begin{Schunk}
 \begin{Sinput}
-> m2f <- mle2(y ~ dbetabinom(mu, size = n, theta = 1/sigma^2 - 
-+     1), data = orob1, parameters = list(mu ~ dilution, sigma ~ 
-+     1), start = list(mu = 0.5, sigma = 0.1))
-> round(sqrt(diag(vcov(m2f))), 3)
+> m2b <- mle2(y ~ dbetabinom(mu, size = n, theta = 1/sigma^2 - 
++     1), data = orob1, parameters = list(mu ~ dilution, 
++     sigma ~ 1), start = list(mu = 0.5, sigma = 0.1))
+> round(sqrt(diag(vcov(m2b))), 3)["sigma"]
 \end{Sinput}
 \begin{Soutput}
-  mu.(Intercept)  mu.dilution1/25 mu.dilution1/625            sigma 
-           0.028            0.040            0.042            0.052 
+sigma 
+0.052 
 \end{Soutput}
+\begin{Sinput}
+> p2b <- profile(m2b)
+\end{Sinput}
 \end{Schunk}
 
 As might be expected since the standard deviation
 of $\sigma$ is large, the quadratic approximation is
-not actually very good:
+poor:
 
 \begin{Schunk}
 \begin{Sinput}
@@ -425,8 +462,8 @@ not actually very good:
 \end{Sinput}
 \begin{Soutput}
            2.5 %   97.5 %
-spline  19.81835       NA
-quad   -67.08388 223.9321
+spline  19.81826       NA
+quad   -67.08021 223.9258
 \end{Soutput}
 \end{Schunk}
 
@@ -438,6 +475,14 @@ Plot the profile:
 \end{Schunk}
 \includegraphics{mle2-025}
 
+What does the profile for $\sigma$ look like?
+\begin{Schunk}
+\begin{Sinput}
+> plot(p2b, which = "sigma", plot.confstr = TRUE, show.points = TRUE)
+\end{Sinput}
+\end{Schunk}
+\includegraphics{mle2-026}
+
 Now fit a homogeneous model:
 \begin{Schunk}
 \begin{Sinput}
@@ -445,7 +490,8 @@ Now fit a homogeneous model:
 +     size <- x$n
 +     -sum(dbetabinom(x$y, mu, size, theta, log = TRUE))
 + }
-> m0 <- mle2(ml0, start = list(mu = 0.5, theta = 100), data = list(x = orob1))
+> m0 <- mle2(ml0, start = list(mu = 0.5, theta = 100), 
++     data = list(x = orob1))
 \end{Sinput}
 \end{Schunk}
 
@@ -459,15 +505,18 @@ The log-likelihood matches Crowder's result:
 \end{Soutput}
 \end{Schunk}
 
-It will be easier to specify all three of the models
+It's easier to 
+use the formula interface
+to specify all three of the models
 fitted by Crowder (homogeneous, probabilities differing
 by group, probabilities and overdispersion differing
-by group) using the formulat interface:
+by group):
 
 \begin{Schunk}
 \begin{Sinput}
 > m0f <- mle2(y ~ dbetabinom(mu, size = n, theta), parameters = list(mu ~ 
-+     1, theta ~ 1), data = orob1, start = list(mu = 0.5, theta = 100))
++     1, theta ~ 1), data = orob1, start = list(mu = 0.5, 
++     theta = 100))
 > m2f <- mle2(y ~ dbetabinom(mu, size = n, theta), parameters = list(mu ~ 
 +     dilution, theta ~ 1), data = orob1, start = list(mu = 0.5, 
 +     theta = 78.424))
@@ -487,7 +536,8 @@ models:
 Likelihood Ratio Tests
 Model 1: m0f, y~dbetabinom(mu,size=n,theta): mu~1, theta~1
 Model 2: m2f, y~dbetabinom(mu,size=n,theta): mu~dilution, theta~1
-Model 3: m3f, y~dbetabinom(mu,size=n,theta): mu~dilution, theta~dilution
+Model 3: m3f, y~dbetabinom(mu,size=n,theta): mu~dilution,
+          theta~dilution
   Tot Df Deviance   Chisq Df Pr(>Chisq)    
 1      2  112.515                          
 2      4   69.981 42.5341  2  5.805e-10 ***
@@ -511,51 +561,94 @@ m3f  82.0 6    4.0 0.119
 m0f 116.5 2   38.5 <0.001
 \end{Soutput}
 \begin{Sinput}
-> BICtab(m0f, m2f, m3f, delta = TRUE, nobs = nrow(orob1), sort = TRUE, 
-+     weights = TRUE)
+> BICtab(m0f, m2f, m3f, delta = TRUE, nobs = nrow(orob1), 
++     sort = TRUE, weights = TRUE)
 \end{Sinput}
 \begin{Soutput}
     BIC   df dBIC  weight
-m2f  81.1 4    0.0 0.9412
-m3f  86.6 6    5.5 0.0588
+m2f  81.1 4    0.0 0.941 
+m3f  86.6 6    5.5 0.059 
 m0f 118.1 2   37.0 <0.001
 \end{Soutput}
 \begin{Sinput}
-> AICctab(m0f, m2f, m3f, delta = TRUE, nobs = nrow(orob1), sort = TRUE, 
-+     weights = TRUE)
+> AICctab(m0f, m2f, m3f, delta = TRUE, nobs = nrow(orob1), 
++     sort = TRUE, weights = TRUE)
 \end{Sinput}
 \begin{Soutput}
-    AICc  df dAICc weight 
-m2f  81.6 4    0.0 0.99222
-m3f  91.3 6    9.7 0.00778
-m0f 117.4 2   35.8 < 0.001
+    AICc  df dAICc weight
+m2f  81.6 4    0.0 0.992 
+m3f  91.3 6    9.7 0.008 
+m0f 117.4 2   35.8 <0.001
 \end{Soutput}
 \end{Schunk}
 
+\section*{Additions/enhancements/differences from \code{stats4::mle}}
 \begin{itemize}
-\item{anova method}
+\item{\code{anova} method}
 \item{warnings on convergence failure}
-\item{more robust to non-positive-definite Hessian}
+\item{more robust to non-positive-definite Hessian;
+  can also specify \code{skip.hessian} to skip Hessian
+  computation when it is problematic}
 \item{when profiling fails because better value is
     found, report new values}
 \item{can take named vectors as well as lists as
     starting parameter vectors}
-\item{added optional arguments to AIC
-    (corr, nobs, delta), BIC, confint 
-    (method=c("spline","uniroot","quad"))}
-\item{more options for colors and line types
-    in profile plots}
-\item{mle.options()}
-\item{data= argument}
+\item{added \code{AICc}, \code{BIC} definitions,
+    \code{ICtab} functions}
+\item{added \code{"uniroot"} and \code{"quad"}
+    options to \code{confint}}
+\item{more options for colors and line types etc etc.
+The old arguments are:
+\begin{Schunk}
+\begin{Sinput}
+> function(x, levels, conf = c(99, 95, 90, 80, 50)/100, 
++     nseg = 50, absVal = TRUE, ...) {
++ }
+\end{Sinput}
+\end{Schunk}
+The new one is:
+\begin{Schunk}
+\begin{Sinput}
+> function(x, levels, which = 1:p, conf = c(99, 95, 90, 
++     80, 50)/100, nseg = 50, plot.confstr = FALSE, confstr = NULL, 
++     absVal = TRUE, add = FALSE, col.minval = "green", 
++     lty.minval = 2, col.conf = "magenta", lty.conf = 2, 
++     col.prof = "blue", lty.prof = 1, xlabs = nm, ylab = "score", 
++     show.points = FALSE, main, xlim, ylim, ...) {
++ }
+\end{Sinput}
+\end{Schunk}
+\code{which} selects (by character vector or numbers)
+which parameters to plot: \code{nseg} does nothing
+(even in the old version); \code{plot.confstr} turns on
+the labels for the confidence levels; \code{confstr} gives
+the labels; \code{add} specifies whether to add the
+profile to an existing plot; \code{col} and \code{lty}
+options specify the colors and line types for
+horizontal and vertical lines marking the minimum
+and confidence vals and the profile curve; \code{xlabs}
+gives a vector of x labels; \code{ylab} gives the y label;
+\code{show.points} specifies whether to show the raw points
+computed.
+}
+\item{\code{mle.options()}}
+\item{\code{data} argument}
 \item{handling of names in argument lists}
+\item{can use alternative optimizers (\code{nlminb}, \code{constrOptim})}
 \end{itemize}
 
-Wish list:
+\section*{Bugs, wishes, to do}
 \begin{itemize}
-\item{variable-length chunks in argument list}
-\item{limited automatic differentiation
-    (add capability for common distributions)}
-\item{ability to use alternate optimizers (e.g. nlmin/b)}
+\item \textbf{BUG}: \code{mle2} fits that are obtained within a function
+  can't be used for subsequent profiles etc. (environment issue)
+\item \textbf{WISH}: \code{subset} and \code{predict}
+\item minor \textbf{WISH}: 
+  better methods for extracting \code{nobs} information
+  when possible (e.g. with formula interface)
+\item \textbf{WISH}: better documentation, especially for S4 methods
+\item \textbf{WISH}: variable-length chunks in argument list
+\item \textbf{WISH}: limited automatic differentiation
+    (add capability for common distributions)
 \end{itemize}
 
 \bibliography{mle2}

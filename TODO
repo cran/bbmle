@@ -1,18 +1,23 @@
 BUGS/ISSUES:
 
-  BIC conflict with nlme (S3/S4)
-
   calling profile, etc. on mle objects
 created inside a function doesn't work
 
   should print warning immediately if convergence fails
 
 TO DO:
-  more documentation
+
+more documentation -- especially S4 methods!
+catch/interpret more error messages?
+  (try to filter last.warning?)
+
 
 WISHLIST:
 analytic derivatives
 relist
+subset
+predict (feasible for formula arguments
+          if we know the MEAN of the relevant distribution?)
 
 document argument handling:
 
@@ -23,5 +28,4 @@ document argument handling:
   convert start to a list
 
   if missing and default.start is TRUE use formals(minuslogl) 
-  [why?]
 
