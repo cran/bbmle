@@ -69,24 +69,13 @@ the \code{aod} package to analyze these data).
 First, generate a single beta-binomially distributed
 set of points as a simple test.
 
-Implement beta-binomial distribution (density and random-deviate 
-function --- these functions are also available in the
-\code{emdbook} package, and in Jim Lindsey's \code{rmutil} package).
+Load the \code{emdbook} package
+to get functions for the beta-binomial distribution (density and random-deviate 
+function --- these functions are also available
+in Jim Lindsey's \code{rmutil} package).
 \begin{Schunk}
 \begin{Sinput}
-> dbetabinom <- function(x, mu, size, theta, log = FALSE) {
-+     v <- lchoose(size, x) - lbeta(theta * (1 - mu), theta * 
-+         mu) + lbeta(size - x + theta * (1 - mu), x + 
-+         theta * mu)
-+     if (log) 
-+         v
-+     else exp(v)
-+ }
-> rbetabinom <- function(n, mu, size, theta) {
-+     a <- theta * mu
-+     b <- theta * (1 - mu)
-+     rbinom(n, size = size, prob = rbeta(n, a, b))
-+ }
+> library(emdbook)
 \end{Sinput}
 \end{Schunk}
 
@@ -94,7 +83,7 @@ Generate random deviates from a random beta-binomial:
 \begin{Schunk}
 \begin{Sinput}
 > set.seed(1001)
-> x1 = rbetabinom(n = 1000, mu = 0.1, size = 50, theta = 10)
+> x1 = rbetabinom(n = 1000, prob = 0.1, size = 50, theta = 10)
 \end{Sinput}
 \end{Schunk}
 
@@ -108,8 +97,8 @@ Load the package:
 Construct a simple negative log-likelihood function:
 \begin{Schunk}
 \begin{Sinput}
-> mtmp <- function(mu, size, theta) {
-+     -sum(dbetabinom(x1, mu, size, theta, log = TRUE))
+> mtmp <- function(prob, size, theta) {
++     -sum(dbetabinom(x1, prob, size, theta, log = TRUE))
 + }
 \end{Sinput}
 \end{Schunk}
@@ -119,15 +108,16 @@ parameter (since it wasn't hard-coded in the \code{mtmp}
 function):
 \begin{Schunk}
 \begin{Sinput}
-> m0 <- mle2(mtmp, start = list(mu = 0.2, theta = 9), data = list(size = 50))
+> m0 <- mle2(mtmp, start = list(prob = 0.2, theta = 9), 
++     data = list(size = 50))
 > m0
 \end{Sinput}
 \begin{Soutput}
 Call:
-mle2(minuslogl = mtmp, start = list(mu = 0.2, theta = 9), data = list(size = 50))
+mle2(minuslogl = mtmp, start = list(prob = 0.2, theta = 9), data = list(size = 50))
 
 Coefficients:
-        mu      theta 
+      prob      theta 
  0.1030974 10.0758090 
 
 Log-likelihood: -2723.5 
@@ -149,11 +139,11 @@ this standard error and on an assumption of normality.
 Maximum likelihood estimation
 
 Call:
-mle2(minuslogl = mtmp, start = list(mu = 0.2, theta = 9), data = list(size = 50))
+mle2(minuslogl = mtmp, start = list(prob = 0.2, theta = 9), data = list(size = 50))
 
 Coefficients:
         Estimate Std. Error z value     Pr(z)    
-mu     0.1030974  0.0031624  32.601 < 2.2e-16 ***
+prob   0.1030974  0.0031624  32.601 < 2.2e-16 ***
 theta 10.0758090  0.6213189  16.217 < 2.2e-16 ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
@@ -189,7 +179,7 @@ profile crosses the critical level.
 \end{Sinput}
 \begin{Soutput}
            2.5 %     97.5 %
-mu    0.09709228  0.1095103
+prob  0.09709228  0.1095103
 theta 8.91708211 11.3559591
 \end{Soutput}
 \begin{Sinput}
@@ -197,7 +187,7 @@ theta 8.91708211 11.3559591
 \end{Sinput}
 \begin{Soutput}
            2.5 %     97.5 %
-mu    0.09689929  0.1092955
+prob  0.09689929  0.1092955
 theta 8.85804640 11.2935716
 \end{Soutput}
 \begin{Sinput}
@@ -205,7 +195,7 @@ theta 8.85804640 11.2935716
 \end{Sinput}
 \begin{Soutput}
            2.5 %     97.5 %
-mu    0.09709185  0.1095099
+prob  0.09709185  0.1095099
 theta 8.91691019 11.3559746
 \end{Soutput}
 \end{Schunk}
@@ -250,8 +240,8 @@ the log-probability or log-probability density
 if \code{log=TRUE}.
 \begin{Schunk}
 \begin{Sinput}
-> m0f <- mle2(x1 ~ dbetabinom(mu, size = 50, theta), start = list(mu = 0.2, 
-+     theta = 9))
+> m0f <- mle2(x1 ~ dbetabinom(prob, size = 50, theta), 
++     start = list(prob = 0.2, theta = 9))
 \end{Sinput}
 \end{Schunk}
 
@@ -260,13 +250,13 @@ to try out likelihood estimation on the
 transformed parameters:
 \begin{Schunk}
 \begin{Sinput}
-> m0cf <- mle2(x1 ~ dbetabinom(mu = plogis(lmu), size = 50, 
-+     theta = exp(ltheta)), start = list(lmu = 0, ltheta = 2))
+> m0cf <- mle2(x1 ~ dbetabinom(prob = plogis(lprob), size = 50, 
++     theta = exp(ltheta)), start = list(lprob = 0, ltheta = 2))
 > confint(m0cf, method = "uniroot")
 \end{Sinput}
 \begin{Soutput}
            2.5 %    97.5 %
-lmu    -2.229963 -2.095757
+lprob  -2.229963 -2.095757
 ltheta  2.187950  2.429744
 \end{Soutput}
 \begin{Sinput}
@@ -274,7 +264,7 @@ ltheta  2.187950  2.429744
 \end{Sinput}
 \begin{Soutput}
            2.5 %    97.5 %
-lmu    -2.229963 -2.095756
+lprob  -2.229963 -2.095756
 ltheta  2.187948  2.429742
 \end{Soutput}
 \end{Schunk}
@@ -302,10 +292,10 @@ Now construct a negative log-likelihood
 function that differentiates among groups:
 \begin{Schunk}
 \begin{Sinput}
-> ML1 <- function(mu1, mu2, mu3, theta, x) {
-+     mu <- c(mu1, mu2, mu3)[as.numeric(x$dilution)]
+> ML1 <- function(prob1, prob2, prob3, theta, x) {
++     prob <- c(prob1, prob2, prob3)[as.numeric(x$dilution)]
 +     size <- x$n
-+     -sum(dbetabinom(x$y, mu, size, theta, log = TRUE))
++     -sum(dbetabinom(x$y, prob, size, theta, log = TRUE))
 + }
 \end{Sinput}
 \end{Schunk}
@@ -316,13 +306,13 @@ Results from \cite{Crowder1978}:
 \begin{center}
  \begin{tabular}{lrrrrrrrr}\hline\hline
 \multicolumn{1}{l}{model}&
-\multicolumn{1}{c}{mu1}&
-\multicolumn{1}{c}{mu2}&
-\multicolumn{1}{c}{mu3}&
+\multicolumn{1}{c}{prob1}&
+\multicolumn{1}{c}{prob2}&
+\multicolumn{1}{c}{prob3}&
 \multicolumn{1}{c}{theta}&
-\multicolumn{1}{c}{sd.mu1}&
-\multicolumn{1}{c}{sd.mu2}&
-\multicolumn{1}{c}{sd.mu3}&
+\multicolumn{1}{c}{sd.prob1}&
+\multicolumn{1}{c}{sd.prob2}&
+\multicolumn{1}{c}{sd.prob3}&
 \multicolumn{1}{c}{NLL}
 \\ \hline
 prop diffs&$0.132$&$0.871$&$0.839$&$78.424$&$0.027$&$0.028$&$0.032$&$-34.991$\\
@@ -334,17 +324,17 @@ homog model&$$&$$&$$&$$&$$&$$&$$&$-56.258$\\
 \end{center}                            
 \begin{Schunk}
 \begin{Sinput}
-> m1 <- mle2(ML1, start = list(mu1 = 0.5, mu2 = 0.5, mu3 = 0.5, 
-+     theta = 1), data = list(x = orob1))
+> m1 <- mle2(ML1, start = list(prob1 = 0.5, prob2 = 0.5, 
++     prob3 = 0.5, theta = 1), data = list(x = orob1))
 > m1
 \end{Sinput}
 \begin{Soutput}
 Call:
-mle2(minuslogl = ML1, start = list(mu1 = 0.5, mu2 = 0.5, mu3 = 0.5, 
-    theta = 1), data = list(x = orob1))
+mle2(minuslogl = ML1, start = list(prob1 = 0.5, prob2 = 0.5, 
+    prob3 = 0.5, theta = 1), data = list(x = orob1))
 
 Coefficients:
-       mu1        mu2        mu3      theta 
+     prob1      prob2      prob3      theta 
  0.1318287  0.8706204  0.8382700 73.6958477 
 
 Log-likelihood: -34.99 
@@ -375,7 +365,7 @@ mle2(minuslogl = ML1, start = as.list(coef(m1)), data = list(x = orob1),
     control = list(parscale = coef(m1)))
 
 Coefficients:
-       mu1        mu2        mu3      theta 
+     prob1      prob2      prob3      theta 
  0.1322123  0.8708914  0.8393195 78.4227872 
 
 Log-likelihood: -34.99 
@@ -397,7 +387,7 @@ rather than computing likelihood profiles):
 > round(sqrt(diag(vcov(m2))), 3)
 \end{Sinput}
 \begin{Soutput}
-   mu1    mu2    mu3  theta 
+ prob1  prob2  prob3  theta 
  0.028  0.029  0.032 74.238 
 \end{Soutput}
 \end{Schunk}
@@ -420,7 +410,6 @@ Using the delta method to get the standard deviation of
 $\sigma$:
 \begin{Schunk}
 \begin{Sinput}
-> library(emdbook)
 > sqrt(deltavar(sqrt(1/(1 + theta)), meanval = coef(m2)["theta"], 
 +     vars = "theta", Sigma = vcov(m2)[4, 4]))
 \end{Sinput}
@@ -435,9 +424,9 @@ formula:
 
 \begin{Schunk}
 \begin{Sinput}
-> m2b <- mle2(y ~ dbetabinom(mu, size = n, theta = 1/sigma^2 - 
-+     1), data = orob1, parameters = list(mu ~ dilution, 
-+     sigma ~ 1), start = list(mu = 0.5, sigma = 0.1))
+> m2b <- mle2(y ~ dbetabinom(prob, size = n, theta = 1/sigma^2 - 
++     1), data = orob1, parameters = list(prob ~ dilution, 
++     sigma ~ 1), start = list(prob = 0.5, sigma = 0.1))
 > round(sqrt(diag(vcov(m2b))), 3)["sigma"]
 \end{Sinput}
 \begin{Soutput}
@@ -486,11 +475,11 @@ What does the profile for $\sigma$ look like?
 Now fit a homogeneous model:
 \begin{Schunk}
 \begin{Sinput}
-> ml0 <- function(mu, theta, x) {
+> ml0 <- function(prob, theta, x) {
 +     size <- x$n
-+     -sum(dbetabinom(x$y, mu, size, theta, log = TRUE))
++     -sum(dbetabinom(x$y, prob, size, theta, log = TRUE))
 + }
-> m0 <- mle2(ml0, start = list(mu = 0.5, theta = 100), 
+> m0 <- mle2(ml0, start = list(prob = 0.5, theta = 100), 
 +     data = list(x = orob1))
 \end{Sinput}
 \end{Schunk}
@@ -514,14 +503,14 @@ by group):
 
 \begin{Schunk}
 \begin{Sinput}
-> m0f <- mle2(y ~ dbetabinom(mu, size = n, theta), parameters = list(mu ~ 
-+     1, theta ~ 1), data = orob1, start = list(mu = 0.5, 
+> m0f <- mle2(y ~ dbetabinom(prob, size = n, theta), parameters = list(prob ~ 
++     1, theta ~ 1), data = orob1, start = list(prob = 0.5, 
 +     theta = 100))
-> m2f <- mle2(y ~ dbetabinom(mu, size = n, theta), parameters = list(mu ~ 
-+     dilution, theta ~ 1), data = orob1, start = list(mu = 0.5, 
+> m2f <- mle2(y ~ dbetabinom(prob, size = n, theta), parameters = list(prob ~ 
++     dilution, theta ~ 1), data = orob1, start = list(prob = 0.5, 
 +     theta = 78.424))
-> m3f <- mle2(y ~ dbetabinom(mu, size = n, theta), parameters = list(mu ~ 
-+     dilution, theta ~ dilution), data = orob1, start = list(mu = 0.5, 
+> m3f <- mle2(y ~ dbetabinom(prob, size = n, theta), parameters = list(prob ~ 
++     dilution, theta ~ dilution), data = orob1, start = list(prob = 0.5, 
 +     theta = 78.424))
 \end{Sinput}
 \end{Schunk}
@@ -534,9 +523,9 @@ models:
 \end{Sinput}
 \begin{Soutput}
 Likelihood Ratio Tests
-Model 1: m0f, y~dbetabinom(mu,size=n,theta): mu~1, theta~1
-Model 2: m2f, y~dbetabinom(mu,size=n,theta): mu~dilution, theta~1
-Model 3: m3f, y~dbetabinom(mu,size=n,theta): mu~dilution,
+Model 1: m0f, y~dbetabinom(prob,size=n,theta): prob~1, theta~1
+Model 2: m2f, y~dbetabinom(prob,size=n,theta): prob~dilution, theta~1
+Model 3: m3f, y~dbetabinom(prob,size=n,theta): prob~dilution,
           theta~dilution
   Tot Df Deviance   Chisq Df Pr(>Chisq)    
 1      2  112.515                          
