@@ -1,9 +1,13 @@
 BUGS/ISSUES:
 
-  calling profile, etc. on mle objects
+***  calling profile, etc. on mle objects
 created inside a function doesn't work
 
   should print warning immediately if convergence fails
+
+*** return something more machine-friendly
+(i.e. coefficients) if profile finds better value
+
 
 TO DO:
 

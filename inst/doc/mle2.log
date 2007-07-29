@@ -1,4 +1,4 @@
-This is pdfeTeXk, Version 3.141592-1.21a-2.2 (Web2C 7.5.4) (format=pdflatex 2007.5.23)  17 JUN 2007 09:54
+This is pdfeTeXk, Version 3.141592-1.21a-2.2 (Web2C 7.5.4) (format=pdflatex 2007.5.23)  29 JUL 2007 17:28
 entering extended mode
  file:line:error style messages enabled.
 **\nonstopmode \input /home/ben/lib/R/pkgs/bbmle/inst/doc/mle2.tex
@@ -529,52 +529,53 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <5> on input line 57.
  [1
 
-{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] <mle2-010.pdf, id=
-39, 578.16pt x 433.62pt>
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] <mle2-010.pdf, id=33, 
+578.16pt x 433.62pt>
 File: mle2-010.pdf Graphic file (type pdf)
-
-<use mle2-010.pdf>
-LaTeX Font Info:    Try loading font information for T1+aess on input line 229.
+ <use mle2-010.pdf>
+[3]
+LaTeX Font Info:    Try loading font information for T1+aess on input line 219.
 
  (/usr/share/texmf-tetex/tex/latex/ae/t1aess.fd
 File: t1aess.fd 1997/11/16 Font definitions for T1/aess.
 ) [4 <./mle2-010.pdf>]
-Overfull \hbox (45.84583pt too wide) in paragraph at lines 317--333
+Overfull \hbox (71.74092pt too wide) in paragraph at lines 307--323
  [] 
  []
 
 [5] [6] <mle2-025.pdf, id=64, 433.62pt x 433.62pt>
 File: mle2-025.pdf Graphic file (type pdf)
- <use mle2-025.pdf> [7]
-<mle2-026.pdf, id=69, 433.62pt x 433.62pt>
+ <use mle2-025.pdf> [7 <./mle2-025.pdf>] <mle2-026.pdf, id=75, 433.62pt x 433.6
+2pt>
 File: mle2-026.pdf Graphic file (type pdf)
- <use mle2-026.pdf> [8 <./mle2-025.pdf>]
-LaTeX Font Info:    Try loading font information for TS1+aett on input line 504
+ <use mle2-026.pdf>
+LaTeX Font Info:    Try loading font information for TS1+aett on input line 493
 .
- (/usr/share/R/share/texmf/ts1aett.fd
+
+(/usr/share/R/share/texmf/ts1aett.fd
 File: ts1aett.fd 
 )
-LaTeX Font Info:    Try loading font information for TS1+cmtt on input line 504
+LaTeX Font Info:    Try loading font information for TS1+cmtt on input line 493
 .
 
 (/usr/share/texmf-tetex/tex/latex/base/ts1cmtt.fd
 File: ts1cmtt.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `TS1/aett/m/n' in size <10> not available
-(Font)              Font shape `TS1/cmtt/m/n' tried instead on input line 504.
- [9 <./mle2-026.pdf>]
-Overfull \hbox (35.14171pt too wide) in paragraph at lines 585--585
+(Font)              Font shape `TS1/cmtt/m/n' tried instead on input line 493.
+ [8 <./mle2-026.pdf>]
+Overfull \hbox (35.14171pt too wide) in paragraph at lines 574--574
 []\T1/aer/bx/n/14.4 Additions/enhancements/differences from \T1/aett/m/n/14.4 s
 tats4::mle 
  []
 
-[10]
-Overfull \hbox (5.2961pt too wide) in paragraph at lines 589--592
+[9]
+Overfull \hbox (5.2961pt too wide) in paragraph at lines 578--581
 []\T1/aer/m/n/10 more ro-bust to non-positive-definite Hes-sian; can also spec-
 ify \T1/aett/m/n/10 skip.hessian
  []
 
-[11] (./mle2.bbl) [12] (./mle2.aux) ) 
+[10] (./mle2.bbl) [11] (./mle2.aux) ) 
 Here is how much of TeX's memory you used:
  2542 strings out of 94500
  32625 string characters out of 1175788
@@ -582,9 +583,9 @@ Here is how much of TeX's memory you used:
  5634 multiletter control sequences out of 10000+50000
  32837 words of font info for 72 fonts, out of 500000 for 2000
  580 hyphenation exceptions out of 8191
- 35i,7n,21p,308b,280s stack positions out of 1500i,500n,5000p,200000b,5000s
+ 35i,7n,21p,308b,288s stack positions out of 1500i,500n,5000p,200000b,5000s
 PDF statistics:
- 100 PDF objects out of 300000
+ 97 PDF objects out of 300000
  0 named destinations out of 131072
  16 words of extra memory for PDF output out of 65536
 </usr/share/texmf-tetex/fonts/type1/bluesk
@@ -599,4 +600,4 @@ cm/cmbx12.pfb> </home/ben/.texmf-var/fonts/pk/ljfour/jknappen/tc/tcrm1000.600pk
 tex/fonts/type1/bluesky/cm/cmr10.pfb></usr/share/texmf-tetex/fonts/type1/bluesk
 y/cm/cmr12.pfb></usr/share/texmf-tetex/fonts/type1/bluesky/cm/cmtt12.pfb></usr/
 share/texmf-tetex/fonts/type1/bluesky/cm/cmr17.pfb>
-Output written on mle2.pdf (12 pages, 130884 bytes).
+Output written on mle2.pdf (11 pages, 130381 bytes).

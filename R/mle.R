@@ -229,9 +229,14 @@ mle2 <- function(minuslogl,
   ##   set!
   if (!("mleenvset" %in% ls(envir=environment(minuslogl))))
     environment(minuslogl) <- denv
-  if (eval.only) {
+  if (length(start)==0 || eval.only) {
+    if (length(start)==0) start <- numeric(0)
+    optimizer <- "none"
+    skip.hessian <- TRUE
     oout <- list(par=start, value=objectivefunction(start),
                  hessian = matrix(NA,nrow=length(start),ncol=length(start)))
+    ## browser()
+
   } else {
     oout <- switch(optimizer,
                    optim = optim(par=start,
@@ -245,7 +250,7 @@ mle2 <- function(minuslogl,
                  )
   }
   optimval <- switch(optimizer,
-                     optim= , constrOptim="value",
+                     optim= , constrOptim=, none="value",
                      nlm="minimum",
                      nlminb="objective")
   if (optimizer=="nlm") oout$par <- oout$estimate
@@ -380,9 +385,11 @@ setMethod("profile", "mle2",
                 else {
                   cat("Profiling has found a better solution, so original fit had not converged:\n")
                   cat("New minimum=",pfit@min,"\n")
-                  cat("Parameter values:\n")
-                  print(pfit@fullcoef)
-                  stop("try restarting fit from values above")
+                  cat("Returning new parameters ...\n")
+                  return(pfit@fullcoef)
+                  ## cat("Parameter values:\n")
+                  ## print(pfit@fullcoef)
+                  ## stop("try restarting fit from values above")
                 }
                 z <- sgn * sqrt(zz)
                 pvi <<- rbind(pvi, ri)
@@ -586,7 +593,7 @@ function(object, ..., nobs){
     nobs <- attr(object,"nobs")
   }
   df <- attr(object,"df")
-  -2 * c(object) + 2*df*(df+1)/(nobs-df-1)
+  -2 * c(object) + 2*df+2*df*(df+1)/(nobs-df-1)
 })
 
 setMethod("AICc", signature(object="ANY"),

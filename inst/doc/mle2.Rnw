@@ -72,26 +72,18 @@ the \code{aod} package to analyze these data).
 First, generate a single beta-binomially distributed
 set of points as a simple test.
 
-Implement beta-binomial distribution (density and random-deviate 
-function --- these functions are also available in the
-\code{emdbook} package, and in Jim Lindsey's \code{rmutil} package).
+Load the \code{emdbook} package
+to get functions for the beta-binomial distribution (density and random-deviate 
+function --- these functions are also available
+in Jim Lindsey's \code{rmutil} package).
 <<>>=
-dbetabinom <- function(x,mu,size,theta,log=FALSE) {
-  v <- lchoose(size,x)-lbeta(theta*(1-mu),theta*mu)+lbeta(size-x+theta*(1-mu),x+theta*mu)
-  if (log) v else exp(v)
-}
-
-rbetabinom <- function(n,mu,size,theta) {
-  a <- theta*mu
-  b <- theta*(1-mu)
-  rbinom(n,size=size,prob=rbeta(n,a,b))
-}
+library(emdbook)
 @  
 
 Generate random deviates from a random beta-binomial:
 <<>>=
 set.seed(1001)
-x1 = rbetabinom(n=1000,mu=0.1,size=50,theta=10)
+x1 = rbetabinom(n=1000,prob=0.1,size=50,theta=10)
 @ 
 
 Load the package:
@@ -101,8 +93,8 @@ library(bbmle)
 
 Construct a simple negative log-likelihood function:
 <<>>=
-mtmp <- function(mu,size,theta) {
-  -sum(dbetabinom(x1,mu,size,theta,log=TRUE))
+mtmp <- function(prob,size,theta) {
+  -sum(dbetabinom(x1,prob,size,theta,log=TRUE))
 }
 @ 
 
@@ -110,7 +102,7 @@ Fit the model --- use \code{data} to pass the \code{size}
 parameter (since it wasn't hard-coded in the \code{mtmp}
 function):
 <<>>=
-m0 <- mle2(mtmp,start=list(mu=0.2,theta=9),data=list(size=50))
+m0 <- mle2(mtmp,start=list(prob=0.2,theta=9),data=list(size=50))
 m0
 @ 
 
@@ -186,16 +178,16 @@ and (2) has a \code{log} argument that will return
 the log-probability or log-probability density
 if \code{log=TRUE}.
 <<>>=
-m0f <- mle2(x1~dbetabinom(mu,size=50,theta),
-            start=list(mu=0.2,theta=9))
+m0f <- mle2(x1~dbetabinom(prob,size=50,theta),
+            start=list(prob=0.2,theta=9))
 @ 
 
 It's convenient to use the formula interface
 to try out likelihood estimation on the
 transformed parameters:
 <<>>=
-m0cf <- mle2(x1~dbetabinom(mu=plogis(lmu),size=50,theta=exp(ltheta)),
-            start=list(lmu=0,ltheta=2))
+m0cf <- mle2(x1~dbetabinom(prob=plogis(lprob),size=50,theta=exp(ltheta)),
+            start=list(lprob=0,ltheta=2))
 confint(m0cf,method="uniroot")
 confint(m0cf,method="spline")
 @ 
@@ -215,10 +207,10 @@ data(orob1)
 Now construct a negative log-likelihood
 function that differentiates among groups:
 <<>>=
-ML1 <- function(mu1,mu2,mu3,theta,x) {
-  mu <- c(mu1,mu2,mu3)[as.numeric(x$dilution)]
+ML1 <- function(prob1,prob2,prob3,theta,x) {
+  prob <- c(prob1,prob2,prob3)[as.numeric(x$dilution)]
   size <- x$n
-  -sum(dbetabinom(x$y,mu,size,theta,log=TRUE))
+  -sum(dbetabinom(x$y,prob,size,theta,log=TRUE))
 }
 @ 
 
@@ -228,13 +220,13 @@ crowder.results <- matrix(c(0.132,0.871,0.839,78.424,0.027,0.028,0.032,-34.991,
                             rep(NA,7),-34.829,
                             rep(NA,7),-56.258),
                           dimnames=list(c("prop diffs","full model","homog model"),
-                            c("mu1","mu2","mu3","theta","sd.mu1","sd.mu2","sd.mu3","NLL")),
+                            c("prob1","prob2","prob3","theta","sd.prob1","sd.prob2","sd.prob3","NLL")),
                           byrow=TRUE,nrow=3)
 latex(crowder.results,file="",table.env=FALSE,title="model")
 @
                             
 <<>>=
-m1 <- mle2(ML1,start=list(mu1=0.5,mu2=0.5,mu3=0.5,theta=1),
+m1 <- mle2(ML1,start=list(prob1=0.5,prob2=0.5,prob3=0.5,theta=1),
     data=list(x=orob1))
 m1
 @ 
@@ -277,7 +269,6 @@ sqrt(1/(1+coef(m2)["theta"]))
 Using the delta method to get the standard deviation of
 $\sigma$:
 <<>>=
-library(emdbook)
 sqrt(deltavar(sqrt(1/(1+theta)),meanval=coef(m2)["theta"],
          vars="theta",Sigma=vcov(m2)[4,4]))
 @ 
@@ -287,10 +278,10 @@ is to compute $\theta=1/\sigma^2-1$ on the fly in a
 formula:
 
 <<>>=
-m2b <- mle2(y~dbetabinom(mu,size=n,theta=1/sigma^2-1),
+m2b <- mle2(y~dbetabinom(prob,size=n,theta=1/sigma^2-1),
             data=orob1,
-            parameters=list(mu~dilution,sigma~1),
-            start=list(mu=0.5,sigma=0.1))
+            parameters=list(prob~dilution,sigma~1),
+            start=list(prob=0.5,sigma=0.1))
 round(sqrt(diag(vcov(m2b))),3)["sigma"]
 p2b <- profile(m2b)
 @ 
@@ -319,11 +310,11 @@ plot(p2b,which="sigma",plot.confstr=TRUE,
 
 Now fit a homogeneous model:
 <<>>=
-ml0 <- function(mu,theta,x) {
+ml0 <- function(prob,theta,x) {
   size <- x$n
-  -sum(dbetabinom(x$y,mu,size,theta,log=TRUE))
+  -sum(dbetabinom(x$y,prob,size,theta,log=TRUE))
 }
-m0 <- mle2(ml0,start=list(mu=0.5,theta=100),
+m0 <- mle2(ml0,start=list(prob=0.5,theta=100),
           data=list(x=orob1))
 @ 
 
@@ -340,18 +331,18 @@ by group, probabilities and overdispersion differing
 by group):
 
 <<>>=
-m0f <- mle2(y~dbetabinom(mu,size=n,theta),
-            parameters=list(mu~1,theta~1),
+m0f <- mle2(y~dbetabinom(prob,size=n,theta),
+            parameters=list(prob~1,theta~1),
             data=orob1,
-            start=list(mu=0.5,theta=100))
-m2f <- mle2(y~dbetabinom(mu,size=n,theta),
-            parameters=list(mu~dilution,theta~1),
+            start=list(prob=0.5,theta=100))
+m2f <- mle2(y~dbetabinom(prob,size=n,theta),
+            parameters=list(prob~dilution,theta~1),
             data=orob1,
-            start=list(mu=0.5,theta=78.424))
-m3f <- mle2(y~dbetabinom(mu,size=n,theta),
-            parameters=list(mu~dilution,theta~dilution),
+            start=list(prob=0.5,theta=78.424))
+m3f <- mle2(y~dbetabinom(prob,size=n,theta),
+            parameters=list(prob~dilution,theta~dilution),
             data=orob1,
-            start=list(mu=0.5,theta=78.424))
+            start=list(prob=0.5,theta=78.424))
 @ 
 
 \code{anova} runs a likelihood ratio test on nested

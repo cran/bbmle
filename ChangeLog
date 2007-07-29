@@ -50,3 +50,19 @@ tweaked namedrop() code -- ??
     preliminary code to allow non-monotonic profiles
     preliminary add nlm to list of optimizers (untested)
     add aod, Hmisc, emdbook to VignetteDepends and Suggests:
+
+0.7.6 tweak vignette
+    fixed second major AICc bug (was fixed in mle2 method,
+	 but not in logLik method)
+
+0.7.7 fix bug in profiling: all optim() methods EXCEPT L-BFGS-B
+     return the value of the objective function if given a function
+     with no arguments/zero-length starting parameter vector
+     (this is the situation with "profiling" a 1-D function).
+     L-BFGS-B gives funky answers.  added a check for this case.
+     (may need to check behavior for alternate optimizers (nlm etc))
+    [this behavior triggered a "found better fit" error when profiling
+     1D functions with L-BFGS-B]
+
+     changed behavior when finding better fit during profiling
+     to return new parameters
