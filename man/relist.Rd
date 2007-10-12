@@ -1,11 +1,11 @@
-\name{relist}
-\alias{relist}
+\name{relist2}
+\alias{relist2}
 \title{reconstruct the structure of a list}
 \description{
   reshapes a vector according to a list template
 }
 \usage{
-relist(v, l)
+relist2(v, l)
 }
 \arguments{
   \item{v}{vector, probably numeric, of values to reshape}
@@ -21,6 +21,6 @@ relist(v, l)
 \author{Ben Bolker}
 \examples{
   l = list(b=1,c=2:5,d=matrix(1:4,nrow=2))
-  relist(1:9,l)
+  relist2(1:9,l)
 }
 \keyword{misc}
