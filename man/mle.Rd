@@ -12,7 +12,7 @@ mle2(minuslogl, start, method, optimizer,
     subset=NULL,
 default.start=TRUE, eval.only = FALSE, vecpar=FALSE,
 parameters=NULL,
-skip.hessian=FALSE,trace=FALSE,\dots)
+skip.hessian=FALSE,trace=FALSE,gr,\dots)
 calc_mle2_function(formula,parameters,start,data=NULL,trace=FALSE)
 }
 \arguments{
@@ -31,6 +31,7 @@ calc_mle2_function(formula,parameters,start,data=NULL,trace=FALSE)
   \item{vecpar}{Logical: is first argument a vector of all parameters?
     (For compatibility with \code{\link{optim}}.)}
   \item{parameters}{List of linear models for parameters}
+  \item{gr}{gradient function}
   \item{\dots}{Further arguments to pass to optimizer}
   \item{formula}{a formula for the likelihood (see Details)}
   \item{trace}{Logical: print parameter values tested?}

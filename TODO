@@ -1,12 +1,10 @@
 BUGS/ISSUES:
 
-***  calling profile, etc. on mle objects
-created inside a function doesn't work
-
   should print warning immediately if convergence fails
 
 *** return something more machine-friendly
 (i.e. coefficients) if profile finds better value
+[done, needs to be tested/documented]
 
 
 TO DO:
@@ -22,6 +20,8 @@ relist
 subset
 predict (feasible for formula arguments
           if we know the MEAN of the relevant distribution?)
+plot.predict
+drop1, add1, etc.
 
 document argument handling:
 

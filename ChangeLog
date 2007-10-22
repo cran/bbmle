@@ -66,3 +66,13 @@ tweaked namedrop() code -- ??
 
      changed behavior when finding better fit during profiling
      to return new parameters
+
+0.8  changed ICtab to allow either ICtab(x,y,z) or ICtab(list(x,y,z))
+	  (L <- list(...); if is.list(L[[1]]) && length(L)==1)
+
+0.8.1 fixed (?) environment bug
+      tried to use built-in relist, but failed: renamed relist
+	  to "relist2" (try again later)
+      documented get.mnames (auxiliary function for ICtabs)
+      started to add gr (gradient) capability -- NOT TESTED
+

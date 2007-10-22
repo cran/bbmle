@@ -129,6 +129,7 @@ mle2 <- function(minuslogl,
                  parameters=NULL,
                  skip.hessian=FALSE,
                  trace=FALSE,
+                 gr,
                  ...) {
   if (missing(method)) method <- mle2.options("optim.method")
   if (missing(optimizer)) optimizer <- mle2.options("optimizer")
@@ -150,9 +151,13 @@ mle2 <- function(minuslogl,
   } else {
     formula <- ""
     fdata <- NULL
-
   }
   call <- match.call()
+  ## bug fix??
+  call$data <- eval.parent(call$data)
+  call$upper <- eval.parent(call$upper)
+  call$lower <- eval.parent(call$lower)
+  ##   browser()
   if(!missing(start))
     if (!is.list(start)) {
       if (is.null(names(start)) || !is.vector(start))
@@ -200,12 +205,14 @@ mle2 <- function(minuslogl,
   ## attach(data,warn.conflicts=FALSE)
   ## on.exit(detach(data))
   denv <- local(environment(),c(as.list(data),fdata,list(mleenvset=TRUE)))
+  ## browser()
+  ## denv <- local(new.env(),c(as.list(data),fdata,list(mleenvset=TRUE)))
   argnames.in.data <- names(data)[names(data) %in% names(formals(minuslogl))]
   args.in.data <- lapply(argnames.in.data,get,env=denv)
   names(args.in.data) <- argnames.in.data
   args.in.data  ## codetools kluge
   objectivefunction <- function(p){
-    l <- relist(p,template) ## redo list structure
+    l <- relist2(p,template) ## redo list structure
     ## if (named)
     names(p) <- nstart[order(oo)] ## make sure to reorder
     l[nfix] <- fixed
@@ -225,10 +232,30 @@ mle2 <- function(minuslogl,
     ## cat("e3:",length(ls(envir=environment(minuslogl))),"\n")
     do.call("minuslogl",args)
   } ## end of objective function
-  ## only want to do this if environment has not been previously
-  ##   set!
-  if (!("mleenvset" %in% ls(envir=environment(minuslogl))))
+  objectivefunctiongr <-
+    if (missing(gr)) NULL else
+        function(p){
+          l <- relist2(p,template) ## redo list structure
+          names(p) <- nstart[order(oo)] ## make sure to reorder
+          l[nfix] <- fixed
+          if (vecpar) {
+            l <- namedrop(l[nfull])
+            l <- unlist(l)
+            args <- list(l)
+            args <- c(list(l),args.in.data)
+          } else { args <- c(l,args.in.data)
+                 }
+          v <- do.call("gr",args)
+          if (length(fixed)>0) warning("gradient functions untested with profiling")
+          names(v) <- names(p)
+          v <- v[-nfix]
+          v
+        } ## end of gradient function
+  ## only set env if environment has not been previously set!
+  if (!("mleenvset" %in% ls(envir=environment(minuslogl)))) {
     environment(minuslogl) <- denv
+    if (!missing(gr)) environment(gr) <- denv
+  }
   if (length(start)==0 || eval.only) {
     if (length(start)==0) start <- numeric(0)
     optimizer <- "none"
@@ -236,11 +263,12 @@ mle2 <- function(minuslogl,
     oout <- list(par=start, value=objectivefunction(start),
                  hessian = matrix(NA,nrow=length(start),ncol=length(start)))
     ## browser()
-
   } else {
     oout <- switch(optimizer,
                    optim = optim(par=start,
-                     fn=objectivefunction, method=method, hessian=!skip.hessian, ...),
+                     fn=objectivefunction, method=method,
+                     hessian=!skip.hessian,
+                     gr=objectivefunctiongr, ...),
                    nlm = nlm(f=objectivefunction, hessian=!skip.hessian, ...),
                    nlminb = nlminb(start=start,
                      objective=objectivefunction, hessian=NULL, ...),
@@ -346,7 +374,8 @@ setMethod("summary", "mle2", function(object, waldtest=TRUE, ...){
 setMethod("profile", "mle2",
           function (fitted, which = 1:p, maxsteps = 100,
                     alpha = 0.01, zmax = sqrt(qchisq(1 - alpha/2, p)),
-                    del = zmax/5, trace = FALSE, skiperrs=TRUE, ...) {
+                    del = zmax/5, trace = FALSE, skiperrs=TRUE,
+                    tol.newmin = 0.001, ...) {
             ## fitted: mle2 object
             ## which: which parameters to profile
             ## maxsteps: steps to take looking for zmax
@@ -380,7 +409,7 @@ setMethod("profile", "mle2",
                 ri <- pv0
                 ri[, names(pfit@coef)] <- pfit@coef
                 ri[, p.i] <- bi
-                if (zz > -0.001)
+                if (zz > -tol.newmin)
                   zz <- max(zz, 0)
                 else {
                   cat("Profiling has found a better solution, so original fit had not converged:\n")
@@ -402,6 +431,13 @@ setMethod("profile", "mle2",
             ## Based on profile.glm in MASS
             summ <- summary(fitted)
             std.err <- summ@coef[, "Std. Error"]
+            if (any(is.na(std.err))) {
+              std.err <- sqrt(1/diag(fitted@details$hessian))
+              if (any(is.na(std.err))) {
+                stop("Hessian is ill-behaved, can't find an initial estimate of std. error")
+              }
+              warning("Non-positive-definite Hessian, attempting initial std err estimate from diagonals")
+            }
             Pnames <- names(B0 <- fitted@coef)
             pv0 <- t(as.matrix(B0))
             p <- length(Pnames)
@@ -485,6 +521,7 @@ ICtab <- function(...,type=c("AIC","BIC","AICc"),
                   weights=FALSE,delta=FALSE,
                    sort=FALSE,nobs,dispersion=1,mnames,k=2) {
   L <- list(...)
+  if (is.list(L[[1]]) && length(L)==1) L <- L[[1]]
   type <- match.arg(type)
   if (type=="AICc" || type=="BIC") {
     if (missing(nobs)) {
@@ -542,25 +579,30 @@ print.ICtab <- function(x,...) {
   print(chtab,quote=FALSE)
 }
 
+get.mnames <- function(Call) {
+  xargs <- which(names(Call) %in% names(formals(ICtab))[-1])
+  mnames <- as.character(Call)[c(-1,-xargs)]
+  if (length(mnames)==1) {
+    g <- get(mnames)
+    if (is.list(g) && length(g)>1) {
+      if (is.null(names(g))) mnames <- paste("model",1:length(g),sep="")
+      else mnames <- names(g)
+      if (any(duplicated(mnames))) stop("model names must be distinct")
+    }
+  }
+  mnames
+}
+  
 AICtab <- function(...) {
   ## fancy footwork to preserve model names
-  Call <- match.call()
-  xargs <- which(names(Call) %in% names(formals(ICtab))[-1])
-  mnames <- as.character(Call)[c(-1,-xargs)]
-  ICtab(...,mnames=mnames,type="AIC")
+  ICtab(...,mnames=get.mnames(match.call()),type="AIC")
 }
 BICtab <- function(...) {
-  Call <- match.call()
-  xargs <- which(names(Call) %in% names(formals(ICtab))[-1])
-  mnames <- as.character(Call)[c(-1,-xargs)]
-  ICtab(...,mnames=mnames,type="BIC")
+  ICtab(...,mnames=get.mnames(match.call()),type="BIC")
 }
 
 AICctab <- function(...) {
-  Call <- match.call()
-  xargs <- which(names(Call) %in% names(formals(ICtab))[-1])
-  mnames <- as.character(Call)[c(-1,-xargs)]
-  ICtab(...,mnames=mnames,type="AICc")
+  ICtab(...,mnames=get.mnames(match.call()),type="AICc")
 }
 
 setGeneric("AICc", function(object, ..., nobs) standardGeneric("AICc"))
@@ -1103,29 +1145,30 @@ function (fitted, which = 1:p, maxsteps = 100,
   })
 
 
+## (not yet) replaced by relist?
 ## reconstruct list structure:
 ##   v is a vector, l is the original list
 ##      to use as a template
-relist <- function(v,l) {
-if (is.list(v)) v <- unlist(v)
-if (!all(sapply(l,mode)=="numeric")) {
-    stop("can't relist non-numeric values")
-  }
-  lens = sapply(l,length)
-  if (all(lens==1))
-    return(as.list(v))
-  l2 <- split(v,rep(1:length(l),lens))
-  names(l2) <- names(l)
-  l3 <- mapply(function(x,y) {
-    if (!is.null(dim(y))) {
-      z=array(x,dim(y)); dimnames(z)=dimnames(y); z
-    } else {
-      z=x; names(z)=names(y); z
-    }
-  },l2,l,SIMPLIFY=FALSE)
-names(l3) <- names(l)
-  l3
-}
+relist2 <- function(v,l) {
+ if (is.list(v)) v <- unlist(v)
+ if (!all(sapply(l,mode)=="numeric")) {
+     stop("can't relist non-numeric values")
+   }
+   lens = sapply(l,length)
+   if (all(lens==1))
+     return(as.list(v))
+   l2 <- split(v,rep(1:length(l),lens))
+   names(l2) <- names(l)
+   l3 <- mapply(function(x,y) {
+     if (!is.null(dim(y))) {
+       z=array(x,dim(y)); dimnames(z)=dimnames(y); z
+     } else {
+       z=x; names(z)=names(y); z
+     }
+   },l2,l,SIMPLIFY=FALSE)
+ names(l3) <- names(l)
+   l3
+ }
 
 namedrop <- function(x) {
 if (!is.list(x)) x
