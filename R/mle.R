@@ -2,6 +2,7 @@ require(methods)  ## for independence from stats4
 ## require(nlme) ## for fdHess() ## argh.  BIC conflict.
 
 setClass("mle2", representation(call = "language",
+                                call.orig = "language",
                                 coef = "numeric",
                                 fullcoef = "numeric",
                                 vcov = "matrix",
@@ -153,6 +154,7 @@ mle2 <- function(minuslogl,
     fdata <- NULL
   }
   call <- match.call()
+  call.orig <- call
   ## bug fix??
   call$data <- eval.parent(call$data)
   call$upper <- eval.parent(call$upper)
@@ -320,7 +322,7 @@ mle2 <- function(minuslogl,
   ##  if (named)
   fullcoef[nstart[order(oo)]] <- coef
   ## else fullcoef <- coef
-  m = new("mle2", call=call, coef=coef, fullcoef=unlist(fullcoef), vcov=vcov,
+  m = new("mle2", call=call, call.orig=call.orig, coef=coef, fullcoef=unlist(fullcoef), vcov=vcov,
       min=min, details=oout, minuslogl=minuslogl, method=method,
     optimizer=optimizer,
       data=as.list(data),formula=formula)
@@ -338,7 +340,7 @@ setMethod("coef", "summary.mle2", function(object) object@coef )
 
 setMethod("show", "mle2", function(object){
     cat("\nCall:\n")
-    print(object@call)
+    print(object@call.orig)
     cat("\nCoefficients:\n")
     print(coef(object))
     cat("\nLog-likelihood: ")
@@ -368,7 +370,7 @@ setMethod("summary", "mle2", function(object, waldtest=TRUE, ...){
     pval <- 2*pnorm(-abs(zval))
     coefmat <- cbind(cmat,"z value"=zval,"Pr(z)"=pval)
     m2logL <- 2*object@min
-    new("summary.mle2", call=object@call, coef=coefmat, m2logL= m2logL)
+    new("summary.mle2", call=object@call.orig, coef=coefmat, m2logL= m2logL)
 })
 
 setMethod("profile", "mle2",
@@ -640,7 +642,7 @@ function(object, ..., nobs){
 
 setMethod("AICc", signature(object="ANY"),
 function(object, ..., nobs){
-  AICc(object=logLik(object, ..., nobs=nobs))
+  AICc(object=logLik(object, ...), nobs=nobs)
 })
 
 setMethod("AIC", "mle2",

@@ -117,8 +117,8 @@ confint(fit)
 ## the lower bounds are really > 0, but we use >=0 to stress-test profiling
 (fit1 <- mle2(LL, method="L-BFGS-B", lower=c(0, 0)))
 p1 <- profile(fit1)
-plot(p1, absVal=FALSE)
 
+plot(p1, absVal=FALSE)
 ## a better parameterization:
 LL2 <- function(lymax=log(15), lxhalf=log(6))
     -sum(stats::dpois(y, lambda=exp(lymax)/(1+x/exp(lxhalf)), log=TRUE))
