@@ -76,3 +76,6 @@ tweaked namedrop() code -- ??
       documented get.mnames (auxiliary function for ICtabs)
       started to add gr (gradient) capability -- NOT TESTED
 
+0.8.2 fixed bug in AICctab
+      cosmetic change to printing -- save call.orig
+      moved ChangeLog to NEWS

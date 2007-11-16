@@ -413,9 +413,9 @@ computed.
 
 \section*{Bugs, wishes, to do}
 \begin{itemize}
-\item \textbf{BUG}: \code{mle2} fits that are obtained within a function
-  can't be used for subsequent profiles etc. (environment issue)
-\item \textbf{WISH}: \code{subset} and \code{predict}
+\item \textbf{WISH}: further methods and arguments: \code{subset},
+  \code{predict}, \code{resid}: \code{sim}?
+\item \textbf{WISH}: extend ICtab to allow DIC as well?
 \item minor \textbf{WISH}: 
   better methods for extracting \code{nobs} information
   when possible (e.g. with formula interface)
