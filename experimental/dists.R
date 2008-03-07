@@ -15,6 +15,22 @@ abinom <- function() {
 x*log(prob) + (size-x)*log(1-prob)")
 }
 
+spois <- function(lambda) {
+  list(title="Poisson",
+       lambda=lambda,
+       Mean=lambda,
+       Median=qpois(0.5,lambda),
+       Mode=NA,
+       Variance=lambda,
+       SD=sqrt(lambda))
+}
+
+## alternative --- more like family?
+## also, keep it simple -- median/quantiles are general
+spois <- list(Mean=function(lambda) { lambda },
+              Variance=function(lambda) {lambda })
+
+
 apois <- function() {
   list(params=c("lambda"),
        fstr = "lambda^x*exp(-lambda)/factorial(x)",
@@ -37,7 +53,18 @@ derivfun = function(formula,params) {
         params,function.arg=TRUE)
 }
 
-lf1 = abinom(a^2+b,s)$Formula.log
+predfun = function(formula,params,newdata) {
+  f6 = formula[[3]] ## extract the RHS
+  sfun = get(gsub("^d","s",as.character(f6[[1]])))
+  qfun = get(gsub("^d","q",as.character(f6[[1]])))
+  
+  ## fn = do.call(,list()) ## call a-function
+
+
+}
+
+## obsolete
+lf1 = abinom()$lfstr
 deriv(lf1,"a")
 f2 = z~dbinom(1/(1+exp(-a)),size=N)
 f3 = f2[[3]]
@@ -52,7 +79,6 @@ params = c("lymax","lhalf")
 d1 = derivfun(f5,params)
 y=c(2:7)
 d1(1,1)
-
 
 
 ## arbitrary parameter ordering?

@@ -1,5 +1,5 @@
 
-R version 2.5.0 (2007-04-23)
+R version 2.6.1 (2007-11-26)
 Copyright (C) 2007 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -73,23 +73,23 @@ Loading required package: nlme
 +            parameters=list(llambda~group),
 +            data=x)
 Warning message:
-NaNs produced in: dweibull(x, shape, scale, log) 
+In dweibull(x, shape, scale, log) : NaNs produced
 > Bm2w <- mle2(lifespan~dweibull(scale=exp(llambda),shape=alpha),
 +              start=list(llambda=mlife,alpha=1),
 +              parameters=list(llambda~group,alpha~group),
 +              data=x)           
 Warning messages:
-1: NaNs produced in: dweibull(x, shape, scale, log) 
-2: NaNs produced in: dweibull(x, shape, scale, log) 
+1: In dweibull(x, shape, scale, log) : NaNs produced
+2: In dweibull(x, shape, scale, log) : NaNs produced
 > Bm3w <- mle2(lifespan~dweibull(scale=exp(llambda),shape=alpha),
 +            start=list(llambda=mlife,alpha=3),
 +            parameters=list(alpha~group),
 +            data=x)
 Warning messages:
-1: NaNs produced in: dweibull(x, shape, scale, log) 
-2: NaNs produced in: dweibull(x, shape, scale, log) 
-3: NaNs produced in: dweibull(x, shape, scale, log) 
-4: NaNs produced in: dweibull(x, shape, scale, log) 
+1: In dweibull(x, shape, scale, log) : NaNs produced
+2: In dweibull(x, shape, scale, log) : NaNs produced
+3: In dweibull(x, shape, scale, log) : NaNs produced
+4: In dweibull(x, shape, scale, log) : NaNs produced
 > anova(Bm0w,Bm1w)
 Likelihood Ratio Tests
 Model 1: Bm0w, lifespan~dweibull(scale=exp(llambda),shape=alpha)
@@ -133,4 +133,4 @@ Bm3w 1051.6 6    23.0
 > 
 > proc.time()
    user  system elapsed 
-  2.696   0.060   2.752 
+  2.448   0.036   2.504 

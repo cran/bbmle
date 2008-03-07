@@ -3,7 +3,6 @@
 \alias{mle2-class}
 \alias{coef,mle2-method}
 \alias{confint,mle2-method}
-\alias{profile,mle2-method}
 \alias{show,mle2-method}
 \alias{slice,mle2-method}
 \alias{summary,mle2-method}
@@ -36,8 +35,6 @@
   \describe{
     \item{confint}{\code{signature(object = "mle2")}: Confidence
       intervals from likelihood profiles.}
-    \item{profile}{\code{signature(fitted = "mle2")}: Likelihood profile
-      generation.}
     \item{show}{\code{signature(object = "mle2")}: Display object
       briefly.}
     \item{show}{\code{signature(object = "summary.mle2")}: Display object briefly.}
