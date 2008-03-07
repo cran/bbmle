@@ -79,3 +79,13 @@ tweaked namedrop() code -- ??
 0.8.2 fixed bug in AICctab
       cosmetic change to printing -- save call.orig
       moved ChangeLog to NEWS
+
+0.8.3 added warning about too-short lower/upper 
+      added documentation
+
+0.8.4 changed  plot.profile.mle2 options (added onepage etc.,
+   made plot.confstr=TRUE by default)
+
+0.8.5 tweaked environment/data assignment to preserve
+    original minuslogl environment better
+

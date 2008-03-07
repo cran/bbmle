@@ -1,21 +1,25 @@
 BUGS/ISSUES:
 
-  should print warning immediately if convergence fails
+use numDeriv library hessian() function instead of nlme?
 
-*** return something more machine-friendly
-(i.e. coefficients) if profile finds better value
-[done, needs to be tested/documented]
+should print warning immediately if convergence fails
 
 
 TO DO:
 
 more documentation -- especially S4 methods!
+   especially:
+     profile
+     plot profile
+     confint
+
 catch/interpret more error messages?
   (try to filter last.warning?)
 
-add DIC to DIC tabs?
+add DIC to IC tabs?
 
 WISHLIST:
+start as FUNCTION (i.e., self-start)
 analytic derivatives
 relist
 subset
@@ -23,6 +27,8 @@ predict (feasible for formula arguments
           if we know the MEAN of the relevant distribution?)
 plot.predict
 drop1, add1, etc.
+link functions ("identity","log", "logit", etc.)
+clean up/argue about data handling: closures etc. etc. etc...
 
 document argument handling:
 

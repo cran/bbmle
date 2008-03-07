@@ -28,7 +28,7 @@ setClass("slice.mle2", representation(profile="list",
 setIs("profile.mle2", "slice.mle2")
 
 calc_mle2_function <- function(formula,parameters,
-                               start,data=NULL,trace=FALSE) {
+                              start,data=NULL,trace=FALSE) {
   RHS <- formula[[3]]
   ddistn <- as.character(RHS[[1]])
   ## need to check on variable order:
@@ -194,6 +194,9 @@ mle2 <- function(minuslogl,
   nstart <- names(unlist(sapply(namedrop(start),eval.parent)))
   fullcoef[! nfull %in% nfix & ! nfull %in% nstart ] <- NULL  ## delete unnecessary names
   nfull <- names(fullcoef)
+  if (length(call$upper)>sum(!nfull %in% nfix) ||
+      length(call$lower)>sum(!nfull %in% nfix))
+    warning("length mismatch between lower/upper and number of non-fixed parameters")
   template <- lapply(start, eval.parent)  ## preserve list structure!
   if (vecpar) template <- unlist(template)
   start <- sapply(namedrop(start), eval.parent) # expressions are allowed; added namedrop
@@ -253,10 +256,18 @@ mle2 <- function(minuslogl,
           v <- v[-nfix]
           v
         } ## end of gradient function
+  ## FIXME: try to do this by assignment into appropriate
+  ##    environments rather than replacing them ...
   ## only set env if environment has not been previously set!
   if (!("mleenvset" %in% ls(envir=environment(minuslogl)))) {
-    environment(minuslogl) <- denv
-    if (!missing(gr)) environment(gr) <- denv
+      d <- as.list(denv)
+      mapply(assign,names(d),d,
+             MoreArgs=list(envir=environment(minuslogl)))
+      ## environment(minuslogl) <- denv
+      if (!missing(gr)) {
+          mapply(assign,names(d),d,
+                 MoreArgs=list(envir=environment(gr)))
+      }
   }
   if (length(start)==0 || eval.only) {
     if (length(start)==0) start <- numeric(0)
@@ -436,9 +447,11 @@ setMethod("profile", "mle2",
             if (any(is.na(std.err))) {
               std.err <- sqrt(1/diag(fitted@details$hessian))
               if (any(is.na(std.err))) {
-                stop("Hessian is ill-behaved, can't find an initial estimate of std. error")
+                stop("Hessian is ill-behaved or missing,",
+                     "can't find an initial estimate of std. error")
               }
-              warning("Non-positive-definite Hessian, attempting initial std err estimate from diagonals")
+              warning("Non-positive-definite Hessian,",
+                      "attempting initial std err estimate from diagonals")
             }
             Pnames <- names(B0 <- fitted@coef)
             pv0 <- t(as.matrix(B0))
@@ -752,11 +765,14 @@ setMethod("anova","mle2",
 
 setMethod("plot", signature(x="profile.mle2", y="missing"),
 function (x, levels, which=1:p, conf = c(99, 95, 90, 80, 50)/100, nseg = 50,
-          plot.confstr = FALSE, confstr = NULL, absVal = TRUE, add = FALSE,
+          plot.confstr = TRUE, confstr = NULL, absVal = TRUE, add = FALSE,
           col.minval="green", lty.minval=2,
           col.conf="magenta", lty.conf=2,
           col.prof="blue", lty.prof=1,
           xlabs=nm, ylab="z",
+          onepage=TRUE,
+          ask=((prod(par("mfcol")) < length(which)) && dev.interactive() &&
+               !onepage),
           show.points=FALSE,
           main, xlim, ylim, ...)
 {
@@ -769,6 +785,16 @@ function (x, levels, which=1:p, conf = c(99, 95, 90, 80, 50)/100, nseg = 50,
     no.xlim <- missing(xlim)
     no.ylim <- missing(ylim)    
     if (is.character(which)) which <- match(which,nm)
+    par(ask=ask)
+    if (onepage) {
+        nplots <- length(which)
+        ## Q: should we reset par(mfrow), or par(mfg), anyway?
+        if (prod(par("mfcol")) < nplots) {
+            rows <- ceiling(round(sqrt(nplots)))
+            columns <- ceiling(nplots/rows)
+            par(mfrow=c(rows,columns))
+        }
+    }
     confstr <- NULL
     if (missing(levels)) {
         levels <- sqrt(qchisq(pmax(0, pmin(1, conf)), 1))
