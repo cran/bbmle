@@ -132,14 +132,24 @@ mle2(y~dpois(lambda=exp(lymax)/(1+x/exp(lhalf))),
    start=list(lymax=0,lhalf=0),
    parameters=list(lymax~1,lhalf~1))
 
-
 ## try bounded optimization with nlminb and constrOptim
 (fit1B <- mle2(LL, optimizer="nlminb", lower=c(1e-7, 1e-7)))
 p1B <- profile(fit1B)
 confint(p1B)
 (fit1C <- mle2(LL, optimizer="constrOptim", ui = c(1,1), ci=2,
    method="Nelder-Mead"))
-}
 
+set.seed(1001)
+lymax <- c(0,2)
+lhalf <- 0
+x <- sort(runif(200))
+g <- factor(sample(c("a","b"),200,replace=TRUE))
+y <- rnbinom(200,mu=exp(lymax[g])/(1+x/exp(lhalf)),size=2)
+
+fit3 <- mle2(y~dnbinom(mu=exp(lymax)/(1+x/exp(lhalf)),size=exp(logk)),
+    parameters=list(lymax~g),
+    start=list(lymax=0,lhalf=0,logk=0))
+
+}
 \keyword{models}
 

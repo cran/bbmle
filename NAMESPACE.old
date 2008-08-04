@@ -1,4 +1,0 @@
-importFrom(graphics,plot)
-importFrom(stats,profile,confint)
-exportClasses("mle","profile.mle","summary.mle")
-exportMethods("confint","plot","profile","summary","vcov","AIC","show")

@@ -10,7 +10,8 @@
 \usage{\S4method{profile}{mle2}(fitted, which = 1:p, maxsteps = 100,
                     alpha = 0.01, zmax = sqrt(qchisq(1 - alpha/2, p)),
                     del = zmax/5, trace = FALSE, skiperrs=TRUE,
-                    tol.newmin = 0.001, ...)
+                    std.err, 
+                    tol.newmin = 0.001, debug=FALSE, \dots)
 }
 \arguments{
   \item{fitted}{A fitted maximum likelihood model of class
@@ -19,16 +20,22 @@
 to profile (default is to profile all parameters)}
   \item{maxsteps}{maximum number of steps to take looking for an upper
 value of the negative log-likelihood}
-  \item{alpha}{maximum confidence level}
-  \item{zmax}{maximum value of negative log-likelihood (default
-  is the likelihood ratio test critical value corresponding to a
+  \item{alpha}{maximum (two-sided) likelihood ratio test confidence
+    level to find}
+  \item{zmax}{maximum value of signed square root of deviance difference
+    to find (default value corresponds to a
   2-tailed chi-squared test at level alpha)}
   \item{del}{step size for profiling}
   \item{trace}{(logical) produce tracing output?}
   \item{skiperrs}{(logical) ignore errors produced during profiling?}
-  \item{tol.newmin}{tolerance for finding a new minimum below the
-    minimum negative log-likelihood estimated in initial fit}
-  \item{\dots}{not used}
+  \item{std.err}{Optional numeric vector of standard errors, for cases
+    when the Hessian is badly behaved.  Will be replicated if necessary,
+    and NA values will be replaced by the corresponding values from
+    the fit summary}
+  \item{tol.newmin}{tolerance for diagnosing a new minimum below the
+    minimum deviance estimated in initial fit is found}
+  \item{debug}{(logical) debugging output?}
+  \item{\dots}{additional arguments (not used)}
 }
 \details{
    The profiling process starts out by \dots

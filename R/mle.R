@@ -1,6 +1,13 @@
 require(methods)  ## for independence from stats4
 ## require(nlme) ## for fdHess() ## argh.  BIC conflict.
 
+call.to.char <- function(x) {
+    ## utility function
+    x <- as.list(x)
+    if (length(x)>1) x <- x[c(2,1,3)]
+    paste(sapply(x,as.character),collapse="")
+}
+
 setClass("mle2", representation(call = "language",
                                 call.orig = "language",
                                 coef = "numeric",
@@ -37,11 +44,6 @@ calc_mle2_function <- function(formula,parameters,
   parnames <- as.list(names(start))
   names(parnames) <- names(start)
   ## hack
-  call.to.char <- function(x) {
-    x = as.list(x)
-    if (length(x)>1) x <- x[c(2,1,3)]
-    paste(sapply(x,as.character),collapse="")
-  }
   if (!missing(parameters)) {
     vars <- as.character(sapply(parameters,"[[",2))
     if (length(parameters)>1) {
@@ -68,11 +70,11 @@ calc_mle2_function <- function(formula,parameters,
         vposvals <- cumsum(sapply(parnames,length))
         ## fill out start vectors with zeros or replicates as appropriate
         if (length(start[[vname]])==1) {
-          if (length(grep("-1",models[i])>0)) {
-            start[[vname]] <- rep(start[[vname]],length(pnames))
-          } else {
-            start[[vname]] <- c(start[[vname]],rep(0,length(pnames)-1))
-          }
+            if (length(grep("-1",models[i])>0)) {
+                start[[vname]] <- rep(start[[vname]],length(pnames))
+            } else {
+                start[[vname]] <- c(start[[vname]],rep(0,length(pnames)-1))
+            }
         }
         ## fix: what if parameters are already correctly specified?
         startpos <- if (vpos0==1) 1 else vposvals[vpos0-1]+1
@@ -235,7 +237,8 @@ mle2 <- function(minuslogl,
     ## eval in environment of minuslogl???
     ## doesn't help, environment(minuslogl) is empty by this time
     ## cat("e3:",length(ls(envir=environment(minuslogl))),"\n")
-    do.call("minuslogl",args)
+    ## hack to remove unwanted names ...
+    do.call("minuslogl",namedrop(args))
   } ## end of objective function
   objectivefunctiongr <-
     if (missing(gr)) NULL else
@@ -253,17 +256,19 @@ mle2 <- function(minuslogl,
           v <- do.call("gr",args)
           if (length(fixed)>0) warning("gradient functions untested with profiling")
           names(v) <- names(p)
-          v <- v[-nfix]
+##           v <- v[-nfix]
+          v <- v[!names(v) %in% nfix] ## from Eric Weese
           v
         } ## end of gradient function
   ## FIXME: try to do this by assignment into appropriate
   ##    environments rather than replacing them ...
   ## only set env if environment has not been previously set!
   if (!("mleenvset" %in% ls(envir=environment(minuslogl)))) {
+      newenv <- new.env(hash=TRUE,parent=environment(minuslogl))
       d <- as.list(denv)
       mapply(assign,names(d),d,
-             MoreArgs=list(envir=environment(minuslogl)))
-      ## environment(minuslogl) <- denv
+             MoreArgs=list(envir=newenv))
+      environment(minuslogl) <- newenv
       if (!missing(gr)) {
           mapply(assign,names(d),d,
                  MoreArgs=list(envir=environment(gr)))
@@ -388,13 +393,16 @@ setMethod("profile", "mle2",
           function (fitted, which = 1:p, maxsteps = 100,
                     alpha = 0.01, zmax = sqrt(qchisq(1 - alpha/2, p)),
                     del = zmax/5, trace = FALSE, skiperrs=TRUE,
-                    tol.newmin = 0.001, ...) {
-            ## fitted: mle2 object
-            ## which: which parameters to profile
-            ## maxsteps: steps to take looking for zmax
-            ## alpha: max alpha level
-            ## zmax: log-likelihood difference
-            ## del: stepsize
+                    std.err, tol.newmin = 0.001, debug=FALSE, ...) {
+              ## fitted: mle2 object
+              ## which: which parameters to profile (numeric or char)
+              ## maxsteps: steps to take looking for zmax
+              ## alpha: max alpha level
+              ## zmax: max log-likelihood difference to search to
+              ## del: stepsize
+              ## trace:
+              ## skiperrs:
+              
             if (fitted@optimizer=="constrOptim")
               stop("profiling not yet working for constrOptim -- sorry")
             Pnames <- names(fitted@coef)
@@ -402,48 +410,77 @@ setMethod("profile", "mle2",
             if (is.character(which)) which <- match(which,Pnames)
             if (any(is.na(which)))
               stop("parameters not found in model coefficients")
+            ## global flag for better fit found inside profile fit
+            newpars_found <- FALSE
+            if (debug) cat("i","bi","B0[i]","sgn","step","del","std.err[i]","\n")
             onestep <- function(step,bi) {
-              if (missing(bi)) bi <- B0[i] + sgn * step * del * std.err[i]
-              fix <- list(bi)
-              names(fix) <- p.i
-              if (is.null(call$fixed)) call$fixed <- fix
-              else call$fixed <- c(eval(call$fixed),fix)
-              if (skiperrs) {
-                pfit <- try(eval.parent(call, 2), silent=TRUE)
-              } else {
-                pfit <- eval.parent(call, 2)
-              }
-              if(skiperrs && inherits(pfit, "try-error")) {
-                warning(paste("Error encountered in profile:",pfit))
-                return(NA)
-              }
-              else {
-                zz <- 2*(pfit@min - fitted@min)
-                ri <- pv0
-                ri[, names(pfit@coef)] <- pfit@coef
-                ri[, p.i] <- bi
-                if (zz > -tol.newmin)
-                  zz <- max(zz, 0)
-                else {
-                  cat("Profiling has found a better solution, so original fit had not converged:\n")
-                  cat("New minimum=",pfit@min,"\n")
-                  cat("Returning new parameters ...\n")
-                  return(pfit@fullcoef)
-                  ## cat("Parameter values:\n")
-                  ## print(pfit@fullcoef)
-                  ## stop("try restarting fit from values above")
+                if (missing(bi)) {
+                    bi <- B0[i] + sgn * step * del * std.err[i]
+                    if (debug) cat(i,bi,B0[i],sgn,step,del,std.err[i],"\n")
+                } else if (debug) cat(bi,"\n")
+                fix <- list(bi)
+                names(fix) <- p.i
+                if (is.null(call$fixed)) call$fixed <- fix
+                else call$fixed <- c(eval(call$fixed),fix)
+                if (skiperrs) {
+                    pfit <- try(eval.parent(call, 2), silent=TRUE)
+                } else {
+                    pfit <- eval.parent(call, 2)
                 }
-                z <- sgn * sqrt(zz)
-                pvi <<- rbind(pvi, ri)
-                zi <<- c(zi, z)
-              }
-              if (trace) cat(bi, z, "\n")
-              z
+                ok <- ! inherits(pfit,"try-error")
+                if (debug && ok) cat(coef(pfit),-logLik(pfit),"\n")
+                if(skiperrs && !ok) {
+                    warning(paste("Error encountered in profile:",pfit))
+                    return(NA)
+                }
+                else {
+                    ## pfit is current (profile) fit,
+                    ##   fitted is original fit
+                    ## pfit@min _should_ be > fitted@min
+                    ## thus zz below should be <0
+                    zz <- 2*(pfit@min - fitted@min)
+                    ri <- pv0
+                    ri[, names(pfit@coef)] <- pfit@coef
+                    ri[, p.i] <- bi
+                    ##cat(2*pfit@min,2*fitted@min,zz,
+                    ##   tol.newmin,zz<(-tol.newmin),"\n")
+                    if (zz<0) {
+                        if (zz > (-tol.newmin)) {
+                            zz <- 0
+                        } else {
+                            ## browser()
+                            cat("Profiling has found a better solution,",
+                                "so original fit had not converged:\n")
+                            cat(sprintf("(new deviance=%1.4g, old deviance=%1.4g, diff=%1.4g)",
+                                        2*pfit@min,2*fitted@min,2*(pfit@min-fitted@min)),"\n")
+                            cat("Returning better fit ...\n")
+                            ## need to return parameters all the way up
+                            ##   to top level
+                            newpars_found <<- TRUE
+                            ## return(pfit@fullcoef)
+                            return(pfit) ## return full fit
+                        }
+                    }
+                    z <- sgn * sqrt(zz)
+                    pvi <<- rbind(pvi, ri)
+                    zi <<- c(zi, z)
+                }
+                if (trace) cat(bi, z, "\n")
+                z
             } ## end onestep
             ## Profile the likelihood around its maximum
             ## Based on profile.glm in MASS
             summ <- summary(fitted)
-            std.err <- summ@coef[, "Std. Error"]
+            if (missing(std.err)) {
+                std.err <- summ@coef[, "Std. Error"]
+            } else {
+                n <- length(summ@coef)
+                if (length(std.err)<n)
+                  std.err <- rep(std.err,length.out=length(summ@coef))
+                if (any(is.na(std.err)))
+                  std.err[is.na(std.err)] <- summ@coef[is.na(std.err)]
+            }
+            ## if (!missing(std.err)) browser()
             if (any(is.na(std.err))) {
               std.err <- sqrt(1/diag(fitted@details$hessian))
               if (any(is.na(std.err))) {
@@ -479,8 +516,10 @@ setMethod("profile", "mle2",
               if (!is.null(upper)) call$upper <- upper[-i]
               if (!is.null(lower)) call$lower <- lower[-i]
               for (sgn in c(-1, 1)) {
-                if (trace)
-                  cat("\nParameter:", p.i, c("down", "up")[(sgn + 1)/2 + 1], "\n")
+                if (trace) {
+                    cat("\nParameter:", p.i, c("down", "up")[(sgn + 1)/2 + 1], "\n")
+                    cat("par val","sqrt(dev diff)\n")
+                }
                 step <- 0
                 z <- 0
                 ## This logic was a bit frail in some cases with
@@ -497,21 +536,26 @@ setMethod("profile", "mle2",
                   if ((sgn==-1 & curval<lbound) ||
                       (sgn==1 && curval>ubound)) break
                   z <- onestep(step)
+                  if (newpars_found) return(z)
                   if(is.na(z)) break
                   lastz <- z
                 }
+                if (step==maxsteps) warning("hit maximum number of steps")
                 if(abs(lastz) < zmax) {
-                  ## now let's try a bit harder if we came up short
-                  for(dstep in c(0.2, 0.4, 0.6, 0.8, 0.9)) {
+                    if (debug) cat("haven't got to zmax yet, trying harder\n")
+                    ## now let's try a bit harder if we came up short
+                    for(dstep in c(0.2, 0.4, 0.6, 0.8, 0.9)) {
                     curval <- B0[i] + sgn * (step-1+dstep) * del * std.err[i]
                     if ((sgn==-1 & curval<lbound) ||
                       (sgn==1 && curval>ubound)) break
                     z <- onestep(step - 1 + dstep)
+                    if (newpars_found) return(z)
                     if(is.na(z) || abs(z) > zmax) break
                     lastz <- z
                   }
                   if ((abs(lastz) < zmax) &&
                       ((sgn==-1 && lbound>-Inf) || (sgn==1 && ubound<Inf))) {
+                      if (debug) cat("bounded and didn't make it, try at boundary\n")
                     ## bounded and didn't make it, try at boundary
                     if (sgn==-1 && B0[i]>lbound) onestep(bi=lbound)
                     if (sgn==1  && B0[i]<ubound) onestep(bi=ubound)
@@ -532,13 +576,20 @@ setMethod("profile", "mle2",
           })
 
 
-ICtab <- function(...,type=c("AIC","BIC","AICc"),
+ICtab <- function(...,type=c("AIC","BIC","AICc","qAIC","qAICc"),
                   weights=FALSE,delta=FALSE,
-                   sort=FALSE,nobs,dispersion=1,mnames,k=2) {
+                  sort=FALSE,nobs,dispersion=1,mnames,k=2) {
   L <- list(...)
   if (is.list(L[[1]]) && length(L)==1) L <- L[[1]]
   type <- match.arg(type)
-  if (type=="AICc" || type=="BIC") {
+  if (dispersion !=1) {
+    if (type=="BIC") stop("cannot specify dispersion with BIC")
+    if (substr(type,1,1)!="q") {
+      type = paste("q",type,sep="")
+      warning("dispersion!=1, type changed to",type)
+    }
+  }
+  if (type=="AICc" || type=="BIC" || type=="qAICc") {
     if (missing(nobs)) {
       if(is.null(attr(L[[1]],"nobs")))
         stop("must specify number of observations if corr=TRUE")
@@ -550,7 +601,9 @@ ICtab <- function(...,type=c("AIC","BIC","AICc"),
   ICs <- switch(type,
                 AIC=sapply(L,AIC),
                 BIC=sapply(L,BIC,nobs=nobs),
-                AICc=sapply(L,AICc,nobs=nobs))
+                AICc=sapply(L,AICc,nobs=nobs),
+                qAIC=sapply(L,qAIC,dispersion=dispersion),
+                qAICc=sapply(L,qAICc,nobs=nobs,dispersion=dispersion))
   ## hack: protect against aod method
   if (is.matrix(ICs)) ICs <- ICs["AIC",]  
   getdf <- function(x) {
@@ -671,7 +724,91 @@ setMethod("AIC", "mle2",
             } else AIC(logLik(object), k = k)
           })
 
-##trace
+### quasi- methods
+
+setGeneric("qAICc", function(object, ..., nobs, dispersion)
+           standardGeneric("qAICc"))
+
+setMethod("qAICc", signature(object="ANY"),
+function(object, ..., nobs, dispersion){
+  qAICc(object=logLik(object, ...), nobs=nobs, dispersion=dispersion)
+})
+
+setMethod("qAICc", "mle2",
+          function (object, ..., nobs, dispersion)  {
+            L <- list(...)
+            if (length(L)) {
+              L <- c(list(object),L)
+              if (missing(nobs) && is.null(attr(object,"nobs")))
+                stop("must specify number of observations")
+              if (missing(dispersion) && is.null(attr(object,"dispersion")))
+                stop("must specify (over)dispersion coefficient")
+              nobs <- sapply(L,attr,"nobs")
+              if (length(unique(nobs))>1)
+                stop("nobs different: must have identical data for all objects")
+              logLiks <- sapply(L, logLik)/dispersion
+              df <- sapply(L,attr,"df")
+              val <- logLiks+k*df*(df+1)/(nobs-df-1)
+              data.frame(AICc=val,df=df)
+            } else {
+              df <- attr(object,"df")
+              c(-2*logLik(object)/dispersion+2*df+2*df*(df+1)/(nobs-df-1))
+            }
+          })
+
+setMethod("qAICc", signature(object="logLik"),
+          function(object, ..., nobs, dispersion){
+            if (missing(nobs)) {
+              if (is.null(attr(object,"nobs")))
+                stop("number of observations not specified")
+              nobs <- attr(object,"nobs")
+            }
+            if (missing(dispersion)) {
+              if (is.null(attr(object,"dispersion")))
+                stop("dispersion not specified")
+              dispersion <- attr(object,"dispersion")
+            }
+            df <- attr(object,"df")
+            -2 * c(object)/dispersion + 2*df+2*df*(df+1)/(nobs-df-1)
+          })
+
+setGeneric("qAIC", function(object, ..., dispersion)
+           standardGeneric("qAIC"))
+
+setMethod("qAIC", signature(object="ANY"),
+function(object, ..., nobs, dispersion){
+  qAIC(object=logLik(object, ...), nobs=nobs, dispersion=dispersion)
+})
+
+setMethod("qAIC", signature(object="logLik"),
+          function(object, ..., nobs, dispersion){
+            if (missing(nobs)) {
+              if (is.null(attr(object,"nobs")))
+                stop("number of observations not specified")
+              nobs <- attr(object,"nobs")
+            }
+            if (missing(dispersion)) {
+              if (is.null(attr(object,"dispersion")))
+                stop("dispersion not specified")
+              dispersion <- attr(object,"dispersion")
+            }
+            df <- attr(object,"df")
+            -2 * c(object)/dispersion + 2*df
+          })
+
+setMethod("qAIC", "mle2",
+          function (object, ..., k = 2, dispersion) {
+            L <- list(...)
+            if (length(L)) {
+              L <- c(list(object),L)
+              if (!all(sapply(L,class)=="mle2"))
+                stop("all objects in list must be class mle2")
+              logLiks <- lapply(L, logLik)
+              AICs <- sapply(logLiks,qAIC,k=k, dispersion=dispersion)
+              df <- sapply(L,attr,"df")
+              data.frame(AIC=AICs,df=df)
+            } else qAIC(logLik(object), k = k, dispersion=dispersion)
+          })
 
 ## copied from stats4
 setGeneric("BIC", function(object, ...) standardGeneric("BIC"))
@@ -776,6 +913,8 @@ function (x, levels, which=1:p, conf = c(99, 95, 90, 80, 50)/100, nseg = 50,
           show.points=FALSE,
           main, xlim, ylim, ...)
 {
+    op <- par(no.readonly=TRUE)
+    on.exit(par(op))
     ## Plot profiled likelihood
     ## Based on profile.nls (package stats)
     obj <- x@profile
@@ -793,6 +932,7 @@ function (x, levels, which=1:p, conf = c(99, 95, 90, 80, 50)/100, nseg = 50,
             rows <- ceiling(round(sqrt(nplots)))
             columns <- ceiling(nplots/rows)
             par(mfrow=c(rows,columns))
+            on.exit(par(op))
         }
     }
     confstr <- NULL
@@ -814,91 +954,91 @@ function (x, levels, which=1:p, conf = c(99, 95, 90, 80, 50)/100, nseg = 50,
       xl2[which] <- xlabs
       xlabs <- xl2
     }
+    if (missing(main)) 
+      main <- paste("Likelihood profile:",nm)
+    main <- rep(main,length=length(nm))
     for (i in seq(along = nm)[which]) {
-      ## <FIXME> This does not need to be monotonic
-      ## cat("**",i,obj[[i]]$par.vals[,i],obj[[i]]$z,"\n")
-      if (missing(main)) setmain <- TRUE
-      if (setmain) {
-        main <- paste("Likelihood profile:",nm[i])
-      }
-      yvals <- obj[[i]]$par.vals[,nm[i],drop=FALSE]
-      sp <- splines::interpSpline(yvals, obj[[i]]$z,
-                                  na.action=na.omit)
-      bsp <- try(splines::backSpline(sp),silent=TRUE)
-      bsp.OK <- (class(bsp)[1]!="try-error")
-      if (bsp.OK) {
-        predfun <- function(y) { predict(bsp,y)$y }
-      } else { ## backspline failed
-        warning("non-monotonic profile: confidence limits may be unreliable")
-        ## what do we do?
-        ## attempt to use uniroot
-        predfun <- function(y) {
-          pfun0 = function(z1) {
-            t1 = try(uniroot(function(z) {
-              predict(sp,z)$y-z1
-            }, range(obj[[i]]$par.vals[,i])),silent=TRUE)
-            if (class(t1)[1]=="try-error") NA else t1$root
-          }
-          sapply(y,pfun0)
+        ## <FIXME> This does not need to be monotonic
+        ## cat("**",i,obj[[i]]$par.vals[,i],obj[[i]]$z,"\n")
+        ## FIXME: reconcile this with confint!
+        yvals <- obj[[i]]$par.vals[,nm[i],drop=FALSE]
+        sp <- splines::interpSpline(yvals, obj[[i]]$z,
+                                    na.action=na.omit)
+        bsp <- try(splines::backSpline(sp),silent=TRUE)
+        bsp.OK <- (class(bsp)[1]!="try-error")
+        if (bsp.OK) {
+            predfun <- function(y) { predict(bsp,y)$y }
+        } else { ## backspline failed
+            warning("non-monotonic profile: confidence limits may be unreliable")
+            ## what do we do?
+            ## attempt to use uniroot
+            predfun <- function(y) {
+                pfun0 = function(z1) {
+                    t1 = try(uniroot(function(z) {
+                        predict(sp,z)$y-z1
+                    }, range(obj[[i]]$par.vals[,nm[i]])),silent=TRUE)
+                    if (class(t1)[1]=="try-error") NA else t1$root
+                }
+                sapply(y,pfun0)
+            }
         }
-      }
-      ## </FIXME>
-      if (no.xlim) xlim <- predfun(c(-mlev, mlev))
-      if (is.na(xlim[1]))
-        xlim[1] <- min(obj[[i]]$par.vals[, i])
-      if (is.na(xlim[2]))
-        xlim[2] <- max(obj[[i]]$par.vals[, i])
-      xvals <- obj[[i]]$par.vals[,nm[i]]
-      if (absVal) {
-        if (!add) {
-          if (no.ylim) ylim <- c(0,mlev)
-          plot(abs(z) ~ xvals, data = obj[[i]],
-               xlab = nm[i],
-               ylab = if (missing(ylab)) expression(abs(z)) else ylab,
-               xlim = xlim, ylim = ylim,
-               type = "n", main=main, ...)
+        ## </FIXME>
+        if (no.xlim) xlim <- predfun(c(-mlev, mlev))
+        xvals <- obj[[i]]$par.vals[,nm[i]]
+        if (is.na(xlim[1]))
+          xlim[1] <- min(xvals)
+        if (is.na(xlim[2]))
+          xlim[2] <- max(xvals)
+        if (absVal) {
+            if (!add) {
+                if (no.ylim) ylim <- c(0,mlev)
+                plot(abs(obj[[i]]$z) ~ xvals, 
+                     xlab = xlabs[i],
+                     ylab = if (missing(ylab)) expression(abs(z)) else ylab,
+                     xlim = xlim, ylim = ylim,
+                     type = "n", main=main[i], ...)
+            }
+            avals <- rbind(as.data.frame(predict(sp)),
+                           data.frame(x = drop(yvals), y = obj[[i]]$z))
+            avals$y <- abs(avals$y)
+            lines(avals[order(avals$x), ], col = col.prof, lty=lty.prof)
+            if (show.points) points(yvals,abs(obj[[i]]$z))
+        } else { ## not absVal
+            if (!add) {
+                if (no.ylim) ylim <- c(-mlev,mlev)
+                plot(obj[[i]]$z ~ xvals,  xlab = xlabs[i],
+                     ylim = ylim, xlim = xlim,
+                     ylab = if (missing(ylab)) expression(z) else ylab,
+                     type = "n", main=main[i], ...)
+            }
+            lines(predict(sp), col = col.prof, lty=lty.prof)
+            if (show.points) points(yvals,obj[[i]]$z)
         }
-        avals <- rbind(as.data.frame(predict(sp)),
-                       data.frame(x = drop(yvals), y = obj[[i]]$z))
-        avals$y <- abs(avals$y)
-        lines(avals[order(avals$x), ], col = col.prof, lty=lty.prof)
-        if (show.points) points(yvals,abs(obj[[i]]$z))
-      } else { ## not absVal
-          if (!add) {
-            if (no.ylim) ylim <- c(-mlev,mlev)
-            plot(z ~ xvals, data = obj[[i]], xlab = nm[i],
-                 ylim = ylim, xlim = xlim,
-                 ylab = if (missing(ylab)) expression(z) else ylab,
-                 type = "n", main=main, ...)
-          }
-          lines(predict(sp), col = col.prof, lty=lty.prof)
-          if (show.points) points(yvals,obj[[i]]$z)
-        }
-      x0 <- predfun(0)
-      abline(v = x0, h=0, col = col.minval, lty = lty.minval)
-      for (j in 1:length(levels)) {
-        lev <- levels[j]
-        confstr.lev <- confstr[j]
-        ## Note: predict may return NA if we didn't profile
-          ## far enough in either direction. That's OK for the
-          ## "h" part of the plot, but the horizontal line made
-          ## with "l" disappears.
-          pred <- predfun(c(-lev, lev))
-          ## horizontal
-          if (absVal) levs=rep(lev,2) else levs=c(-lev,lev)
-          lines(pred, levs, type = "h", col = col.conf, lty = 2)
-          ## vertical
-          pred <- ifelse(is.na(pred), xlim, pred)
-          if (absVal) {
-            lines(pred, rep(lev, 2), type = "l", col = col.conf, lty = lty.conf)
-          } else {
-            lines(c(x0,pred[2]), rep(lev, 2), type = "l", col = col.conf, lty = lty.conf)
-            lines(c(pred[1],x0), rep(-lev, 2), type = "l", col = col.conf, lty = lty.conf)
-          }
-        if (plot.confstr) {
-          text(labels=confstr.lev,x=x0,y=lev,col=col.conf)
-        }
-      } ## loop over levels
+        x0 <- predfun(0)
+        abline(v = x0, h=0, col = col.minval, lty = lty.minval)
+        for (j in 1:length(levels)) {
+            lev <- levels[j]
+            confstr.lev <- confstr[j]
+            ## Note: predict may return NA if we didn't profile
+            ## far enough in either direction. That's OK for the
+            ## "h" part of the plot, but the horizontal line made
+            ## with "l" disappears.
+            pred <- predfun(c(-lev, lev))
+            ## horizontal
+            if (absVal) levs=rep(lev,2) else levs=c(-lev,lev)
+            lines(pred, levs, type = "h", col = col.conf, lty = 2)
+            ## vertical
+            pred <- ifelse(is.na(pred), xlim, pred)
+            if (absVal) {
+                lines(pred, rep(lev, 2), type = "l", col = col.conf, lty = lty.conf)
+            } else {
+                lines(c(x0,pred[2]), rep(lev, 2), type = "l", col = col.conf, lty = lty.conf)
+                lines(c(pred[1],x0), rep(-lev, 2), type = "l", col = col.conf, lty = lty.conf)
+            }
+            if (plot.confstr) {
+                text(labels=confstr.lev,x=x0,y=lev,col=col.conf)
+            }
+        } ## loop over levels
     } ## loop over variables
     ## par(opar)
   })
@@ -939,7 +1079,8 @@ function (object, parm, level = 0.95, trace=FALSE, ...)
 
 setMethod("confint", "mle2",
 function (object, parm, level = 0.95, method,
-          trace=FALSE,quietly=!interactive(),...)
+          trace=FALSE,quietly=!interactive(),
+          tol.newmin=0.001,...)
 {
   if (missing(method)) method <- mle2.options("confint")
   ## changed coef() calls to object@coef -- really *don't* want fullcoef!
@@ -950,8 +1091,14 @@ function (object, parm, level = 0.95, method,
   if (any(is.na(parm))) stop("parameters not found in model coefficients")
   if (method=="spline") {
     if (!quietly) cat("Profiling...\n")
-    prof = try(profile(object,which=parm))
+    newpars_found <- FALSE
+    prof = try(profile(object,which=parm,tol.newmin=tol.newmin))
     if (inherits(prof,"try-error")) stop(paste("Problem with profiling:",prof))
+    if (newpars_found) {
+        ## profiling found a better fit
+        cat("returning better fit\n")
+        return(prof)
+    }
     return(confint(prof, parm, level, ...))
   } else {
     B0 <- object@coef
@@ -985,10 +1132,10 @@ function (object, parm, level = 0.95, method,
             }
             else {
               zz <- 2*pfit@min - 2*(-logLik(object))
-              if (zz > -0.001)
+              if (zz > -tol.newmin)
                 zz <- max(zz, 0)
               else
-                stop("profiling has found a better solution, so original fit had not converged")
+                stop(sprintf("profiling has found a better solution (old deviance=%.2f, new deviance=%.2f), so original fit had not converged",2*pfit@min,2*(-logLik(object))))
               z <- zz - chisqcutoff
             }
             if (trace) cat(bi, z, "\n")
@@ -1094,8 +1241,9 @@ slice <- function(fitted, ...) UseMethod("slice")
 
 setMethod("slice", "mle2",    
 function (fitted, which = 1:p, maxsteps = 100,
-                          alpha = 0.01, zmax = sqrt(qchisq(1 - alpha/2, p)),
-                          del = zmax/5, trace = FALSE, ...)
+          alpha = 0.01, zmax = sqrt(qchisq(1 - alpha/2, p)),
+          del = zmax/5, trace = FALSE,
+          tol.newmin=0.001, ...)
 {
     onestep <- function(step)
     {
@@ -1111,7 +1259,7 @@ function (fitted, which = 1:p, maxsteps = 100,
             ri <- pv0
             ri[, names(pfit@coef)] <- pfit@coef
             ri[, p.i] <- bi
-            if (zz > -0.001)
+            if (zz > -tol.newmin)
                 zz <- max(zz, 0)
             else stop("profiling has found a better solution, so original fit had not converged")
             z <- sgn * sqrt(zz)
@@ -1344,3 +1492,30 @@ prefix = "", simplify = TRUE,
         y <- unlist(y)
     y
   }
+
+## translate from profile to data frame, as either
+## S3 or S4 method
+as.data.frame.profile.mle2 <- function(x, row.names = NULL,
+                                       optional = FALSE, ...) {
+    m1 <- mapply(function(vals,parname) {
+        ## need to unpack the vals data frame so that
+        ## parameter names show up properly
+        do.call("data.frame",
+                c(list(param=rep(parname,nrow(vals))),
+                  as.list(vals),focal=list(vals$par.vals[,parname])))
+            },
+                 x@profile,
+                 as.list(names(x@profile)),
+                 SIMPLIFY=FALSE)
+    m2 <- do.call("rbind",m1)
+    m2
+}
+
+setAs("profile.mle2","data.frame",
+      function(from) {
+          as.data.frame.profile.mle2(from)
+          })
+
+
+
+

@@ -28,7 +28,4 @@ any optimization with respect to the other parameters.
 \seealso{
   \code{\link{profile.mle2-class}}
 }
-\examples{
-
-}
 \keyword{classes}
