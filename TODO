@@ -1,8 +1,21 @@
 BUGS/ISSUES:
+ 
+  use numDeriv library hessian() function instead of nlme::fdHess?
+(use nlme::fdHess to avoid loading whole package?)
 
-use numDeriv library hessian() function instead of nlme?
+  turn off Hessian calculation for profile fits??
 
-should print warning immediately if convergence fails
+  should print warning immediately if convergence fails
+
+  some weird stuff with returned fit from found-better-fit profile --
+treating profiled value as fixed ...
+
+BUG:   order of parameters matters for L-BFGS-B
+
+  adjusting parameter vectors for lower, upper, parscale, ...
+    when some params are fixed ...
+
+  sort out names BS -- when can we safely remove names?
 
 
 TO DO:

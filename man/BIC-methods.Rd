@@ -11,10 +11,22 @@
 \alias{AICc,logLik-method}
 \alias{AICc,ANY-method}
 \alias{AICc,ANY,mle2,logLik-method}
+\alias{qAICc}
+\alias{qAICc-methods}
+\alias{qAICc,ANY-method}
+\alias{qAICc,mle2-method}
+\alias{qAICc,logLik-method}
+\alias{qAIC}
+\alias{qAIC-methods}
+\alias{qAIC,ANY-method}
+\alias{qAIC,mle2-method}
+\alias{qAIC,logLik-method}
 \alias{BIC,logLik-method}
 \alias{BIC,ANY-method}
 \alias{BIC,mle2-method}
 \alias{BIC,ANY,mle2,logLik-method}
+\alias{qAIC,ANY,mle2,logLik-method}
+\alias{qAICc,ANY,mle2,logLik-method}
 \alias{logLik,mle2-method}
 \alias{anova,mle2-method}
 \title{Log likelihoods and model selection for mle2 objects}
@@ -42,6 +54,8 @@
 }
 \usage{
 \S4method{BIC}{ANY,mle2,logLik}(object,...)
+\S4method{qAIC}{ANY,mle2,logLik}(object,...)
+\S4method{qAICc}{ANY,mle2,logLik}(object,...)
 }
 \arguments{
   \item{object}{A \code{logLik} or \code{mle2} object}
