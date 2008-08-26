@@ -12,6 +12,7 @@ mle2.options(...)
     or a list of values to set}
 }
 \details{
+  \itemize{
     \item{optim.method}{name of optimization method (see
       \code{\link{optim}} for choices)}
     \item{confint}{name of confidence-interval: choices
@@ -20,6 +21,7 @@ mle2.options(...)
       information-matrix approximation}
     \item{optimizer}{optimization function to use (only choice
       at present is "optim")}
+}
 }
 \value{
   Values of queried parameters, or (invisibly) the full list of parameters

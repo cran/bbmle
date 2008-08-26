@@ -1,5 +1,7 @@
 \name{as.data.frame.profile.mle2}
 \alias{as.data.frame.profile.mle2}
+\alias{coerce,profile.mle2-method}
+\alias{coerce,profile.mle2,data.frame-method}
 \title{convert profile to data frame}
 \description{
   converts a profile of a fitted mle2 object

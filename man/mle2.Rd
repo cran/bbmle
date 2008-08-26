@@ -1,4 +1,4 @@
-\name{mle}
+\name{mle2}
 \alias{mle2}
 \alias{mle}
 \alias{calc_mle2_function}
@@ -12,7 +12,8 @@ mle2(minuslogl, start, method, optimizer,
     subset=NULL,
 default.start=TRUE, eval.only = FALSE, vecpar=FALSE,
 parameters=NULL,
-skip.hessian=FALSE,trace=FALSE,gr,\dots)
+skip.hessian=FALSE,trace=FALSE,
+gr,\dots)
 calc_mle2_function(formula,parameters,start,data=NULL,trace=FALSE)
 }
 \arguments{
@@ -84,13 +85,18 @@ calc_mle2_function(formula,parameters,start,data=NULL,trace=FALSE)
 }
 \note{
   Note that the \code{minuslogl} function should
-  return -log L (not -2 log L). It
+  return the negative log-likelihood, -log L (not
+  the log-likelihood, log L, nor the deviance, -2 log L). It
   is the user's responsibility
   to ensure that the likelihood is correct, and that
   asymptotic likelihood inference is valid (e.g.
   that there are "enough" data and that the
   estimated parameter values do not lie on the
   boundary of the feasible parameter space).
+
+  If \code{lower}, \code{upper}, \code{control$parscale},
+  or \code{control$ndeps} are specified for \code{optim}
+  fits, they must be named vectors.
 }
 \seealso{
   \code{\link{mle2-class}}
@@ -114,8 +120,9 @@ plot(p1, absVal=FALSE)
 confint(fit)
 
 ## use bounded optimization
-## the lower bounds are really > 0, but we use >=0 to stress-test profiling
-(fit1 <- mle2(LL, method="L-BFGS-B", lower=c(0, 0)))
+## the lower bounds are really > 0, but we use >=0 to stress-test
+## profiling; note lower must be named
+(fit1 <- mle2(LL, method="L-BFGS-B", lower=c(ymax=0, xhalf=0)))
 p1 <- profile(fit1)
 
 plot(p1, absVal=FALSE)
@@ -133,10 +140,10 @@ mle2(y~dpois(lambda=exp(lymax)/(1+x/exp(lhalf))),
    parameters=list(lymax~1,lhalf~1))
 
 ## try bounded optimization with nlminb and constrOptim
-(fit1B <- mle2(LL, optimizer="nlminb", lower=c(1e-7, 1e-7)))
+(fit1B <- mle2(LL, optimizer="nlminb", lower=c(lymax=1e-7, lhalf=1e-7)))
 p1B <- profile(fit1B)
 confint(p1B)
-(fit1C <- mle2(LL, optimizer="constrOptim", ui = c(1,1), ci=2,
+(fit1C <- mle2(LL, optimizer="constrOptim", ui = c(lymax=1,lhalf=1), ci=2,
    method="Nelder-Mead"))
 
 set.seed(1001)

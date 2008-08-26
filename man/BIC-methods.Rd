@@ -54,16 +54,18 @@
 }
 \usage{
 \S4method{BIC}{ANY,mle2,logLik}(object,...)
-\S4method{qAIC}{ANY,mle2,logLik}(object,...)
-\S4method{qAICc}{ANY,mle2,logLik}(object,...)
+\S4method{AICc}{ANY,mle2,logLik}(object,...,nobs,k=2)
+\S4method{qAIC}{ANY,mle2,logLik}(object,...,k=2)
+\S4method{qAICc}{ANY,mle2,logLik}(object,...,nobs,k=2)
 }
 \arguments{
   \item{object}{A \code{logLik} or \code{mle2} object}
   \item{...}{An optional list of additional \code{logLik}
-    or \code{mle2} objects (fitted to the same data set).
-    If the number of attributes has not been included as an attribute of
-    the fit or of the log-likelihood, it can specified as
-    \code{nobs=} in this list.}
+    or \code{mle2} objects (fitted to the same data set).}
+  \item{nobs}{Number of observations (sometimes 
+    obtainable as an attribute of
+    the fit or of the log-likelihood)}
+  \item{k}{penalty parameter (nearly always left at its default value of 2)}
 }
 \details{
   Further arguments to \code{BIC} can be specified

@@ -8,6 +8,7 @@
 \alias{summary,mle2-method}
 \alias{update,mle2-method}
 \alias{vcov,mle2-method}
+\alias{coerce,mle,mle2-method}
 \title{Class "mle2". Result of Maximum Likelihood Estimation.}
 \description{This class encapsulates results of a generic maximum
   likelihood procedure.}

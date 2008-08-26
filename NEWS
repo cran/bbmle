@@ -1,3 +1,15 @@
+devel:
+  fix AICctab bug
+  remove spurious cat/print in profile
+
+0.9.0 26/08/2008
+*  fix Tom Hobbs bug: named lower/upper/parscale/ndeps
+get rearranged properly, otherwise rearrange in order
+of "start" and issue a warning
+* documentation tweak for S4 as.data.frame
+* added sbeta to list of known distributions
+* removed nlme requirement & auto-loading
+
 0.8.9 04/08/2008
 * version bump, submit to CRAN
 * added predict method

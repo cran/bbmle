@@ -8,6 +8,22 @@ call.to.char <- function(x) {
     paste(sapply(x,as.character),collapse="")
 }
 
+setAs("mle","mle2", function(from,to) {
+  new("mle2",
+      call=from@call,
+      call.orig=from@call,
+      coef=from@coef,
+      fullcoef=from@fullcoef,
+      vcov=from@vcov,
+      min=from@min,
+      details=from@details,
+      minuslogl=from@minuslogl,
+      method=from@method,
+      data=list(),
+      formula="",
+      optimizer="optim")
+})
+                
 setClass("mle2", representation(call = "language",
                                 call.orig = "language",
                                 coef = "numeric",
@@ -161,6 +177,8 @@ mle2 <- function(minuslogl,
   call$data <- eval.parent(call$data)
   call$upper <- eval.parent(call$upper)
   call$lower <- eval.parent(call$lower)
+  call$control$parscale <- eval.parent(call$control$parscale)
+  call$control$ndeps <- eval.parent(call$control$ndeps)
   ##   browser()
   if(!missing(start))
     if (!is.list(start)) {
@@ -209,6 +227,25 @@ mle2 <- function(minuslogl,
     stop("some named arguments in 'start' are not arguments to the specified log-likelihood function")
   ## if (named)
   start <- start[order(oo)]
+  ## rearrange lower/upper to same order as "start"
+  ## FIXME: use names to rearrange if present
+  fix_order <- function(c1,name,default=NULL) {
+      if (!is.null(c1)) {
+          if (length(c1)>1) {
+              if (is.null(names(c1))) {
+                warning(name," not named: rearranging to match 'start'")
+                oo2 <- oo
+              } else oo2 <- match(names(unlist(namedrop(c1))),names(fullcoef))
+              c1 <- c1[order(oo2)]
+          }
+      } else c1 <- default
+      c1
+  }
+  call$lower <- fix_order(call$lower,"lower bounds",-Inf)
+  call$upper <- fix_order(call$upper,"upper bounds",Inf)
+  call$control$parscale <- fix_order(call$control$parscale,"parscale")
+  call$control$ndeps <- fix_order(call$control$ndeps,"ndeps")
+  if (is.null(call$control)) call$control <- list()
   ## attach(data,warn.conflicts=FALSE)
   ## on.exit(detach(data))
   denv <- local(environment(),c(as.list(data),fdata,list(mleenvset=TRUE)))
@@ -283,10 +320,20 @@ mle2 <- function(minuslogl,
     ## browser()
   } else {
     oout <- switch(optimizer,
-                   optim = optim(par=start,
-                     fn=objectivefunction, method=method,
-                     hessian=!skip.hessian,
-                     gr=objectivefunctiongr, ...),
+                   optim = {
+                       arglist <- list(...)
+                       arglist$lower <- arglist$upper <-
+                         arglist$control <- NULL
+                       do.call("optim",
+                               c(list(par=start,
+                                      fn=objectivefunction, method=method,
+                                      hessian=!skip.hessian,
+                                      gr=objectivefunctiongr,
+                                      control=call$control,
+                                      lower=call$lower,
+                                      upper=call$upper),
+                                 arglist))
+                   },
                    nlm = nlm(f=objectivefunction, hessian=!skip.hessian, ...),
                    nlminb = nlminb(start=start,
                      objective=objectivefunction, hessian=NULL, ...),
@@ -307,6 +354,8 @@ mle2 <- function(minuslogl,
   ## so use default hessian=FALSE and compute them later
   ## n.b. this is not using parscale information
   if (optimizer %in% c("nlminb","constrOptim") && !skip.hessian) {
+    if (!require(nlme,quietly=TRUE))
+      stop("need nlme package to compute Hessians for nlminb or constrOptim")
     oout$hessian <- nlme::fdHess(oout$par,objectivefunction)$Hessian
     oout$hessian[lower.tri(oout$hessian)] <- t(oout$hessian)[lower.tri(oout$hessian)]
     ## print(oout$hessian)
@@ -509,12 +558,10 @@ setMethod("profile", "mle2",
               p.i <- Pnames[i]
               ## omit values from control vectors:
               ##   is this necessary/correct?
-              ## FIXME: if lower, upper are set then the profile should
-              ##    respect that!
-              if (!is.null(ndeps)) call$control$ndeps <- ndeps[-i]
-              if (!is.null(parscale)) call$control$parscale <- parscale[-i]
-              if (!is.null(upper)) call$upper <- upper[-i]
-              if (!is.null(lower)) call$lower <- lower[-i]
+               if (!is.null(ndeps)) call$control$ndeps <- ndeps[-i]
+               if (!is.null(parscale)) call$control$parscale <- parscale[-i]
+               if (!is.null(upper) && length(upper)>1) call$upper <- upper[-i]
+               if (!is.null(lower) && length(lower)>1) call$lower <- lower[-i]
               for (sgn in c(-1, 1)) {
                 if (trace) {
                     cat("\nParameter:", p.i, c("down", "up")[(sgn + 1)/2 + 1], "\n")
@@ -529,8 +576,10 @@ setMethod("profile", "mle2",
                 ## (We now have.)
                 call$start <- as.list(B0)
                 lastz <- 0
-                lbound <- if (!is.null(lower)) lower[i] else -Inf
-                ubound <- if (!is.null(upper)) upper[i] else Inf
+                lbound <- if (!is.null(lower) && length(lower)>1)
+                  lower[i] else -Inf
+                ubound <- if (!is.null(upper) && length(upper)>1)
+                  upper[i] else Inf
                 while ((step <- step + 1) < maxsteps && abs(z) < zmax) {
                   curval <- B0[i] + sgn * step * del * std.err[i]
                   if ((sgn==-1 & curval<lbound) ||
@@ -596,6 +645,7 @@ ICtab <- function(...,type=c("AIC","BIC","AICc","qAIC","qAICc"),
       nobs <- sapply(L,attr,"nobs")
       if (length(unique(nobs))>1)
         stop("nobs different: must have identical data for all objects")
+      nobs <- nobs[1]
     }
   }
   ICs <- switch(type,
@@ -673,10 +723,10 @@ AICctab <- function(...) {
   ICtab(...,mnames=get.mnames(match.call()),type="AICc")
 }
 
-setGeneric("AICc", function(object, ..., nobs) standardGeneric("AICc"))
+setGeneric("AICc", function(object, ..., nobs, k=2) standardGeneric("AICc"))
 
 setMethod("AICc", "mle2",
-          function (object, ..., nobs)  {
+          function (object, ..., nobs, k)  {
             L <- list(...)
             if (length(L)) {
               L <- c(list(object),L)
@@ -696,19 +746,20 @@ setMethod("AICc", "mle2",
           })
 
 setMethod("AICc", signature(object="logLik"),
-function(object, ..., nobs){
+function(object, ..., nobs, k){
   if (missing(nobs)) {
     if (is.null(attr(object,"nobs")))
       stop("number of observations not specified")
     nobs <- attr(object,"nobs")
   }
   df <- attr(object,"df")
-  -2 * c(object) + 2*df+2*df*(df+1)/(nobs-df-1)
+  ## FIXME: should second "2" also be k?
+  -2 * c(object) + k*df+2*df*(df+1)/(nobs-df-1)
 })
 
 setMethod("AICc", signature(object="ANY"),
-function(object, ..., nobs){
-  AICc(object=logLik(object, ...), nobs=nobs)
+function(object, ..., nobs, k){
+  AICc(object=logLik(object, ...), nobs=nobs, k=k)
 })
 
 setMethod("AIC", "mle2",
@@ -726,16 +777,16 @@ setMethod("AIC", "mle2",
 
 ### quasi- methods
 
-setGeneric("qAICc", function(object, ..., nobs, dispersion)
+setGeneric("qAICc", function(object, ..., nobs, dispersion, k)
            standardGeneric("qAICc"))
 
 setMethod("qAICc", signature(object="ANY"),
-function(object, ..., nobs, dispersion){
-  qAICc(object=logLik(object, ...), nobs=nobs, dispersion=dispersion)
+function(object, ..., nobs, dispersion, k){
+  qAICc(object=logLik(object, ...), nobs=nobs, dispersion=dispersion, k=k)
 })
 
 setMethod("qAICc", "mle2",
-          function (object, ..., nobs, dispersion)  {
+          function (object, ..., nobs, dispersion, k)  {
             L <- list(...)
             if (length(L)) {
               L <- c(list(object),L)
@@ -757,7 +808,7 @@ setMethod("qAICc", "mle2",
           })
 
 setMethod("qAICc", signature(object="logLik"),
-          function(object, ..., nobs, dispersion){
+          function(object, ..., nobs, dispersion, k){
             if (missing(nobs)) {
               if (is.null(attr(object,"nobs")))
                 stop("number of observations not specified")
@@ -769,19 +820,19 @@ setMethod("qAICc", signature(object="logLik"),
               dispersion <- attr(object,"dispersion")
             }
             df <- attr(object,"df")
-            -2 * c(object)/dispersion + 2*df+2*df*(df+1)/(nobs-df-1)
+            -2 * c(object)/dispersion + k*df+2*df*(df+1)/(nobs-df-1)
           })
 
-setGeneric("qAIC", function(object, ..., dispersion)
+setGeneric("qAIC", function(object, ..., dispersion, k)
            standardGeneric("qAIC"))
 
 setMethod("qAIC", signature(object="ANY"),
-function(object, ..., nobs, dispersion){
-  qAIC(object=logLik(object, ...), nobs=nobs, dispersion=dispersion)
+function(object, ..., dispersion, k){
+  qAIC(object=logLik(object, ...), dispersion=dispersion, k=k)
 })
 
 setMethod("qAIC", signature(object="logLik"),
-          function(object, ..., nobs, dispersion){
+          function(object, ..., dispersion, k){
             if (missing(nobs)) {
               if (is.null(attr(object,"nobs")))
                 stop("number of observations not specified")
@@ -793,21 +844,21 @@ setMethod("qAIC", signature(object="logLik"),
               dispersion <- attr(object,"dispersion")
             }
             df <- attr(object,"df")
-            -2 * c(object)/dispersion + 2*df
+            -2 * c(object)/dispersion + k*df
           })
 
 setMethod("qAIC", "mle2",
-          function (object, ..., k = 2, dispersion) {
+          function (object, ..., dispersion, k=2) {
             L <- list(...)
             if (length(L)) {
               L <- c(list(object),L)
               if (!all(sapply(L,class)=="mle2"))
                 stop("all objects in list must be class mle2")
               logLiks <- lapply(L, logLik)
-              AICs <- sapply(logLiks,qAIC,k=k, dispersion=dispersion)
+              AICs <- sapply(logLiks,qAIC, k=k, dispersion=dispersion)
               df <- sapply(L,attr,"df")
               data.frame(AIC=AICs,df=df)
-            } else qAIC(logLik(object), k = k, dispersion=dispersion)
+            } else qAIC(logLik(object), k=k, dispersion=dispersion)
           })
 
 ## copied from stats4
