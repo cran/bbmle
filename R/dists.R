@@ -1,3 +1,4 @@
+
 sbinom <- function(size,prob) {
   list(title="Binomial",
        prob=prob,size=size,
@@ -6,6 +7,16 @@ sbinom <- function(size,prob) {
        mode=NA,
        variance=size*prob*(1-prob),
        sd=sqrt(size*prob*(1-prob)))
+}
+
+sbeta <- function(shape1,shape2) {
+  list(title="Beta",
+       shape1=shape1,shape2=shape2,
+       mean=shape1/(shape1+shape2),
+       median=qbeta(0.5,shape1,shape2),
+       mode=NA,
+       variance=shape1*shape2/((shape1+shape2)^2*(shape1+shape2+1)),
+       sd=sqrt(shape1*shape2/((shape1+shape2)^2*(shape1+shape2+1))))
 }
 
 snbinom <- function(size,prob,mu) {
@@ -36,4 +47,14 @@ spois <- function(lambda) {
        mode=NA,
        variance=lambda,
        sd=sqrt(lambda))      
+}
+
+sbetabinom <- function(size,prob,theta) {
+  list(title="Beta-binomial",
+       prob=prob,size=size,theta=theta,
+       mean=prob*size,
+       median=NA, ## qbetabinom(0.5,size,prob),
+       mode=NA,
+       variance=size*prob*(1-prob)/theta,
+       sd=sqrt(size*prob*(1-prob)))
 }

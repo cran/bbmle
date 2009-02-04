@@ -1,0 +1,54 @@
+
+R version 2.7.1 (2008-06-23)
+Copyright (C) 2008 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> set.seed(1001)
+> x <- runif(10)
+> y <- 1000+x+rnorm(10,sd=0.1)
+> 
+> library(bbmle)
+Loading required package: nlme
+> ## warning
+> m1 = mle2(y~dnorm(a+b*x,sd=exp(s)),start=list(a=900,b=1,s=log(0.1)),
++   control=list(parscale=c(1000,1,0.1)))
+Warning message:
+In fix_order(call$control$parscale, "parscale") :
+  parscale not named: rearranging to match 'start'
+> 
+> m2 = mle2(y~dnorm(a+b*x,sd=exp(s)),start=list(a=900,b=1,s=log(0.1)),
++   control=list(parscale=c(b=1,a=1000,s=0.1)))
+> 
+> m3 = mle2(y~dnorm(a+b*x,sd=exp(s)),start=list(a=1,b=1,s=log(0.1)),
++   method="L-BFGS-B",lower=c(a=1100,b=2,s=-Inf))
+> 
+> ## warning
+> m4 = mle2(y~dnorm(a+b*x,sd=exp(s)),start=list(b=1,a=1200,s=log(0.1)),
++   method="L-BFGS-B",lower=c(2,1100,0.1))
+Warning message:
+In fix_order(call$lower, "lower bounds", -Inf) :
+  lower bounds not named: rearranging to match 'start'
+> 
+> c1 = coef(m3)[c("a","b","s")]
+> c2 = coef(m4)[c("a","b","s")]
+> if (!all(abs(c1-c2)<1e-7)) stop("mismatch")
+> 
+> proc.time()
+   user  system elapsed 
+  1.792   0.040   1.827 

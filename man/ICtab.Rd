@@ -32,7 +32,7 @@ AICctab(\dots)
     required for \code{type="qAIC"} or \code{type="qAICc"} unless
     objects have a \code{"dispersion"} attribute}
   \item{mnames}{names for table rows: defaults to names of objects passed}
-  \item{k}{penalty term (largely unused)}
+  \item{k}{penalty term (largely unused: left at default of 2)}
   \item{x}{an ICtab object}
 }
 \value{
