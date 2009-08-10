@@ -2,6 +2,7 @@
 \alias{sbinom}
 \alias{spois}
 \alias{snbinom}
+\alias{snorm}
 \alias{sbeta}
 \alias{sbetabinom}
 \title{Abstract definitions of distributions}
@@ -10,11 +11,12 @@
   (mean, median, etc.) of distributions
 }
 \usage{
-sbinom(size, prob)
-snbinom(size, prob, mu)
-spois(lambda)
 sbeta(shape1, shape2)
 sbetabinom(size, prob, theta)
+sbinom(size, prob)
+snbinom(size, prob, mu)
+snorm(mean, sd)
+spois(lambda)
 }
 \arguments{
   \item{prob}{probability as defined for \code{\link{dbinom}},
@@ -24,7 +26,9 @@ sbetabinom(size, prob, theta)
     \code{\link{dbinom}} or \code{dbetabinom}
     in the \code{emdbook} package, or size/overdispersion parameter
     as in \code{\link{dnbinom}}}
+  \item{mean}{mean parameter as defined for \code{\link{dnorm}}}
   \item{mu}{mean parameter as defined for \code{\link{dnbinom}}}
+  \item{sd}{standard deviation parameter as defined for \code{\link{dnorm}}}
   \item{shape1}{shape parameter for \code{\link{dbeta}}}
   \item{shape2}{shape parameter for \code{\link{dbeta}}}
   \item{lambda}{rate parameter as defined for \code{\link{dpois}}}
@@ -41,7 +45,7 @@ sbetabinom(size, prob, theta)
   \item{sd}{theoretical standard deviation of the distribution}
 }
 \author{Ben Bolker}
-\seealso{\code{\link{dbinom}},\code{\link{dpois}}, \code{\link{dnbinom}}}
+\seealso{\code{\link{dbinom}}, \code{\link{dpois}}, \code{\link{dnorm}}, \code{\link{dnbinom}}}
 \examples{
   sbinom(prob=0.2,size=10)
   snbinom(mu=2,size=1.2)

@@ -1,6 +1,6 @@
 
-R version 2.4.1 (2006-12-18)
-Copyright (C) 2006 The R Foundation for Statistical Computing
+R version 2.9.1 (2009-06-26)
+Copyright (C) 2009 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -17,7 +17,6 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-> invisible(options(echo = TRUE))
 > 
 > library(bbmle)
 > 
@@ -109,5 +108,5 @@ h 0.006987242 0.02638530
 > 
 > 
 > proc.time()
-[1] 9.040 0.108 9.217 0.000 0.000
-> 
+   user  system elapsed 
+  3.780   0.028   3.848 

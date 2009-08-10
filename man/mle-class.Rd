@@ -8,6 +8,7 @@
 \alias{summary,mle2-method}
 \alias{update,mle2-method}
 \alias{vcov,mle2-method}
+\alias{deviance,mle2-method}
 \alias{coerce,mle,mle2-method}
 \title{Class "mle2". Result of Maximum Likelihood Estimation.}
 \description{This class encapsulates results of a generic maximum
@@ -19,14 +20,20 @@
 \section{Slots}{
   \describe{
     \item{\code{call}:}{(language) The call to \code{\link{mle2}}.}
+    \item{\code{call.orig}:}{(language) The call to \code{\link{mle2}},
+      saved in its original form (i.e. without data arguments
+      evaluated).}
     \item{\code{coef}:}{(numeric) Vector of estimated parameters.}
+    \item{\code{data}:}{(data frame or list) Data with which to evaluate the negative log-likelihood function}
     \item{\code{fullcoef}:}{(numeric) Fixed and estimated parameters.}
     \item{\code{vcov}:}{(numeric matrix) Approximate variance-covariance
       matrix, based on the second derivative matrix at the MLE.}
     \item{\code{min}:}{(numeric) Minimum value of objective function =
       minimum negative log-likelihood.}
     \item{\code{details}:}{(list) Return value from \code{\link{optim}}.}
-    \item{\code{minuslogl}:}{(function) The negative log-likelihood function.}
+    \item{\code{minuslogl}:}{(function) The negative log-likelihood
+      function.}
+    \item{\code{optimizer}:}{(character) The optimizing function used.}
     \item{\code{method}:}{(character) The optimization method used.}
     \item{\code{formula}:}{(character) If a formula was specified, a
       character vector giving the formula and parameter specifications.}

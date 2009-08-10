@@ -50,21 +50,28 @@ setClass("slice.mle2", representation(profile="list",
 
 setIs("profile.mle2", "slice.mle2")
 
-calc_mle2_function <- function(formula,parameters,
-                              start,data=NULL,trace=FALSE) {
+calc_mle2_function <- function(formula,
+                               parameters,
+                               start,
+                               parnames,
+                               data=NULL,
+                               trace=FALSE) {
   RHS <- formula[[3]]
   ddistn <- as.character(RHS[[1]])
   ## need to check on variable order:
   ## should it go according to function/formula,
   ##   not start?
-  parnames <- as.list(names(start))
-  names(parnames) <- names(start)
+  vecstart <- (is.numeric(start))
+  if (vecstart) start <- as.list(start) ## ??
+  if (missing(parnames) || is.null(parnames)) {
+    parnames <- as.list(names(start))
+    names(parnames) <- names(start)
+  }
   ## hack
   if (!missing(parameters)) {
     vars <- as.character(sapply(parameters,"[[",2))
     if (length(parameters)>1) {
       models <-  sapply(parameters,function(z) call.to.char(z[[3]]))
-       ## as.character(sapply(parameters,"[[",3))
     } else {
       models <- as.character(parameters)
     }
@@ -75,6 +82,8 @@ calc_mle2_function <- function(formula,parameters,
     } else {
       mmats <- list()
       vpos <- list()
+      pnames0 <- parnames
+      names(parnames) <- parnames
       for (i in seq(along=parameters)) {
         vname <- vars[i]
         p <- parameters[[i]]
@@ -82,7 +91,7 @@ calc_mle2_function <- function(formula,parameters,
         mmat <- model.matrix(p,data=data)     
         pnames <- paste(vname,colnames(mmat),sep=".")
         parnames[[vname]] <- pnames ## insert into parameter names
-        vpos0 <- which(names(start)==vname)
+        vpos0 <- which(pnames0==vname)
         vposvals <- cumsum(sapply(parnames,length))
         ## fill out start vectors with zeros or replicates as appropriate
         if (length(start[[vname]])==1) {
@@ -127,6 +136,7 @@ calc_mle2_function <- function(formula,parameters,
   flist <-  vector("list",npars)
   names(flist) <- parnames
   formals(fn) <- flist
+  if (vecstart) start <- unlist(start)
   list(fn=fn,start=start,parameters=parameters,
        fdata=list(vars=vars,mmats=mmats,vpos=vpos,
          arglist1=arglist1,ddistn=ddistn,parameters=parameters),
@@ -146,6 +156,7 @@ mle2 <- function(minuslogl,
                  eval.only = FALSE,
                  vecpar = FALSE,
                  parameters=NULL,
+                 parnames=NULL,
                  skip.hessian=FALSE,
                  trace=FALSE,
                  gr,
@@ -154,15 +165,23 @@ mle2 <- function(minuslogl,
   if (missing(optimizer)) optimizer <- mle2.options("optimizer")
   ## if (optimizer != "optim") stop("only optim() is currently supported")
   if (inherits(minuslogl,"formula")) {
-    pf <- function(f) {if (is.null(f)) "" else paste(f[2],"~",
-                                                     gsub(" ","",as.character(f[3])),sep="")}
+    pf <- function(f) {if (is.null(f))
+                         {  ""
+                          } else {
+                            paste(f[2],"~",
+                                  gsub(" ","",as.character(f[3])),sep="")
+                          }
+                     }
     if (missing(parameters)) {
       formula <- pf(minuslogl)
     } else {
-      formula <- paste(pf(minuslogl),paste(sapply(parameters,pf),collapse=", "),sep=": ")
+      formula <- paste(pf(minuslogl),
+                       paste(sapply(parameters,pf),collapse=", "),sep=": ")
     }
     tmp <- calc_mle2_function(minuslogl,parameters,
-                              start,data,trace)
+                              start,
+                              parnames,
+                              data,trace)
     minuslogl <- tmp$fn
     start <- tmp$start
     fdata <- tmp$fdata
@@ -174,11 +193,14 @@ mle2 <- function(minuslogl,
   call <- match.call()
   call.orig <- call
   ## bug fix??
+  ## this is a hack! would like to do a better job
+  ## consider: call <- rapply(call,eval.parent)
   call$data <- eval.parent(call$data)
   call$upper <- eval.parent(call$upper)
   call$lower <- eval.parent(call$lower)
   call$control$parscale <- eval.parent(call$control$parscale)
   call$control$ndeps <- eval.parent(call$control$ndeps)
+  call$control$maxit <- eval.parent(call$control$maxit)
   ##   browser()
   if(!missing(start))
     if (!is.list(start)) {
@@ -626,8 +648,8 @@ setMethod("profile", "mle2",
 
 
 ICtab <- function(...,type=c("AIC","BIC","AICc","qAIC","qAICc"),
-                  weights=FALSE,delta=FALSE,
-                  sort=FALSE,nobs,dispersion=1,mnames,k=2) {
+                  weights=FALSE,delta=TRUE,base=FALSE,
+                  sort=TRUE,nobs,dispersion=1,mnames,k=2) {
   L <- list(...)
   if (is.list(L[[1]]) && length(L)==1) L <- L[[1]]
   type <- match.arg(type)
@@ -660,18 +682,24 @@ ICtab <- function(...,type=c("AIC","BIC","AICc","qAIC","qAICc"),
     if (!is.null(df <- attr(x,"df"))) return(df)
     else if (!is.null(df <- attr(logLik(x),"df"))) return(df)
   }
-  df <- sapply(L,getdf)
-  tab <- data.frame(IC=ICs,df=df)
-  names(tab)[1] <- type
   dIC <- ICs-min(ICs)
-  if (delta) {
-    tab <- data.frame(tab,"dIC"=dIC)
+  df <- sapply(L,getdf)
+  if (base) {
+    tab <- data.frame(IC=ICs,df=df)
+    names(tab)[1] <- type
+  } else if (delta) {
+    tab <- data.frame(dIC=dIC,df=df)
+    names(tab)[1] <- paste("d",type,sep="")
+  }
+  if (delta && base) {
+    tab <- data.frame(tab,dIC=dIC)
     names(tab)[3] <- paste("d",type,sep="")
   }
+  if (!delta && !base) stop("either 'base' or 'delta' must be TRUE")
   if (weights) {
-      wts <- exp(-dIC/2)/sum(exp(-dIC/2))
-      tab <- data.frame(tab,weight=wts)
-    }
+    wts <- exp(-dIC/2)/sum(exp(-dIC/2))
+    tab <- data.frame(tab,weight=wts)
+  }
   if (missing(mnames)) {
     Call <- match.call()
     if (!is.null(names(Call))) {
@@ -823,21 +851,16 @@ setMethod("qAICc", signature(object="logLik"),
             -2 * c(object)/dispersion + k*df+2*df*(df+1)/(nobs-df-1)
           })
 
-setGeneric("qAIC", function(object, ..., dispersion, k)
+setGeneric("qAIC", function(object, ..., dispersion, k=2)
            standardGeneric("qAIC"))
 
 setMethod("qAIC", signature(object="ANY"),
-function(object, ..., dispersion, k){
-  qAIC(object=logLik(object, ...), dispersion=dispersion, k=k)
+function(object, ..., dispersion, k=2){
+  qAIC(object=logLik(object, ...), dispersion=dispersion, k)
 })
 
 setMethod("qAIC", signature(object="logLik"),
           function(object, ..., dispersion, k){
-            if (missing(nobs)) {
-              if (is.null(attr(object,"nobs")))
-                stop("number of observations not specified")
-              nobs <- attr(object,"nobs")
-            }
             if (missing(dispersion)) {
               if (is.null(attr(object,"dispersion")))
                 stop("dispersion not specified")
@@ -858,7 +881,9 @@ setMethod("qAIC", "mle2",
               AICs <- sapply(logLiks,qAIC, k=k, dispersion=dispersion)
               df <- sapply(L,attr,"df")
               data.frame(AIC=AICs,df=df)
-            } else qAIC(logLik(object), k=k, dispersion=dispersion)
+            } else {
+              qAIC(logLik(object), k=k, dispersion=dispersion)
+            }
           })
 
 ## copied from stats4
@@ -1100,32 +1125,24 @@ function (object, parm, level = 0.95, trace=FALSE, ...)
   Pnames <- names(object@profile)
   if (missing(parm)) parm <- Pnames
   if (is.character(parm)) parm <- match(parm,Pnames)
-  if (any(is.na(parm))) stop("parameters not found in model coefficients")
+  if (any(is.na(parm))) stop("parameters not found in profile")
   ## Calculate confidence intervals based on likelihood
   ## profiles
-  of <- object@summary
-  pnames <- rownames(of@coef)
-  if (missing(parm))
-    parm <- seq(along=pnames)
-  if (is.character(parm))
-        parm <- match(parm, pnames, nomatch = 0)
-    a <- (1 - level)/2
-    a <- c(a, 1 - a)
-    pct <- paste(round(100 * a, 1), "%")
-    ci <- array(NA, dim = c(length(parm), 2),
-                dimnames = list(pnames[parm], pct))
-    cutoff <- qnorm(a)
-    std.err <- object@summary@coef[, "Std. Error"]
-    call <- object@summary@call
-    B0 <- object@summary@coef[,"Estimate"]
-    for (pm in parm) {
-      pro <- object@profile[[pnames[pm]]]
-      sp <- if (length(pnames) > 1)
-        spline(x = pro[, "par.vals"][, pm], y = pro[, 1])
-      else spline(x = pro[, "par.vals"], y = pro[, 1])
-      ci[pnames[pm], ] <- approx(sp$y, sp$x, xout = cutoff)$y
-    }
-    drop(ci)
+  a <- (1 - level)/2
+  a <- c(a, 1 - a)
+  pct <- paste(round(100 * a, 1), "%")
+  ci <- array(NA, dim = c(length(parm), 2),
+              dimnames = list(Pnames[parm], pct))
+  cutoff <- qnorm(a)
+  for (pm in parm) {
+    pro <- object@profile[[Pnames[pm]]]
+    pv <- pro[,"par.vals"]
+    sp <- if (is.matrix(pv)) {
+      spline(x = pv[, Pnames[pm]], y = pro[, 1])
+    } else spline(x = pv, y = pro[, 1])
+    ci[Pnames[pm], ] <- approx(sp$y, sp$x, xout = cutoff)$y
+  }
+  drop(ci)
 })
 
 setMethod("confint", "mle2",
@@ -1238,6 +1255,12 @@ function (object, ...)
     class(val) <- "logLik"
     val
   })
+
+setMethod("deviance", "mle2",
+function (object, ...)
+{
+  -2*logLik(object)
+})
 
 setMethod("vcov", "mle2", function (object, ...) { object@vcov } )
 

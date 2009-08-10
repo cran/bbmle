@@ -1,6 +1,6 @@
 
-R version 2.6.1 (2007-11-26)
-Copyright (C) 2007 The R Foundation for Statistical Computing
+R version 2.9.1 (2009-06-26)
+Copyright (C) 2009 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -18,7 +18,6 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > library(bbmle)
-Loading required package: nlme
 > 
 > ## goby data in dump format
 > 
@@ -124,13 +123,13 @@ Model 3: Bm2w, lifespan~dweibull(scale=exp(llambda),shape=alpha):
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
 > AICctab(Bm0w,Bm1w,Bm2w,Bm3w,sort=TRUE,nobs=nrow(x),delta=TRUE)
-     AICc   df dAICc 
-Bm1w 1028.6 6     0.0
-Bm2w 1031.7 10    3.1
-Bm0w 1047.6 2    19.0
-Bm3w 1051.6 6    23.0
+     dAICc df
+Bm1w  0.0  6 
+Bm2w  3.1  10
+Bm0w 19.0  2 
+Bm3w 23.0  6 
 > 
 > 
 > proc.time()
    user  system elapsed 
-  2.448   0.036   2.504 
+  2.256   0.032   2.326 

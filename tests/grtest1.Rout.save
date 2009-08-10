@@ -1,6 +1,6 @@
 
-R version 2.7.0 (2008-04-22)
-Copyright (C) 2008 The R Foundation for Statistical Computing
+R version 2.9.1 (2009-06-26)
+Copyright (C) 2009 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -19,7 +19,6 @@ Type 'q()' to quit R.
 
 > ## from Eric Weese
 > library(bbmle)
-Loading required package: nlme
 > f <- function(x=2,a=1) x^2 - a
 > f.g <- function(x,a) 2*x
 > mle2(f,fixed=list(a=1)) #works
@@ -51,4 +50,4 @@ Warning messages:
 > 
 > proc.time()
    user  system elapsed 
-  1.860   0.036   1.880 
+  0.764   0.036   0.790 
