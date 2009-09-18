@@ -17,24 +17,23 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-> library(bbmle)
-> set.seed(1001)
-> f <- factor(rep(1:3,each=50))
-> kvals <- c(1,2,5)
-> muvals <- c(10,2,5)
-> y <- rnbinom(length(f),size=kvals[f],mu=muvals[f])
-> plot(y)
+> x <- runif(10)
+> y <- 1+x+rnorm(10,sd=0.1)
 > 
-> NLL <- function(p) {
-+   kvals <- p[1:3]
-+   muvals <- p[4:6]
-+   -sum(dnbinom(y,size=kvals[f],mu=muvals[f],log=TRUE))
-+ }
-> parnames(NLL) <- c("k1","k2","k3","mu1","mu2","mu3")
-> svec <- c(kvals,muvals)
-> names(svec) <- parnames(NLL)
-> m1 <- mle2(NLL,start=svec,vecpar=TRUE)
+> library(bbmle)
+> m1 = mle2(y~dnorm(a+b*x,sd=exp(s)),start=list(a=1,b=1,s=log(0.1)))
+> 
+> m2 = mle2(y~dnorm(a+b*x,sd=exp(s)),start=list(a=1,b=1,s=log(0.1)),
++   method="L-BFGS-B",lower=c(a=0,b=0,s=-Inf))
+> 
+> m2F = mle2(y~dnorm(a+b*x,sd=exp(s)),start=list(a=1,b=1,s=log(0.1)),
++   method="L-BFGS-B",lower=c(a=0,b=0,s=-Inf),
++   fixed=list(a=1))
+Warning message:
+In mle2(y ~ dnorm(a + b * x, sd = exp(s)), start = list(a = 1, b = 1,  :
+  length mismatch between lower/upper and number of non-fixed parameters
+> 
 > 
 > proc.time()
    user  system elapsed 
-  1.116   0.036   1.134 
+  1.000   0.036   1.029 

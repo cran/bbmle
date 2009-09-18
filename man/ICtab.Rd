@@ -11,7 +11,7 @@
 }
 \usage{
 ICtab(\dots, type=c("AIC","BIC","AICc","qAIC","qAICc"),
-    weights = FALSE, delta = FALSE, sort = FALSE,
+    weights = FALSE, delta = TRUE, base = FALSE, sort = TRUE,
 nobs, dispersion = 1, mnames, k = 2)
 AICtab(\dots)
 BICtab(\dots)
@@ -22,6 +22,7 @@ AICctab(\dots)
   \item{\dots}{a list of (logLik or?) mle objects; in the case of
     \code{AICtab} etc., could also include other arguments to \code{ICtab}}
   \item{type}{specify information criterion to use}
+  \item{base}{(logical) include base IC values?}
   \item{weights}{(logical) compute IC weights?}
   \item{delta}{(logical) compute differences among ICs?}
   \item{sort}{(logical) sort ICs in increasing order?}
@@ -54,7 +55,10 @@ AICctab(\dots)
   and models taken from different packages.  If necessary
   one can change the degrees of freedom manually by
   saying \code{attr(obj,"df") <- df.new}, where \code{df.new}
-  is the desired number of parameters.}
+  is the desired number of parameters.
+  (3) Defaults have changed to \code{sort=TRUE}, \code{base=FALSE},
+  \code{delta=TRUE}, to match my conviction that it rarely makes
+  sense to report the overall values of information criteria}
 \references{Burnham and Anderson 2002}
 \author{Ben Bolker}
 \keyword{misc}

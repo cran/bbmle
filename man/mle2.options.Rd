@@ -19,8 +19,8 @@ mle2.options(...)
       are "spline", "uniroot", "hessian" corresponding
       to spline inversion, attempt to find best answer via uniroot,
       information-matrix approximation}
-    \item{optimizer}{optimization function to use (only choice
-      at present is "optim")}
+    \item{optimizer}{optimization function to use by default
+(choices: "optim", "nlm", "nlminb", "constrOptim")}
 }
 }
 \value{

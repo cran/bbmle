@@ -1,4 +1,13 @@
 
+snorm <- function(mean,sd) {
+  list(title="Normal",
+       mean=mean,sd=sd,
+       median=mean,
+       mode=mean,
+       variance=sd^2,
+       sd=sd)
+}
+
 sbinom <- function(size,prob) {
   list(title="Binomial",
        prob=prob,size=size,

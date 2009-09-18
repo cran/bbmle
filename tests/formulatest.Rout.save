@@ -1,6 +1,6 @@
 
-R version 2.4.1 (2006-12-18)
-Copyright (C) 2006 The R Foundation for Statistical Computing
+R version 2.9.1 (2009-06-26)
+Copyright (C) 2009 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -17,8 +17,9 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-> invisible(options(echo = TRUE))
 > library(bbmle)
+> 
+> set.seed(1001)
 > 
 > ## test 1
 > x <- 0:10
@@ -27,14 +28,25 @@ Type 'q()' to quit R.
 +            parameters=list(ymax~1,xhalf~1),
 +            start=list(ymax=1,xhalf=1))
 Warning messages:
-1: NaNs produced in: dpois(x, lambda, log) 
-2: NaNs produced in: dpois(x, lambda, log) 
+1: In dpois(x, lambda, log) : NaNs produced
+2: In dpois(x, lambda, log) : NaNs produced
+> 
+> p1 <- profile(m1)
+Warning messages:
+1: In dpois(x, lambda, log) : NaNs produced
+2: In dpois(x, lambda, log) : NaNs produced
+3: In dpois(x, lambda, log) : NaNs produced
+4: In dpois(x, lambda, log) : NaNs produced
+5: In dpois(x, lambda, log) : NaNs produced
+6: In dpois(x, lambda, log) : NaNs produced
+7: In dpois(x, lambda, log) : NaNs produced
+8: In dpois(x, lambda, log) : NaNs produced
 > 
 > m2 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
 +            start=list(ymax=1,xhalf=1))
 Warning messages:
-1: NaNs produced in: dpois(x, lambda, log) 
-2: NaNs produced in: dpois(x, lambda, log) 
+1: In dpois(x, lambda, log) : NaNs produced
+2: In dpois(x, lambda, log) : NaNs produced
 > 
 > ## should be able to omit parameters (?) or
 > ## have them taken from 
@@ -83,6 +95,9 @@ Log-likelihood: -12.15
 >   m4 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
 +              parameters=list(ymax~f,xhalf~f),
 +              start=list(ymax=1,xhalf=1))
+Warning messages:
+1: In dpois(x, lambda, log) : NaNs produced
+2: In dpois(x, lambda, log) : NaNs produced
 > 
 >   m5 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
 +              parameters=list(ymax~f),
@@ -95,8 +110,8 @@ Model 2: m3, y~dpois(lambda=ymax/(1+x/xhalf)): xhalf~f
 Model 3: m4, y~dpois(lambda=ymax/(1+x/xhalf)): ymax~f, xhalf~f
   Tot Df Deviance    Chisq Df Pr(>Chisq)    
 1      2   57.208                           
-2      3  166.907 109.6992  1     <2e-16 ***
-3      4  166.856   0.0509  1     0.8216    
+2      3  173.004 115.7960  1     <2e-16 ***
+3      4  172.415   0.5894  1     0.4427    
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
 >   anova(m2,m5,m4)
@@ -106,16 +121,16 @@ Model 2: m5, y~dpois(lambda=ymax/(1+x/xhalf)): ymax~f
 Model 3: m4, y~dpois(lambda=ymax/(1+x/xhalf)): ymax~f, xhalf~f
   Tot Df Deviance    Chisq Df Pr(>Chisq)    
 1      2   57.208                           
-2      3  167.224 110.0159  1     <2e-16 ***
-3      4  166.856   0.3675  1     0.5444    
+2      3  177.101 119.8930  1     <2e-16 ***
+3      4  172.415   4.6864  1     0.0304 *  
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
 >   AICtab(m2,m3,m4,m5)
-   AIC   df
-m2  61.2 2 
-m3 172.9 3 
-m4 174.9 4 
-m5 173.2 3 
+   dAIC  df
+m2   0.0 2 
+m3 117.8 3 
+m4 119.2 4 
+m5 121.9 3 
 > 
 > GobySurvival <-
 + structure(list(exper = as.integer(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 
@@ -385,5 +400,5 @@ Log-likelihood: -443.06
 There were 14 warnings (use warnings() to see them)
 > 
 > proc.time()
-[1] 8.216 0.080 9.017 0.000 0.000
-> 
+   user  system elapsed 
+  3.896   0.052   3.949 
