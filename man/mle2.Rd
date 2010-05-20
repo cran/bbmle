@@ -14,6 +14,7 @@ default.start=TRUE, eval.only = FALSE, vecpar=FALSE,
 parameters=NULL,
 parnames=NULL,
 skip.hessian=FALSE,trace=FALSE,
+transform=NULL,
 gr,\dots)
 calc_mle2_function(formula,parameters,start,
    parnames,data=NULL,trace=FALSE)
@@ -39,6 +40,8 @@ calc_mle2_function(formula,parameters,start,
   \item{\dots}{Further arguments to pass to optimizer}
   \item{formula}{a formula for the likelihood (see Details)}
   \item{trace}{Logical: print parameter values tested?}
+  \item{transform}{(stub) list of link functions/parameter transformations
+    ("log"=log/exp, "logit"=plogis/qlogis, etc.)}
   \item{skip.hessian}{Bypass Hessian calculation?}
 }
 \details{

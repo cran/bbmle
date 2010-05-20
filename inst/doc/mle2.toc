@@ -1,0 +1,5 @@
+\contentsline {section}{\numberline {1}Example}{2}{section.1}
+\contentsline {subsection}{\numberline {1.1}Test basic fit to simulated beta-binomial data}{2}{subsection.1.1}
+\contentsline {subsection}{\numberline {1.2}Using real data}{5}{subsection.1.2}
+\contentsline {section}{\numberline {2}Newer stuff}{11}{section.2}
+\contentsline {section}{\numberline {3}Example}{11}{section.3}

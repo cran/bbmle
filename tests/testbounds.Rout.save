@@ -1,5 +1,5 @@
 
-R version 2.9.1 (2009-06-26)
+R version 2.9.2 (2009-08-24)
 Copyright (C) 2009 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -31,9 +31,9 @@ Type 'q()' to quit R.
 +   fixed=list(a=1))
 Warning message:
 In mle2(y ~ dnorm(a + b * x, sd = exp(s)), start = list(a = 1, b = 1,  :
-  length mismatch between lower/upper and number of non-fixed parameters
+  length mismatch between lower/upper and number of non-fixed parameters: # lower=3, # upper=0, # non-fixed=2
 > 
 > 
 > proc.time()
    user  system elapsed 
-  1.000   0.036   1.029 
+  1.020   0.060   1.137 

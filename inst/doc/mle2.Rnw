@@ -1,28 +1,440 @@
 \documentclass{article}
-%\VignettePackage{mle2}
-%\VignetteIndexEntry{mle2: extended classes and methods for general-purpose maximum likelihood estimation}
-%\VignetteDepends{ggplot2}
-
+%\VignetteIndexEntry{Examples for enhanced mle code}
+%\VignettePackage{bbmle}
+%\VignetteDepends{aod}
+%\VignetteDepends{Hmisc}
+%\VignetteDepends{emdbook}
 \usepackage[utf8]{inputenc} % for UTF-8/single quotes from sQuote()
 \usepackage{graphicx}
+\usepackage{natbib}
 \usepackage{array}
 \usepackage{color}
 \usepackage[colorlinks=true,urlcolor=blue,bookmarks=true]{hyperref}
-
-\newcommand{\code}[1]{{\tt #1}}
-\title{The \code{mle2} package}
+\usepackage{url}
 \author{Ben Bolker}
+\title{Maximum likelihood estimation and analysis
+  with the \code{bbmle} package}
+\newcommand{\code}[1]{{\tt #1}}
 \date{\today}
-
 \begin{document}
+\bibliographystyle{chicago}
+%\bibliographystyle{plain}
 \maketitle
 \tableofcontents
 
+\SweaveOpts{keep.source=TRUE}
+<<results=hide,echo=FALSE>>=
+library(Hmisc)
+options(width=70,continue=" ")
+@ 
 
-\section{Introduction}
+\emph{Note: I have suppressed the continuation character (+) in
+  the R examples throughout this document, 
+  as I find it easier to read/cut-and-paste where
+  necessary.}
 
-There's not much here yet \ldots but hopefully I will
-be adding to this in the future.
+The \code{bbmle} package, designed to simplify
+maximum likelihood estimation and analysis in R,
+extends and modifies the \code{mle} function and class
+in the \code{stats4} package that comes with R by default.
+\code{mle} is in turn a wrapper around the \code{optim}
+function in base R.
+The maximum-likelihood-estimation function and class
+in \code{bbmle} are both called \code{mle2}, to avoid
+confusion and conflict with the original functions in
+the \code{stats4} package.  The major differences between
+\code{mle} and \code{mle2} are:
+\begin{itemize}
+\item \code{mle2} is slightly
+   more robust, with additional warnings (e.g.
+  if the Hessian can't be computed by finite differences,
+  \code{mle2} returns a fit with a missing Hessian rather
+  than stopping with an error)
+\item \code{mle2} uses a \code{data} argument to allow different
+  data to be passed to the negative log-likelihood function
+\item \code{mle2} has a formula interface like that
+ of (e.g.) \code{gls} in the \code{nlme} package.
+  For relatively simple models the formula for the
+  maximum likelihood can be written in-line, rather than
+  defining a negative log-likelihood function.  The formula
+  interface also simplifies fitting models with
+  categorical variables.  Models fitted using the formula interface
+  also have applicable \code{predict} and \code{simulate} methods.
+\item \code{bbmle} defines \code{anova}, \code{AIC}, \code{AICc}, 
+  and \code{BIC} methods for
+  \code{mle2} objects, as well as
+  \code{AICtab}, \code{BICtab}, \code{AICctab}
+  functions for producing summary tables of information criteria for a 
+  set of models.
+\end{itemize}
+
+Other packages with similar functionality (extending
+GLMs in various ways) are \code{aod} and \code{vgam} (on CRAN), 
+\code{gnlr} and \code{gnlr3} in Jim Lindsey's \code{gnlm} package
+(\url{http://popgen.unimaas.nl/~jlindsey/rcode.html}).
+
+\section{Example}
+
+This example will use the classic data set on
+\emph{Orobanche} germination from \cite{Crowder1978}
+(you can also use
+\code{glm(...,family="quasibinomial")} or
+the \code{aod} package to analyze these data).
+
+\subsection{Test basic fit to simulated beta-binomial data}
+
+First, generate a single beta-binomially distributed
+set of points as a simple test.
+
+Load the \code{emdbook} package
+to get functions for the beta-binomial distribution (random-deviate 
+function \code{rbetabinom} --- these functions are also available
+in Jim Lindsey's \code{rmutil} package).
+<<emdbook>>=
+library(emdbook)
+@  
+
+Generate random deviates from a random beta-binomial:
+<<bbsim>>=
+set.seed(1001)
+x1 = rbetabinom(n=1000,prob=0.1,size=50,theta=10)
+@ 
+
+Load the package:
+<<bbmle>>=
+library(bbmle)
+@ 
+
+Construct a simple negative log-likelihood function:
+<<likfun1>>=
+mtmp <- function(prob,size,theta) {
+  -sum(dbetabinom(x1,prob,size,theta,log=TRUE))
+}
+@ 
+
+Fit the model --- use \code{data} to pass the \code{size}
+parameter (since it wasn't hard-coded in the \code{mtmp}
+function):
+<<fit1>>=
+(m0 <- mle2(mtmp,start=list(prob=0.2,theta=9),data=list(size=50)))
+@
+
+The \code{summary} method for \code{mle2} objects
+shows the parameters; approximate standard
+errors (based on quadratic approximation to the curvature at
+the maximum likelihood estimate); and a test
+of the parameter difference from zero based on
+this standard error and on an assumption of normality.
+
+<<sum1>>=
+summary(m0)
+@ 
+
+Construct the likelihood profile (you can
+apply \code{confint} directly to \code{m0},
+but if you're going to work with the likelihood
+profile (e.g. plotting, or looking for confidence
+intervals at several different $\alpha$ values)
+then it is more efficient to compute the profile
+once):
+
+<<prof1,cache=TRUE>>=
+p0 <- profile(m0)
+@ 
+
+Compare the confidence interval estimates based on
+inverting a spline fit to the profile (the default);
+based on the quadratic approximation at the
+maximum likelihood estimate; and based on
+root-finding to find the exact point where the
+profile crosses the critical level.
+
+<<confint1>>=
+confint(p0)
+confint(m0,method="quad")
+confint(m0,method="uniroot")
+@ 
+
+All three types of confidence limits are similar.
+
+Plot the profiles:
+<<profplot1,fig=TRUE,height=5,width=10>>=
+par(mfrow=c(1,2))
+plot(p0,plot.confstr=TRUE)
+@ 
+
+By default, the plot method for 
+likelihood profiles displays the square root of the
+the deviance
+(twice the difference in negative
+log-likelihood), so it will
+be {\sf V}-shaped
+for cases where the quadratic approximation works well
+(as in this case).
+(For a better visual estimate of whether the profile
+is quadratic, use the \code{absVal=FALSE} option to the \code{plot}
+method.)
+
+You can also request confidence intervals
+calculated using \code{uniroot}, which may be more exact when
+the profile is not smooth enough to be modeled accurately
+by a spline.  However, this method is
+also more sensitive to numeric problems.
+
+Instead of defining an
+explicit function for \code{minuslogl}, 
+we can also use the formula interface.
+The formula interface assumes that
+the density function given (1) has \code{x} as
+its first argument (if the distribution is multivariate,
+then \code{x} should be a matrix of observations)
+and (2) has a \code{log} argument that will return
+the log-probability or log-probability density
+if \code{log=TRUE}.
+<<fit2>>=
+m0f <- mle2(x1~dbetabinom(prob,size=50,theta),
+            start=list(prob=0.2,theta=9))
+@ 
+
+It's convenient to use the formula interface
+to try out likelihood estimation on the
+transformed parameters:
+<<fit2f>>=
+m0cf <- mle2(x1~dbetabinom(prob=plogis(lprob),size=50,theta=exp(ltheta)),
+            start=list(lprob=0,ltheta=2))
+confint(m0cf,method="uniroot")
+confint(m0cf,method="spline")
+@ 
+
+In this case the answers from \code{uniroot}
+and \code{spline} (default) methods barely
+differ.
+
+\subsection{Real data (\emph{Orobanche}, \cite{Crowder1978})}
+Data as incorporated in the \code{aod} package:
+<<aod>>=
+library(aod)
+data(orob1)
+@ 
+
+Now construct a negative log-likelihood
+function that differentiates among groups:
+<<aodlikfun>>=
+ML1 <- function(prob1,prob2,prob3,theta,x) {
+  prob <- c(prob1,prob2,prob3)[as.numeric(x$dilution)]
+  size <- x$n
+  -sum(dbetabinom(x$y,prob,size,theta,log=TRUE))
+}
+@ 
+
+Results from \cite{Crowder1978}:
+<<crowdertab,echo=FALSE,results=tex>>=
+crowder.results <- matrix(c(0.132,0.871,0.839,78.424,0.027,0.028,0.032,-34.991,
+                            rep(NA,7),-34.829,
+                            rep(NA,7),-56.258),
+                          dimnames=list(c("prop diffs","full model","homog model"),
+                            c("prob1","prob2","prob3","theta","sd.prob1","sd.prob2","sd.prob3","NLL")),
+                          byrow=TRUE,nrow=3)
+latex(crowder.results,file="",table.env=FALSE,title="model")
+@
+                            
+<<aodfit1,cache=TRUE>>=
+(m1 <- mle2(ML1,start=list(prob1=0.5,prob2=0.5,prob3=0.5,theta=1),
+    data=list(x=orob1)))
+@ 
+
+Or:
+<<echo=FALSE,eval=FALSE>>=
+## would prefer ~dilution-1, but problems with starting values ...
+(m1B <- mle2(y~dbetabinom(prob,size=n,theta),
+             param=list(prob~dilution),
+             start=list(prob=0.5,theta=1),
+    data=orob1))
+@ 
+The result warns us that the optimization has not
+converged; we also don't match
+Crowder's results for $\theta$ exactly.
+We can fix this by setting \code{parscale} appropriately.
+
+<<aodfit2,cache=TRUE>>=
+(m2 <- mle2(ML1,start=as.list(coef(m1)),
+          control=list(parscale=coef(m1)),
+          data=list(x=orob1)))
+@ 
+
+Calculate likelihood profile (restrict the upper limit
+of $\theta$, simply because it will make the picture
+below a little bit nicer):
+<<aodprof2,cache=TRUE>>=
+p2 <- profile(m2,prof.upper=c(Inf,Inf,Inf,theta=2000))
+@ 
+
+Get the curvature-based parameter standard
+deviations (which Crowder used
+rather than computing likelihood profiles):
+<<aodstderr>>=
+round(sqrt(diag(vcov(m2))),3)
+@ 
+We are slightly off Crowder's numbers --- rounding
+error?
+
+Crowder also defines a variance (overdispersion) parameter
+$\sigma^2=1/(1+\theta)$.
+<<aodvar>>=
+sqrt(1/(1+coef(m2)["theta"]))
+@ 
+
+Using the delta method (via the \code{deltavar}
+function in the \code{emdbook} package)
+to approximate the standard deviation of
+$\sigma$:
+<<>>=
+sqrt(deltavar(sqrt(1/(1+theta)),meanval=coef(m2)["theta"],
+         vars="theta",Sigma=vcov(m2)[4,4]))
+@ 
+
+Another way to fit in terms of $\sigma$ rather than $\theta$
+is to compute $\theta=1/\sigma^2-1$ on the fly in a
+formula:
+
+<<>>=
+m2b <- mle2(y~dbetabinom(prob,size=n,theta=1/sigma^2-1),
+            data=orob1,
+            parameters=list(prob~dilution,sigma~1),
+            start=list(prob=0.5,sigma=0.1))
+round(sqrt(diag(vcov(m2b))),3)["sigma"]
+p2b <- profile(m2b,prof.lower=c(-Inf,-Inf,-Inf,0))
+@ 
+
+As might be expected since the standard deviation
+of $\sigma$ is large, the quadratic approximation is
+poor:
+
+<<>>=
+r1 <- rbind(confint(p2)["theta",],
+            confint(m2,method="quad")["theta",])
+rownames(r1) <- c("spline","quad")
+r1
+@ 
+
+Plot the profile:
+<<fig=TRUE>>=
+plot(p2,which="theta",plot.confstr=TRUE)
+@ 
+
+What does the profile for $\sigma$ look like?
+<<fig=TRUE>>=
+plot(p2b,which="sigma",plot.confstr=TRUE,
+     show.points=TRUE)
+@ 
+
+Now fit a homogeneous model:
+<<>>=
+ml0 <- function(prob,theta,x) {
+  size <- x$n
+  -sum(dbetabinom(x$y,prob,size,theta,log=TRUE))
+}
+m0 <- mle2(ml0,start=list(prob=0.5,theta=100),
+          data=list(x=orob1))
+@ 
+
+The log-likelihood matches Crowder's result:
+<<>>=
+logLik(m0)
+@ 
+
+It's easier to 
+use the formula interface
+to specify all three of the models
+fitted by Crowder (homogeneous, probabilities differing
+by group, probabilities and overdispersion differing
+by group):
+
+<<>>=
+m0f <- mle2(y~dbetabinom(prob,size=n,theta),
+            parameters=list(prob~1,theta~1),
+            data=orob1,
+            start=list(prob=0.5,theta=100))
+m2f <- mle2(y~dbetabinom(prob,size=n,theta),
+            parameters=list(prob~dilution,theta~1),
+            data=orob1,
+            start=list(prob=0.5,theta=78.424))
+m3f <- mle2(y~dbetabinom(prob,size=n,theta),
+            parameters=list(prob~dilution,theta~dilution),
+            data=orob1,
+            start=list(prob=0.5,theta=78.424))
+@ 
+
+\code{anova} runs a likelihood ratio test on nested
+models:
+<<>>=
+anova(m0f,m2f,m3f)
+@ 
+
+The various \code{ICtab} commands produce tables of
+information criteria, optionally sorted and
+with model weights.
+<<>>=
+AICtab(m0f,m2f,m3f,weights=TRUE,delta=TRUE,sort=TRUE)
+BICtab(m0f,m2f,m3f,delta=TRUE,nobs=nrow(orob1),sort=TRUE,weights=TRUE)
+AICctab(m0f,m2f,m3f,delta=TRUE,nobs=nrow(orob1),sort=TRUE,weights=TRUE)
+@ 
+
+\section*{Additions/enhancements/differences from \code{stats4::mle}}
+\begin{itemize}
+\item{\code{anova} method}
+\item{warnings on convergence failure}
+\item{more robust to non-positive-definite Hessian;
+  can also specify \code{skip.hessian} to skip Hessian
+  computation when it is problematic}
+\item{when profiling fails because better value is
+    found, report new values}
+\item{can take named vectors as well as lists as
+    starting parameter vectors}
+\item{added \code{AICc}, \code{BIC} definitions,
+    \code{ICtab} functions}
+\item{added \code{"uniroot"} and \code{"quad"}
+    options to \code{confint}}
+\item{more options for colors and line types etc etc.
+The old arguments are:
+<<eval=FALSE>>=
+function (x, levels, conf = c(99, 95, 90, 80, 50)/100, nseg = 50,
+          absVal = TRUE, ...) {}
+@ 
+The new one is:
+<<eval=FALSE>>=
+function (x, levels, which=1:p, conf = c(99, 95, 90, 80, 50)/100, nseg = 50,
+          plot.confstr = FALSE, confstr = NULL, absVal = TRUE, add = FALSE,
+          col.minval="green", lty.minval=2,
+          col.conf="magenta", lty.conf=2,
+          col.prof="blue", lty.prof=1,
+          xlabs=nm, ylab="score",
+          show.points=FALSE,
+          main, xlim, ylim, ...) {}
+@ 
+\code{which} selects (by character vector or numbers)
+which parameters to plot: \code{nseg} does nothing
+(even in the old version); \code{plot.confstr} turns on
+the labels for the confidence levels; \code{confstr} gives
+the labels; \code{add} specifies whether to add the
+profile to an existing plot; \code{col} and \code{lty}
+options specify the colors and line types for
+horizontal and vertical lines marking the minimum
+and confidence vals and the profile curve; \code{xlabs}
+gives a vector of x labels; \code{ylab} gives the y label;
+\code{show.points} specifies whether to show the raw points
+computed.
+}
+\item{\code{mle.options()}}
+\item{\code{data} argument}
+\item{handling of names in argument lists}
+\item{can use alternative optimizers (\code{nlminb}, \code{constrOptim})}
+\end{itemize}
+
+
+
+
+\section{Newer stuff}
 
 \textbf{To do:}
 \begin{itemize}
@@ -42,7 +454,8 @@ be adding to this in the future.
   \end{itemize}
 
 \section{Example}
-  
+
+Data from an experiment by Vonesh \citep{VoneshBolker2005}
 <<>>=
 frogdat <- data.frame(
   size=rep(c(9,12,21,25,37),each=3),
@@ -51,47 +464,76 @@ frogdat$initial <- rep(10,nrow(frogdat))
 @ 
 
 <<>>=
-library(bbmle)
 library(ggplot2)
-print(gg1 <- ggplot(frogdat,aes(x=size,y=killed))+geom_point()+
-      stat_sum(aes(size=factor(..n..)))+
-      labs(size="#")+scale_x_continuous(limits=c(0,40)))
-m1 <- mle2(killed~dbinom(prob=c*(size/d)^g*exp(1-size/d),
-  size=initial),data=frogdat,start=list(c=0.5,d=5,g=1))
-pdat <- data.frame(size=1:40,initial=rep(10,40))
-pdat1 <- data.frame(pdat,killed=predict(m1,newdata=pdat))
-m2 <- mle2(killed~dbinom(prob=c*((size/d)*exp(1-size/d))^g,
-  size=initial),data=frogdat,start=list(c=0.5,d=5,g=1))
-pdat2 <- data.frame(pdat,killed=predict(m2,newdata=pdat))
-gg1 + geom_line(data=pdat1,colour="red")+geom_line(data=pdat2,colour="blue")
 @ 
 
 <<>>=
-coef(m2)
-prof2 <- profile(m2)
+gg1 <- ggplot(frogdat,aes(x=size,y=killed))+geom_point()+
+      stat_sum(aes(size=factor(..n..)))+
+      labs(size="#")+scale_x_continuous(limits=c(0,40))
+@ 
+
+<<cache=TRUE>>=
+m3 <- mle2(killed~dbinom(prob=c*(size/d)^g*exp(1-size/d),
+  size=initial),data=frogdat,start=list(c=0.5,d=5,g=1))
+pdat <- data.frame(size=1:40,initial=rep(10,40))
+pdat1 <- data.frame(pdat,killed=predict(m3,newdata=pdat))
+@
+
+<<cache=TRUE>>=
+m4 <- mle2(killed~dbinom(prob=c*((size/d)*exp(1-size/d))^g,
+  size=initial),data=frogdat,start=list(c=0.5,d=5,g=1))
+pdat2 <- data.frame(pdat,killed=predict(m4,newdata=pdat))
+@ 
+
+<<fig=TRUE>>=
+print(gg1 + geom_line(data=pdat1,colour="red")+geom_line(data=pdat2,colour="blue"))
+@ 
+
+<<>>=
+coef(m4)
+prof4 <- profile(m4)
 @ 
 
 Three different ways to draw the profile:
 <<>>=
-print(plot(prof2))
+print(plot(prof4))
 @ 
 
-<<fig=TRUE>>=
-prof2_df <- as.data.frame(prof2)
+\setkeys{Gin}{width=\textwidth}
+<<latticeprof,fig=TRUE,height=5,width=10>>=
+prof4_df <- as.data.frame(prof4)
 library(lattice)
-print(xyplot(abs(z)~focal|param,data=prof2_df,
+print(xyplot(abs(z)~focal|param,data=prof4_df,
        subset=abs(z)<3,
        type="b",
        xlab="",
        ylab=expression(paste(abs(z),
            " (square root of ",Delta," deviance)")),
-       scale=list(x=list(relation="free"))))
+       scale=list(x=list(relation="free")),
+             layout=c(3,1)))
 @ 
 
-<<fig=TRUE>>=
-print(ggplot(subset(prof2_df,abs(z)<3),
+<<ggplotprof,fig=TRUE,height=5,width=10>>=
+print(ggplot(subset(prof4_df,abs(z)<3),
        aes(x=focal,y=abs(z)))+geom_line()+
-      facet_wrap(~param,scale="free_x"))
+      geom_point()+
+      facet_grid(~param,scale="free_x"))
 @ 
 
+\section*{Bugs, wishes, to do}
+\begin{itemize}
+\item \textbf{WISH}: further methods and arguments: \code{subset},
+  \code{predict}, \code{resid}: \code{sim}?
+\item \textbf{WISH}: extend ICtab to allow DIC as well?
+\item minor \textbf{WISH}: 
+  better methods for extracting \code{nobs} information
+  when possible (e.g. with formula interface)
+\item \textbf{WISH}: better documentation, especially for S4 methods
+\item \textbf{WISH}: variable-length chunks in argument list
+\item \textbf{WISH}: limited automatic differentiation
+    (add capability for common distributions)
+\end{itemize}
+
+\bibliography{mle2}
 \end{document}

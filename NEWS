@@ -1,4 +1,30 @@
+
+0.9.5.1
+ * fixed bug in AICc (David Harris)
+
+
+0.9.5 
+
+  too many changes!
+ * added NAMESPACE, various fixes to go with that
+ * beginnings of an RUnit testing framework
+ * tweaked vignette
+ * added prof.lower, prof.upper to profile()
+ * added "optimize" to list of allowed optimizers, some
+   bug fixes
+
+0.9.4.1
+
+ * tweaked par() resetting in profile plots
+
+0.9.4
+
+ * more qAICc fixing
+
 0.9.3 (version bump from previous) 18/09/2009
+
+* tweaked handling of bounds: profile now succeeds
+  on some 1D problems where it didn't before
 
 15/08/2009
 
