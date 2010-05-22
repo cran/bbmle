@@ -1,5 +1,14 @@
 BUGS/ISSUES:
 
+* allow ICtab etc. to recognize optim(), optimize() fits
+  (ASSUMING that the function was a NLL)
+* add optimizer() as alternative optimizer [DONE]
+* fix par mfrow resetting glitch on plotting profile
+* prettier profile plots (with lattice)?  xyplot for profiles?
+* make sure numeric deriv modifications are working
+
+* incorporate optimx?  minpack.lm?
+
 * proper initialization of intercept-less parameter()
     entries
 
@@ -17,18 +26,21 @@ BUGS/ISSUES:
    m1 <- mle2(10~dbinom(prob=p,size=15),start=list(p=0.67))
    c1 <- confint(m1)
 
-* issues when hitting new minimum in confint rather than
-profile; should return unevaluated call too in this case
+* do one-parameter profiles with optimize??
 
 * use numDeriv library hessian() function instead of nlme::fdHess?
 (or use nlme::fdHess to avoid loading whole package?)
+  [DONE]
 
 * turn off Hessian calculation for profile fits??
+  [maybe DONE by virtue of previous fix]
 
 * should print warning immediately if convergence fails
 
 * some weird stuff with returned fit from found-better-fit profile --
 treating profiled value as fixed ...
+
+* replace approx() in confint() with backspline?
 
 BUG:   order of parameters matters for L-BFGS-B
   (fixed)

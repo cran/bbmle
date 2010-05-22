@@ -1,0 +1,13 @@
+exportPattern("^[^\\.]")
+## import(stats4)
+importClassesFrom(stats4,mle)
+importMethodsFrom(stats4,coef,confint,logLik,BIC,summary,profile)
+importFrom(stats, AIC, profile, update, vcov,
+           anova,deviance,residuals,simulate,predict)
+importFrom(graphics, plot)
+
+
+## importMethodsFrom(stats, anova)
+## to do: export methods etc.
+## import mle from stats4
+## ??

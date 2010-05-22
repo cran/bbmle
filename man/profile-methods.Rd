@@ -11,7 +11,8 @@
                     alpha = 0.01, zmax = sqrt(qchisq(1 - alpha/2, p)),
                     del = zmax/5, trace = FALSE, skiperrs=TRUE,
                     std.err, 
-                    tol.newmin = 0.001, debug=FALSE, \dots)
+                    tol.newmin = 0.001, debug=FALSE,
+                    prof.lower, prof.upper, \dots)
 }
 \arguments{
   \item{fitted}{A fitted maximum likelihood model of class
@@ -35,6 +36,8 @@ value of the negative log-likelihood}
   \item{tol.newmin}{tolerance for diagnosing a new minimum below the
     minimum deviance estimated in initial fit is found}
   \item{debug}{(logical) debugging output?}
+  \item{prof.lower}{optional vector of lower bounds for profiles}
+  \item{prof.upper}{optional vector of upper bounds for profiles}
   \item{\dots}{additional arguments (not used)}
 }
 \details{

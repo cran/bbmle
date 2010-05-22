@@ -1,9 +1,8 @@
-
+setGeneric("simulate", function(object, nsim=1, seed=NULL, ...) standardGeneric("simulate"))
 setMethod("simulate", "mle2",
-          function(object, nsim, seed, newdata=NULL,
+          function(object, nsim=1, seed, newdata=NULL,
                    newparams=NULL, ...) {
-            if (missing(nsim)) nsim=1
-            if (!missing(seed) && !is.null(seed)) set.seed(seed)
+            if (!is.null(seed)) set.seed(seed)
             if (!is.null(newparams)) {
               object@fullcoef <- newparams
             }
@@ -14,6 +13,7 @@ setMethod("simulate", "mle2",
             g
           })
 
+setGeneric("predict", function(object, ...) standardGeneric("predict"))
 setMethod("predict", "mle2",
           function(object,newdata=NULL,
                    location="mean",newparams=NULL, ...) {
@@ -23,6 +23,7 @@ setMethod("predict", "mle2",
             gfun(object,newdata=newdata,location=location,op="predict")
           })
 
+setGeneric("residuals", function(object, ...) standardGeneric("residuals"))
 setMethod("residuals", "mle2",
           function(object,
                    type=c("pearson","response"),
