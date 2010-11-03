@@ -1,3 +1,18 @@
+0.9.8
+ * require data= argument when using formula interface
+ * turn off hessian computation in profile
+ * allow use of MASS::ginv
+
+0.9.7
+ * bug fix in calc_mle2_function for no-intercept models
+  (thanks to Colin Kremer)
+ * fixed optimx, added 'user' option
+
+0.9.6
+ * changed hessian calculation to use numDeriv code (causes tiny
+changes to hessian results that could matter in edge cases)
+  too lazy to provide a backward compatibility mode ...
+ * documented optimizer= choices in ?mle2
 
 0.9.5.1
  * fixed bug in AICc (David Harris)

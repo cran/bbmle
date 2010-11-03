@@ -193,15 +193,20 @@ the log-probability or log-probability density
 if \code{log=TRUE}.
 <<fit2>>=
 m0f <- mle2(x1~dbetabinom(prob,size=50,theta),
-            start=list(prob=0.2,theta=9))
+            start=list(prob=0.2,theta=9),data=data.frame(x1))
 @ 
+Note that you must specify the data via the \code{data}
+argument when using the formula interface; this is sometimes
+slightly more unwieldy than just pulling the data from your
+workspace when you are doing simple things, but in the long
+run it makes tasks like predicting new responses much simpler.
 
 It's convenient to use the formula interface
 to try out likelihood estimation on the
 transformed parameters:
 <<fit2f>>=
 m0cf <- mle2(x1~dbetabinom(prob=plogis(lprob),size=50,theta=exp(ltheta)),
-            start=list(lprob=0,ltheta=2))
+            start=list(lprob=0,ltheta=2),data=data.frame(x1))
 confint(m0cf,method="uniroot")
 confint(m0cf,method="spline")
 @ 

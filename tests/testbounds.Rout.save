@@ -1,7 +1,8 @@
 
-R version 2.9.2 (2009-08-24)
-Copyright (C) 2009 The R Foundation for Statistical Computing
+R version 2.12.1 (2010-12-16)
+Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
+Platform: i486-pc-linux-gnu (32-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -19,21 +20,29 @@ Type 'q()' to quit R.
 
 > x <- runif(10)
 > y <- 1+x+rnorm(10,sd=0.1)
+> d <- data.frame(x,y)
 > 
 > library(bbmle)
-> m1 = mle2(y~dnorm(a+b*x,sd=exp(s)),start=list(a=1,b=1,s=log(0.1)))
+Loading required package: stats4
+Loading required package: numDeriv
+Loading required package: lattice
+> m1 <- mle2(y~dnorm(a+b*x,sd=exp(s)),start=list(a=1,b=1,s=log(0.1)),data=d)
 > 
-> m2 = mle2(y~dnorm(a+b*x,sd=exp(s)),start=list(a=1,b=1,s=log(0.1)),
-+   method="L-BFGS-B",lower=c(a=0,b=0,s=-Inf))
+> m2 <- mle2(y~dnorm(a+b*x,sd=exp(s)),start=list(a=1,b=1,s=log(0.1)),
++   method="L-BFGS-B",lower=c(a=0,b=0,s=-Inf),data=d)
 > 
-> m2F = mle2(y~dnorm(a+b*x,sd=exp(s)),start=list(a=1,b=1,s=log(0.1)),
+> m2F <- mle2(y~dnorm(a+b*x,sd=exp(s)),start=list(a=1,b=1,s=log(0.1)),
 +   method="L-BFGS-B",lower=c(a=0,b=0,s=-Inf),
-+   fixed=list(a=1))
-Warning message:
-In mle2(y ~ dnorm(a + b * x, sd = exp(s)), start = list(a = 1, b = 1,  :
++   fixed=list(a=1),data=d)
+Warning messages:
+1: In mle2(y ~ dnorm(a + b * x, sd = exp(s)), start = list(a = 1, b = 1,  :
   length mismatch between lower/upper and number of non-fixed parameters: # lower=3, # upper=0, # non-fixed=2
+2: In oout$par == call$lower :
+  longer object length is not a multiple of shorter object length
+3: In mle2(y ~ dnorm(a + b * x, sd = exp(s)), start = list(a = 1, b = 1,  :
+  some parameters are on the boundary: variance-covariance calculations may be unreliable
 > 
 > 
 > proc.time()
    user  system elapsed 
-  1.020   0.060   1.137 
+  0.864   0.188   0.989 

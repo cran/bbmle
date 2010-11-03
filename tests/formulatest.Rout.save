@@ -1,7 +1,8 @@
 
-R version 2.9.1 (2009-06-26)
-Copyright (C) 2009 The R Foundation for Statistical Computing
+R version 2.12.1 (2010-12-16)
+Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
+Platform: i486-pc-linux-gnu (32-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -18,15 +19,19 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > library(bbmle)
+Loading required package: stats4
+Loading required package: numDeriv
+Loading required package: lattice
 > 
 > set.seed(1001)
 > 
 > ## test 1
 > x <- 0:10
 > y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
+> d <- data.frame(x,y)
 > m1 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
 +            parameters=list(ymax~1,xhalf~1),
-+            start=list(ymax=1,xhalf=1))
++            start=list(ymax=1,xhalf=1),data=d)
 Warning messages:
 1: In dpois(x, lambda, log) : NaNs produced
 2: In dpois(x, lambda, log) : NaNs produced
@@ -43,7 +48,7 @@ Warning messages:
 8: In dpois(x, lambda, log) : NaNs produced
 > 
 > m2 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
-+            start=list(ymax=1,xhalf=1))
++            start=list(ymax=1,xhalf=1),data=d)
 Warning messages:
 1: In dpois(x, lambda, log) : NaNs produced
 2: In dpois(x, lambda, log) : NaNs produced
@@ -68,11 +73,13 @@ Warning messages:
 > startp <- list(sizep1=0,sizep2=1,sizep3=12)
 > mle2(Kill~dbinom(prob=VBlogist(TBL,sizep1,sizep2,sizep3),size=10),
 +      start=startp,
-+      method="Nelder-Mead")
++      method="Nelder-Mead",
++      data=ReedfrogSizepred)
 
 Call:
 mle2(minuslogl = Kill ~ dbinom(prob = VBlogist(TBL, sizep1, sizep2, 
-    sizep3), size = 10), start = startp, method = "Nelder-Mead")
+    sizep3), size = 10), start = startp, method = "Nelder-Mead", 
+    data = ReedfrogSizepred)
 
 Coefficients:
     sizep1     sizep2     sizep3 
@@ -86,22 +93,23 @@ Log-likelihood: -12.15
 > ymax <- 10
 >   x <- rep(0:19,2)
 >   y <- rpois(40,ymax/(1+x/xhalf[f]))
+> d <- data.frame(x,y)
 > ##  plot(x,y,col=as.numeric(f))
 > 
 >   m3 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
 +              parameters=list(xhalf~f),
-+              start=list(ymax=1,xhalf=1))
++              start=list(ymax=1,xhalf=1),data=d)
 > 
 >   m4 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
 +              parameters=list(ymax~f,xhalf~f),
-+              start=list(ymax=1,xhalf=1))
++              start=list(ymax=1,xhalf=1),data=d)
 Warning messages:
 1: In dpois(x, lambda, log) : NaNs produced
 2: In dpois(x, lambda, log) : NaNs produced
 > 
 >   m5 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
 +              parameters=list(ymax~f),
-+              start=list(ymax=1,xhalf=1))
++              start=list(ymax=1,xhalf=1),data=d)
 > 
 >   anova(m2,m3,m4)
 Likelihood Ratio Tests
@@ -372,21 +380,20 @@ m5 121.9 3
 +   if (log) v else exp(v)
 + }
 > 
-> attach(GobySurvival)
-> on.exit(detach(GobySurvival))
-> totmeansurv = mean((d1+d2)/2)
-> day1 = d1-1
-> day2 = ifelse(d2==70,Inf,d2-1)
+> GS2 <- transform(GobySurvival,
++                           day1 = d1-1,
++                           day2 = ifelse(d2==70,Inf,d2-1),
++                           fexper=factor(exper))
+> totmeansurv <- with(GS2,mean((d1+d2)/2))
 > 
-> fexper <- factor(exper)
 > mle2(cbind(day1,day2)~dicweib(exp(shape),exp(scale)),
 +      parameters=list(scale~fexper+qual*density),
-+      start=list(scale=log(totmeansurv),shape=0))
++      start=list(scale=log(totmeansurv),shape=0),data=GS2)
 
 Call:
 mle2(minuslogl = cbind(day1, day2) ~ dicweib(exp(shape), exp(scale)), 
-    start = list(scale = log(totmeansurv), shape = 0), parameters = list(scale ~ 
-        fexper + qual * density))
+    start = list(scale = log(totmeansurv), shape = 0), data = GS2, 
+    parameters = list(scale ~ fexper + qual * density))
 
 Coefficients:
  scale.(Intercept)      scale.fexper2      scale.fexper3      scale.fexper4 
@@ -401,4 +408,4 @@ There were 14 warnings (use warnings() to see them)
 > 
 > proc.time()
    user  system elapsed 
-  3.896   0.052   3.949 
+  2.708   0.240   2.903 

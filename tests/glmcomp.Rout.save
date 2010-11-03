@@ -1,0 +1,62 @@
+
+R version 2.12.1 (2010-12-16)
+Copyright (C) 2010 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: i486-pc-linux-gnu (32-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library(bbmle)
+Loading required package: stats4
+Loading required package: numDeriv
+Loading required package: lattice
+> x <- 0:10
+> y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
+> d <- data.frame(x,y)
+> LL <- function(ymax=15, xhalf=6)
++     -sum(stats::dpois(y, lambda=ymax/(1+x/xhalf), log=TRUE))
+> mfit0 <- mle2(y~dpois(lambda=exp(interc)),
++               start=list(interc=log(mean(y))),data=d)
+> 
+> mfit1 <- mle2(y~dpois(lambda=exp(loglambda)),
++               start=list(loglambda=log(mean(y))),data=d)
+>               
+> gfit0 <- glm(y~1,family=poisson)
+> coef(mfit0)-coef(gfit0)
+       interc 
+-2.709339e-10 
+> logLik(mfit0)-logLik(gfit0)
+'log Lik.' 7.105427e-15 (df=1)
+> predict(gfit0,type="response")
+       1        2        3        4        5        6        7        8 
+11.54545 11.54545 11.54545 11.54545 11.54545 11.54545 11.54545 11.54545 
+       9       10       11 
+11.54545 11.54545 11.54545 
+> predict(mfit0)  ## why only one value??
+[1] 11.54545
+> ## FIXME: residuals are backwards
+> residuals(mfit0)
+ [1]  4.2540141  1.6052883  0.4280769  0.1337740  2.4881969 -1.9263460
+ [7] -0.7491346 -1.0434374 -1.9263460 -2.2206488 -1.0434374
+> residuals(gfit0,type="response")
+         1          2          3          4          5          6          7 
+14.4545455  5.4545455  1.4545455  0.4545455  8.4545455 -6.5454545 -2.5454545 
+         8          9         10         11 
+-3.5454545 -6.5454545 -7.5454545 -3.5454545 
+> 
+> 
+> proc.time()
+   user  system elapsed 
+  0.716   0.180   0.840 

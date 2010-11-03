@@ -1,7 +1,8 @@
 
-R version 2.9.2 (2009-08-24)
-Copyright (C) 2009 The R Foundation for Statistical Computing
+R version 2.12.1 (2010-12-16)
+Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
+Platform: i486-pc-linux-gnu (32-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -19,10 +20,14 @@ Type 'q()' to quit R.
 
 > require(bbmle)
 Loading required package: bbmle
+Loading required package: stats4
+Loading required package: numDeriv
+Loading required package: lattice
 > x <- 0:10
 > y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
-> fit <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)), start=list(ymax=25,xhalf=3))
-> fit2 <- mle2(y~dpois(lambda=(x+1)*slope), start=list(slope=1))
+> d <- data.frame(x,y)
+> fit <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)), start=list(ymax=25,xhalf=3),data=d)
+> fit2 <- mle2(y~dpois(lambda=(x+1)*slope), start=list(slope=1),data=d)
 > BIC(fit,nobs=length(x))
 [1] 62.0039
 > BIC(fit,fit2,nobs=length(x))
@@ -32,4 +37,4 @@ Loading required package: bbmle
 > 
 > proc.time()
    user  system elapsed 
-  0.848   0.044   0.895 
+  0.720   0.208   0.872 

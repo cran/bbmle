@@ -1,7 +1,8 @@
 
-R version 2.9.1 (2009-06-26)
-Copyright (C) 2009 The R Foundation for Statistical Computing
+R version 2.12.1 (2010-12-16)
+Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
+Platform: i486-pc-linux-gnu (32-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -18,16 +19,20 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > library(bbmle)
+Loading required package: stats4
+Loading required package: numDeriv
+Loading required package: lattice
 > set.seed(1002)
 > lymax <- c(0,2)
 > lhalf <- 0
 > x <- runif(200)
 > g <- factor(rep(c("a","b"),each=100))
 > y <- rnbinom(200,mu=exp(lymax[g])/(1+x/exp(lhalf)),size=2)
+> d <- data.frame(x,g,y)
 > 
 > fit3 <- mle2(y~dnbinom(mu=exp(lymax)/(1+x/exp(lhalf)),size=exp(logk)),
 +     parameters=list(lymax~g),
-+     start=list(lymax=0,lhalf=0,logk=0))
++     start=list(lymax=0,lhalf=0,logk=0),data=d)
 > 
 > plot(y~x,col=g)
 > ## true curves
@@ -52,4 +57,4 @@ Type 'q()' to quit R.
 > 
 > proc.time()
    user  system elapsed 
-  1.104   0.032   1.128 
+  0.972   0.164   1.080 

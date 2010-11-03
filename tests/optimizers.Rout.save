@@ -1,0 +1,66 @@
+
+R version 2.12.1 (2010-12-16)
+Copyright (C) 2010 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: i486-pc-linux-gnu (32-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library(bbmle)
+Loading required package: stats4
+Loading required package: numDeriv
+Loading required package: lattice
+> x <- 0:10
+> y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
+> d <- data.frame(x,y)
+> fits <- lapply(c("optim","nlm","nlminb"),
++        mle2,
++        minuslogl=y~dpois(lambda=ymax/(1+x/xhalf)),
++        start=list(ymax=15,xhalf=6),data=d,
++        method="Nelder-Mead") ## 'method' is ignored by nlm()/nlminb()
+Warning messages:
+1: In dpois(x, lambda, log) : NaNs produced
+2: In nlm(f = objectivefunction, p = start, hessian = !skip.hessian,  :
+  NA/Inf replaced by maximum positive value
+> sapply(fits,coef)
+           [,1]      [,2]      [,3]
+ymax  24.999725 24.999387 24.999424
+xhalf  3.055245  3.055784  3.055781
+> sapply(fits,logLik)
+[1] -28.60406 -28.60405 -28.60405
+> 
+> (fit2 <-  mle2(y~dpois(lambda=25/(1+x/xhalf)),
++               start=list(xhalf=5),data=d,
++               lower=2,upper=8,
++               optimizer="optimize"))
+
+Call:
+mle2(minuslogl = y ~ dpois(lambda = 25/(1 + x/xhalf)), start = list(xhalf = 5), 
+    optimizer = "optimize", data = d, lower = 2, upper = 8)
+
+Coefficients:
+   xhalf 
+3.055659 
+
+Log-likelihood: -28.6 
+> 
+> ## gives error referring to 'interval' rather than 'upper'/'lower'
+> ## (fit2 <-  mle2(y~dpois(lambda=25/(1+x/xhalf)),
+> ##              start=list(xhalf=5),
+> ##              optimizer="optimize"))
+> 
+> proc.time()
+   user  system elapsed 
+  0.828   0.164   0.934 
