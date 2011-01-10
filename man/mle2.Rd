@@ -13,20 +13,31 @@ mle2(minuslogl, start, method, optimizer,
 default.start=TRUE, eval.only = FALSE, vecpar=FALSE,
 parameters=NULL,
 parnames=NULL,
-skip.hessian=FALSE,trace=FALSE,
+skip.hessian=FALSE,
+hessian.opts=NULL,
+use.ginv=TRUE,
+trace=FALSE,
+browse_obj=FALSE,
 transform=NULL,
-gr,\dots)
+gr,
+optimfun,\dots)
 calc_mle2_function(formula,parameters,start,
-   parnames,data=NULL,trace=FALSE)
+   parnames, use.deriv=FALSE, data=NULL,trace=FALSE)
 }
 \arguments{
-  \item{minuslogl}{Function to calculate negative log-likelihood.}
-  \item{start}{Named list. Initial values for optimizer.}
+  \item{minuslogl}{Function to calculate negative log-likelihood,
+  or a formula}
+  \item{start}{Named list. Initial values for optimizer}
   \item{method}{Optimization method to use. See \code{\link{optim}}.}
-  \item{optimizer}{Optimization function to use. (Stub.)}
+  \item{optimizer}{Optimization function to use. Currently available
+    choices are "optim" (the default), "nlm", "nlminb", "constrOptim",
+    "optimx", and "optimize". (\emph{Warning:} Options other than the
+    default may be poorly tested, use with caution.)
+  }
   \item{fixed}{Named list.  Parameter values to keep fixed during
     optimization.}
-  \item{data}{list of data to pass to minuslogl}
+  \item{data}{list of data to pass to negative log-likelihood function: must
+    be specified if \code{minuslogl} is specified as a formula}
   \item{subset}{logical vector for subsetting data (STUB)}
   \item{default.start}{Logical: allow default values of \code{minuslogl}
     as starting values?}
@@ -34,15 +45,27 @@ calc_mle2_function(formula,parameters,start,
     rather than optimizing}
   \item{vecpar}{Logical: is first argument a vector of all parameters?
     (For compatibility with \code{\link{optim}}.)}
-  \item{parameters}{List of linear models for parameters}
+  \item{parameters}{List of linear models for parameters.
+    \emph{MUST BE SPECIFIED IN THE SAME ORDER as the start vector
+      (this is a bug/restriction that I hope to fix soon, but in
+      the meantime beware)}}
   \item{parnames}{List (or vector?) of parameter names}
   \item{gr}{gradient function}
   \item{\dots}{Further arguments to pass to optimizer}
   \item{formula}{a formula for the likelihood (see Details)}
   \item{trace}{Logical: print parameter values tested?}
+  \item{browse_obj}{Logical: drop into browser() within the objective function?}
   \item{transform}{(stub) list of link functions/parameter transformations
     ("log"=log/exp, "logit"=plogis/qlogis, etc.)}
   \item{skip.hessian}{Bypass Hessian calculation?}
+  \item{hessian.opts}{Options for Hessian calculation, passed through to
+    the \code{\link[numDeriv]{hessian}} function}
+  \item{use.ginv}{Use generalized inverse (\code{\link[MASS]{ginv}}) to
+    compute approximate variance-covariance}
+  \item{optimfun}{user-supplied optimization function. Must take exactly
+    the same arguments and return exactly the same structure as \code{\link{optim}}.}
+  \item{use.deriv}{(experimental, not yet implemented): construct symbolic
+     derivatives based on formula?}
 }
 \details{
   The \code{\link{optim}} optimizer is used to find the minimum of the
@@ -103,6 +126,17 @@ calc_mle2_function(formula,parameters,start,
   If \code{lower}, \code{upper}, \code{control$parscale},
   or \code{control$ndeps} are specified for \code{optim}
   fits, they must be named vectors.
+
+  The requirement that \code{data} be specified when using
+  the formula interface is relatively new: it saves many
+  headaches on the programming side when evaluating the
+  likelihood function later on (e.g. for profiling or
+  constructing predictions).  Since \code{data.frame} uses
+  the names of its arguments as column names by default, it
+  is probably the easiest way to package objects that are
+  lying around in the global workspace for use in \code{mle2}
+  (provided they are all of the same length). 
+  
 }
 \seealso{
   \code{\link{mle2-class}}
@@ -110,13 +144,14 @@ calc_mle2_function(formula,parameters,start,
 \examples{
 x <- 0:10
 y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
+d <- data.frame(x,y)
 LL <- function(ymax=15, xhalf=6)
     -sum(stats::dpois(y, lambda=ymax/(1+x/xhalf), log=TRUE))
 ## uses default parameters of LL
 (fit <- mle2(LL))
 mle2(LL, fixed=list(xhalf=6))
 
-(fit0 <- mle2(y~dpois(lambda=ymean),start=list(ymean=mean(y))))
+(fit0 <- mle2(y~dpois(lambda=ymean),start=list(ymean=mean(y)),data=d))
 anova(fit0,fit)
 summary(fit)
 logLik(fit)
@@ -143,6 +178,7 @@ cov2cor(vcov(fit2))
 
 mle2(y~dpois(lambda=exp(lymax)/(1+x/exp(lhalf))),
    start=list(lymax=0,lhalf=0),
+   data=d,
    parameters=list(lymax~1,lhalf~1))
 
 ## try bounded optimization with nlminb and constrOptim
@@ -158,11 +194,11 @@ lhalf <- 0
 x <- sort(runif(200))
 g <- factor(sample(c("a","b"),200,replace=TRUE))
 y <- rnbinom(200,mu=exp(lymax[g])/(1+x/exp(lhalf)),size=2)
+d2 <- data.frame(x,g,y)
 
 fit3 <- mle2(y~dnbinom(mu=exp(lymax)/(1+x/exp(lhalf)),size=exp(logk)),
-    parameters=list(lymax~g),
+    parameters=list(lymax~g),data=d2,
     start=list(lymax=0,lhalf=0,logk=0))
-
 }
 \keyword{models}
 

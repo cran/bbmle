@@ -5,14 +5,15 @@ set.seed(1001)
 ## test 1
 x <- 0:10
 y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
+d <- data.frame(x,y)
 m1 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
            parameters=list(ymax~1,xhalf~1),
-           start=list(ymax=1,xhalf=1))
+           start=list(ymax=1,xhalf=1),data=d)
 
 p1 <- profile(m1)
 
 m2 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
-           start=list(ymax=1,xhalf=1))
+           start=list(ymax=1,xhalf=1),data=d)
 
 ## should be able to omit parameters (?) or
 ## have them taken from 
@@ -34,7 +35,8 @@ VBlogist <- function(x,sizep1,sizep2,sizep3) {
 startp <- list(sizep1=0,sizep2=1,sizep3=12)
 mle2(Kill~dbinom(prob=VBlogist(TBL,sizep1,sizep2,sizep3),size=10),
      start=startp,
-     method="Nelder-Mead")
+     method="Nelder-Mead",
+     data=ReedfrogSizepred)
              
 ## test 3:
 f <- factor(rep(1:2,each=20))
@@ -42,19 +44,20 @@ xhalf <- c(5,10)
 ymax <- 10
   x <- rep(0:19,2)
   y <- rpois(40,ymax/(1+x/xhalf[f]))
+d <- data.frame(x,y)
 ##  plot(x,y,col=as.numeric(f))
 
   m3 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
              parameters=list(xhalf~f),
-             start=list(ymax=1,xhalf=1))
+             start=list(ymax=1,xhalf=1),data=d)
 
   m4 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
              parameters=list(ymax~f,xhalf~f),
-             start=list(ymax=1,xhalf=1))
+             start=list(ymax=1,xhalf=1),data=d)
 
   m5 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
              parameters=list(ymax~f),
-             start=list(ymax=1,xhalf=1))
+             start=list(ymax=1,xhalf=1),data=d)
 
   anova(m2,m3,m4)
   anova(m2,m5,m4)
@@ -300,13 +303,12 @@ dicweib <- function(x,shape,scale,log=FALSE) {
   if (log) v else exp(v)
 }
 
-attach(GobySurvival)
-on.exit(detach(GobySurvival))
-totmeansurv = mean((d1+d2)/2)
-day1 = d1-1
-day2 = ifelse(d2==70,Inf,d2-1)
+GS2 <- transform(GobySurvival,
+                          day1 = d1-1,
+                          day2 = ifelse(d2==70,Inf,d2-1),
+                          fexper=factor(exper))
+totmeansurv <- with(GS2,mean((d1+d2)/2))
 
-fexper <- factor(exper)
 mle2(cbind(day1,day2)~dicweib(exp(shape),exp(scale)),
      parameters=list(scale~fexper+qual*density),
-     start=list(scale=log(totmeansurv),shape=0))
+     start=list(scale=log(totmeansurv),shape=0),data=GS2)

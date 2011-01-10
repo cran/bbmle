@@ -1,5 +1,11 @@
 BUGS/ISSUES:
 
+* ask MM about mismatch between confint (approx) and profile plot (backspline) ... ?
+* DISABLE boundary warning when profiling ...
+* try to do something about rescaling when hessian is problematic?
+* add ginv for problematic hessians?
+* implement 'subset' argument
+* check problems with optimizer="optimize" in tests/parscale.R
 * allow ICtab etc. to recognize optim(), optimize() fits
   (ASSUMING that the function was a NLL)
 * add optimizer() as alternative optimizer [DONE]
@@ -20,7 +26,7 @@ BUGS/ISSUES:
 
 * spurious error on mismatched parameter names
 
-* spurious warnings in 1-parameter conf int:
+* spurious warnings in 1-parameter conf int: [FIXED]
 
    library(bbmle)
    m1 <- mle2(10~dbinom(prob=p,size=15),start=list(p=0.67))
@@ -41,6 +47,7 @@ BUGS/ISSUES:
 treating profiled value as fixed ...
 
 * replace approx() in confint() with backspline?
+  general solution for non-monotonic profiles?
 
 BUG:   order of parameters matters for L-BFGS-B
   (fixed)

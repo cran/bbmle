@@ -5,10 +5,11 @@ lhalf <- 0
 x <- runif(200)
 g <- factor(rep(c("a","b"),each=100))
 y <- rnbinom(200,mu=exp(lymax[g])/(1+x/exp(lhalf)),size=2)
+d <- data.frame(x,g,y)
 
 fit3 <- mle2(y~dnbinom(mu=exp(lymax)/(1+x/exp(lhalf)),size=exp(logk)),
     parameters=list(lymax~g),
-    start=list(lymax=0,lhalf=0,logk=0))
+    start=list(lymax=0,lhalf=0,logk=0),data=d)
 
 plot(y~x,col=g)
 ## true curves

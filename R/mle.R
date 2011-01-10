@@ -57,6 +57,7 @@ calc_mle2_function <- function(formula,
                                parameters,
                                start,
                                parnames,
+                               use.deriv=FALSE,
                                data=NULL,
                                trace=FALSE) {
   RHS <- formula[[3]]
@@ -64,6 +65,9 @@ calc_mle2_function <- function(formula,
   ## need to check on variable order:
   ## should it go according to function/formula,
   ##   not start?
+  ## BUG/FIXME: data evaluates to 'FALSE' at this point -- regardless of whether
+  ## it has been specified
+  if (!is.list(data)) stop("must specify data argument (as a list or data frame) when using formula argument")
   vecstart <- (is.numeric(start))
   if (vecstart) start <- as.list(start) ## ??
   if (missing(parnames) || is.null(parnames)) {
@@ -83,6 +87,7 @@ calc_mle2_function <- function(formula,
     if (npars==0) { ## no non-constant parameters
       parameters <- mmats <- vpos <- NULL
     } else {
+      ## BUG IN HERE SOMEWHERE, FIXME: SENSITIVE TO ORDER OF 'start'
       mmats <- list()
       vpos <- list()
       pnames0 <- parnames
@@ -98,7 +103,7 @@ calc_mle2_function <- function(formula,
         vposvals <- cumsum(sapply(parnames,length))
         ## fill out start vectors with zeros or replicates as appropriate
         if (length(start[[vname]])==1) {
-            if (length(grep("-1",models[i])>0)) {
+            if (length(grep("- 1",models[i])>0)) {
                 start[[vname]] <- rep(start[[vname]],length(pnames))
             } else {
                 start[[vname]] <- c(start[[vname]],rep(0,length(pnames)-1))
@@ -122,16 +127,30 @@ calc_mle2_function <- function(formula,
     ## is there a better way to do this?
     pars <- unlist(as.list(match.call())[-1])
     if (!is.null(parameters)) {
-      ## browser()
       for (i in seq(along=parameters)) {
         assign(vars[i],mmats[[i]] %*% pars[vpos[[i]]])
       }
     }
-    arglist1 <- lapply(arglist1,eval,envir=data,enclos=sys.frame(sys.nframe()))
-    r <- -sum(do.call(ddistn,arglist1))
+    ## if (is.null(data) || !is.list(data))
+    ## stop("data argument must be specified when using formula interface")
+    ## BUG/FIXME: data evaluates to 'FALSE' at this point -- regardless of whether
+    ## it has been specified
+    arglist2 <- lapply(arglist1,eval,envir=data,enclos=sys.frame(sys.nframe()))
+    if (use.deriv) {
+      stop("use.deriv is not yet implemented")
+      browser()
+      ## minor hack -- should store information otherwise -- could have
+      ##  different numbers of arguments for different distributions?
+      LLform <- get(gsub("^d","s",as.character(RHS[[1]])))(NA,NA)$formula
+      avals <- as.list(formula[[3]][-1])
+      for (i in seq_along(avals))
+        LLform <- gsub(names(avals)[i],avals[[i]],LLform)
+      r <- eval(deriv(parse(text=LLform),parnames),envir=c(arglist2,data))
+    } else {
+      r <- -sum(do.call(ddistn,arglist2))
+    }
     ## doesn't work yet -- need to eval arglist in the right env ...
     ## if (debugfn) cat(unlist(arglist),r,"\n")
-    ## browser()
     if (trace) cat(pars,r,"\n")
     r
   }
@@ -161,15 +180,18 @@ mle2 <- function(minuslogl,
                  parameters=NULL,
                  parnames=NULL,
                  skip.hessian=FALSE,
+                 hessian.opts=NULL,
+                 use.ginv=TRUE,
                  trace=FALSE,
+                 browse_obj=FALSE,
                  transform=NULL, ## stub
                  gr,
+                 optimfun,
                  ...) {
   if (!missing(transform))
     stop("parameter transformations not yet implemented")
   if (missing(method)) method <- mle2.options("optim.method")
   if (missing(optimizer)) optimizer <- mle2.options("optimizer")
-  ## if (optimizer != "optim") stop("only optim() is currently supported")
   if (inherits(minuslogl,"formula")) {
     pf <- function(f) {if (is.null(f))
                          {  ""
@@ -185,9 +207,9 @@ mle2 <- function(minuslogl,
                        paste(sapply(parameters,pf),collapse=", "),sep=": ")
     }
     tmp <- calc_mle2_function(minuslogl,parameters,
-                              start,
-                              parnames,
-                              data,trace)
+                              start=start,
+                              parnames=parnames,
+                              data=data,trace=trace)
     minuslogl <- tmp$fn
     start <- tmp$start
     fdata <- tmp$fdata
@@ -207,7 +229,6 @@ mle2 <- function(minuslogl,
   call$control$parscale <- eval.parent(call$control$parscale)
   call$control$ndeps <- eval.parent(call$control$ndeps)
   call$control$maxit <- eval.parent(call$control$maxit)
-  ##   browser()
   if(!missing(start))
     if (!is.list(start)) {
       if (is.null(names(start)) || !is.vector(start))
@@ -282,7 +303,6 @@ mle2 <- function(minuslogl,
   ## attach(data,warn.conflicts=FALSE)
   ## on.exit(detach(data))
   denv <- local(environment(),c(as.list(data),fdata,list(mleenvset=TRUE)))
-  ## browser()
   ## denv <- local(new.env(),c(as.list(data),fdata,list(mleenvset=TRUE)))
   argnames.in.data <- names(data)[names(data) %in% names(formals(minuslogl))]
   args.in.data <- lapply(argnames.in.data,get,env=denv)
@@ -308,6 +328,7 @@ mle2 <- function(minuslogl,
     ## doesn't help, environment(minuslogl) is empty by this time
     ## cat("e3:",length(ls(envir=environment(minuslogl))),"\n")
     ## hack to remove unwanted names ...
+    if (browse_obj) browser()
     do.call("minuslogl",namedrop(args))
   } ## end of objective function
   objectivefunctiongr <-
@@ -350,7 +371,6 @@ mle2 <- function(minuslogl,
     skip.hessian <- TRUE
     oout <- list(par=start, value=objectivefunction(start),
                  hessian = matrix(NA,nrow=length(start),ncol=length(start)))
-    ## browser()
   } else {
     oout <- switch(optimizer,
                    optim = {
@@ -375,7 +395,7 @@ mle2 <- function(minuslogl,
                      arglist <- list(...)
                      arglist$lower <- arglist$upper <-
                        arglist$control <- NULL
-                     do.call("optim",
+                     do.call("optimx",
                              c(list(par=start,
                                     fn=objectivefunction,
                                     method=method,
@@ -386,20 +406,47 @@ mle2 <- function(minuslogl,
                                     upper=call$upper),
                                arglist))
                    },
-                   nlm = nlm(f=objectivefunction, p=start, hessian=!skip.hessian, ...),
+                   nlm = nlm(f=objectivefunction, p=start, hessian=FALSE, ...),
+                     ##!skip.hessian, 
                    nlminb = nlminb(start=start,
                      objective=objectivefunction, hessian=NULL, ...),
                    constrOptim = constrOptim(theta=start,
                      f=objectivefunction, method=method, ...),
                    optimize=,
                    optimise= optimize(f=objectivefunction, ...),
-                   stop("unknown optimizer (choices are 'optim', 'nlm', 'nlminb', 'constrOptim', and 'optimi[sz]e')")
+                   user = {
+                     arglist <- list(...)
+                     arglist$lower <- arglist$upper <-
+                       arglist$control <- NULL
+                     do.call(optimfun,
+                             c(list(par=start,
+                                    fn=objectivefunction,
+                                    method=method,
+                                    hessian=FALSE,
+                                    gr=objectivefunctiongr,
+                                    control=call$control,
+                                    lower=call$lower,
+                                    upper=call$upper),
+                               arglist))
+                   },
+                   stop("unknown optimizer (choices are 'optim', 'nlm', 'nlminb', 'constrOptim', 'user', and 'optimi[sz]e')")
                  )
   }
   optimval <- switch(optimizer,
-                     optim= , constrOptim=, none="value",
+                     optim= , constrOptim=, optimx=, user=, none="value",
                      nlm="minimum",
                      optimize=, optimise=, nlminb="objective")
+  if (optimizer=="optimx") {
+    ## HACK: oout from optimx is a data frame [therefore all elements must
+    ##  have the same length, in this class length 1].  Why??  I'm going
+    ## to try to pull out the details from the best fit ...
+    ## oout <- attr(oout,"details")[[which.min(oout$fvalues)]]
+    ## if (is.null(oout)
+    best <- which.min(oout$fvalues)
+    oout <- list(par=oout$par[[best]],
+                 value=oout$fvalues[[best]],
+                 convergence=oout$conv[[best]])
+  }
   if (optimizer=="nlm") {
     oout$par <- oout$estimate
     oout$convergence <- oout$code
@@ -411,31 +458,39 @@ mle2 <- function(minuslogl,
   if (optimizer %in% c("nlminb","optimise","optimize")) {
     names(oout$par) <- names(start)
   }
-  tmpf <- objectivefunction
   ## FIXME: worry about boundary violations?
-  psc <- call$control$parscale
-  if (is.null(psc)) {
-    oout$hessian <- try(hessian(objectivefunction,oout$par))
-  } else {
-    tmpf <- function(x) {
-      objectivefunction(x/psc)
+  ## (if we're on the boundary then the Hessian may not be useful anyway)
+  ##
+  if ((!is.null(call$upper) || !is.null(call$lower)) &&
+      any(oout$par==call$upper) || any(oout$par==call$lower))
+    warning("some parameters are on the boundary: variance-covariance calculations may be unreliable")
+  if (length(oout$par)==0) skip.hessian <- TRUE
+  namatrix <- matrix(NA,nrow=length(start),ncol=length(start))
+  if (!skip.hessian) {
+    psc <- call$control$parscale
+    if (is.null(psc)) {
+      oout$hessian <- try(hessian(objectivefunction,oout$par,method.args=hessian.opts))
+    } else {
+      cat(oout$par,"\n")
+      tmpf <- function(x) {
+        objectivefunction(x*psc)
+      }
+      oout$hessian <- try(hessian(tmpf,oout$par/psc,method.args=hessian.opts))/outer(psc,psc)
     }
-    oout$hessian <- hessian(tmpf,oout$par*psc)*outer(psc,psc)
   }
-  ##  } else {
-  ## oout <- optim(start, objectivefunction, method=method, hessian=!skip.hessian, ...)
-  if (skip.hessian) {
-    oout$hessian = matrix(NA,nrow=length(start),ncol=length(start))
-  }
-  ## skip hessian calculation if 0 varying parameters
-  ##if (length(oout$par)) oout$hessian <- fdHess(pars=oout$par,fun=f)$Hessian
+  if (skip.hessian || inherits(oout$hessian,"try-error"))
+    oout$hessian <- namatrix
   coef <- oout$par
   nc <- names(coef)
   if (skip.hessian) {
     tvcov <- matrix(NA,length(coef),length(coef))
   } else {
     if (length(coef)) {
-      tmphess <- try(solve(oout$hessian,silent=TRUE))
+      if (use.ginv) {
+        tmphess <- try(MASS::ginv(oout$hessian))
+      } else {
+        tmphess <- try(solve(oout$hessian,silent=TRUE))
+      }
       if (class(tmphess)=="try-error") {
         tvcov <- matrix(NA,length(coef),length(coef))
         warning("couldn't invert Hessian")
@@ -507,7 +562,7 @@ setMethod("profile", "mle2",
                     alpha = 0.01, zmax = sqrt(qchisq(1 - alpha/2, p)),
                     del = zmax/5, trace = FALSE, skiperrs=TRUE,
                     std.err, tol.newmin = 0.001, debug=FALSE,
-                    prof.lower, prof.upper, ...) {
+                    prof.lower, prof.upper, skip.hessian=TRUE, ...) {
               ## fitted: mle2 object
               ## which: which parameters to profile (numeric or char)
               ## maxsteps: steps to take looking for zmax
@@ -562,7 +617,6 @@ setMethod("profile", "mle2",
                         if (zz > (-tol.newmin)) {
                             zz <- 0
                         } else {
-                            ## browser()
                             cat("Profiling has found a better solution,",
                                 "so original fit had not converged:\n")
                             cat(sprintf("(new deviance=%1.4g, old deviance=%1.4g, diff=%1.4g)",
@@ -577,7 +631,7 @@ setMethod("profile", "mle2",
                     }
                     z <- sgn * sqrt(zz)
                     pvi <<- rbind(pvi, ri)
-                    zi <<- c(zi, z)
+                    zi <<- c(zi, z) ## nb GLOBAL set
                 }
                 if (trace) cat(bi, z, "\n")
                 z
@@ -594,7 +648,6 @@ setMethod("profile", "mle2",
                 if (any(is.na(std.err)))
                   std.err[is.na(std.err)] <- summ@coef[is.na(std.err)]
             }
-            ## if (!missing(std.err)) browser()
             if (any(is.na(std.err))) {
               std.err <- sqrt(1/diag(fitted@details$hessian))
               if (any(is.na(std.err))) {
@@ -611,6 +664,7 @@ setMethod("profile", "mle2",
             prof <- vector("list", length = length(which))
             names(prof) <- Pnames[which]
             call <- fitted@call
+            call$skip.hessian <- skip.hessian ## BMB: experimental
             call$minuslogl <- fitted@minuslogl
             ndeps <- eval.parent(call$control$ndeps)
             parscale <- eval.parent(call$control$parscale)
@@ -652,43 +706,63 @@ setMethod("profile", "mle2",
                   { lower[i]
                   } else -Inf
                 ubound <- if (!missing(prof.upper)) prof.upper[i] else if (valf(upper)) upper[i] else Inf
+                stop_bound <- stop_na <- stop_cutoff <- stop_flat <- FALSE
                 while ((step <- step + 1) < maxsteps && abs(z) < zmax) {
                   curval <- B0[i] + sgn * step * del * std.err[i]
                   if ((sgn==-1 & curval<lbound) ||
-                      (sgn==1 && curval>ubound)) break
+                      (sgn==1 && curval>ubound)) {
+                    stop_bound <- TRUE; break
+                  }
                   z <- onestep(step)
+                  if (step>1 && (identical(oldcurval,curval) || identical(oldz,z))) {
+                    stop_flat <- TRUE; break
+                  }
+                  oldcurval <- curval
+                  oldz <- z
                   if (newpars_found) return(z)
-                  if(is.na(z)) break
+                  if(is.na(z)) {
+                    stop_na <- TRUE; break
+                  }
                   lastz <- z
                 }
-                if (step==maxsteps) warning("hit maximum number of steps")
-                if(abs(lastz) < zmax) {
+                stop_cutoff <- (!is.na(z) && abs(z)>=zmax)
+                stop_maxstep <- (step==maxsteps)
+                if (debug) {
+                  if (stop_na) cat("encountered NA\n")
+                  if (stop_cutoff) cat("above cutoff\n")
+                }
+                if (stop_flat) {
+                  warning("stepsize effectively zero/flat profile")
+                } else {
+                  if (stop_maxstep) warning("hit maximum number of steps")
+                  if(!stop_cutoff) {
                     if (debug) cat("haven't got to zmax yet, trying harder\n")
                     ## now let's try a bit harder if we came up short
                     for(dstep in c(0.2, 0.4, 0.6, 0.8, 0.9)) {
-                    curval <- B0[i] + sgn * (step-1+dstep) * del * std.err[i]
-                    if ((sgn==-1 & curval<lbound) ||
-                      (sgn==1 && curval>ubound)) break
-                    z <- onestep(step - 1 + dstep)
-                    if (newpars_found) return(z)
-                    if(is.na(z) || abs(z) > zmax) break
-                    lastz <- z
-                  }
-                  if ((abs(lastz) < zmax) &&
-                      ((sgn==-1 && lbound>-Inf) || (sgn==1 && ubound<Inf))) {
+                      curval <- B0[i] + sgn * (step-1+dstep) * del * std.err[i]
+                      if ((sgn==-1 & curval<lbound) ||
+                          (sgn==1 && curval>ubound)) break
+                      z <- onestep(step - 1 + dstep)
+                      if (newpars_found) return(z)
+                      if(is.na(z) || abs(z) > zmax) break
+                      lastz <- z
+                    }
+                    if (!stop_cutoff && stop_bound) {
                       if (debug) cat("bounded and didn't make it, try at boundary\n")
-                    ## bounded and didn't make it, try at boundary
-                    if (sgn==-1 && B0[i]>lbound) onestep(bi=lbound)
-                    if (sgn==1  && B0[i]<ubound) onestep(bi=ubound)
-                  }
-                } else if(length(zi) < 5) { # try smaller steps
-                  mxstep <- step - 1
-                  step <- 0.5
-                  while ((step <- step + 1) < mxstep) {
-                    onestep(step)
-                  }
-                }
-              }
+                      ## bounded and didn't make it, try at boundary
+                      if (sgn==-1 && B0[i]>lbound) onestep(bi=lbound)
+                      if (sgn==1  && B0[i]<ubound) onestep(bi=ubound)
+                    }
+                  } else if (length(zi) < 5) { # try smaller steps
+                    if (debug) cat("try smaller steps\n")
+                    mxstep <- step - 1
+                    step <- 0.5
+                    while ((step <- step + 1) < mxstep) {
+                      onestep(step)
+                    }
+                  } ## smaller steps
+                } ## !zero stepsize
+              } ## step in both directions
               si <- order(pvi[, i])
               prof[[p.i]] <- data.frame(z = zi[si])
               prof[[p.i]]$par.vals <- pvi[si,, drop=FALSE]
@@ -1190,7 +1264,9 @@ function (object, parm, level = 0.95, trace=FALSE, ...)
     sp <- if (is.matrix(pv)) {
       spline(x = pv[, Pnames[pm]], y = pro[, 1])
     } else spline(x = pv, y = pro[, 1])
-    ci[Pnames[pm], ] <- approx(sp$y, sp$x, xout = cutoff)$y
+    tt <- try(approx(sp$y, sp$x, xout = cutoff)$y,silent=TRUE)
+    if (inherits(tt,"try-error")) tt <- rep(NA,2)
+    ci[Pnames[pm], ] <- tt
   }
   drop(ci)
 })
@@ -1390,7 +1466,7 @@ function (fitted, which = 1:p, maxsteps = 100,
             else stop("profiling has found a better solution, so original fit had not converged")
             z <- sgn * sqrt(zz)
             pvi <<- rbind(pvi, ri)
-            zi <<- c(zi, z)
+            zi <<- c(zi, z) ## NB global set!
         }
         if (trace) cat(bi, z, "\n")
         z

@@ -1,7 +1,8 @@
 
-R version 2.9.1 (2009-06-26)
-Copyright (C) 2009 The R Foundation for Statistical Computing
+R version 2.12.1 (2010-12-16)
+Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
+Platform: i486-pc-linux-gnu (32-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -19,6 +20,9 @@ Type 'q()' to quit R.
 
 > ## from Eric Weese
 > library(bbmle)
+Loading required package: stats4
+Loading required package: numDeriv
+Loading required package: lattice
 > f <- function(x=2,a=1) x^2 - a
 > f.g <- function(x,a) 2*x
 > mle2(f,fixed=list(a=1)) #works
@@ -45,9 +49,7 @@ Warning messages:
 1: In gr(par, ...) : gradient functions untested with profiling
 2: In gr(par, ...) : gradient functions untested with profiling
 3: In gr(par, ...) : gradient functions untested with profiling
-4: In gr(par, ...) : gradient functions untested with profiling
-5: In gr(par, ...) : gradient functions untested with profiling
 > 
 > proc.time()
    user  system elapsed 
-  0.764   0.036   0.790 
+  0.676   0.204   0.824 

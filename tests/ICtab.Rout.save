@@ -18,39 +18,24 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-> ## set up a data frame for prediction
-> 
-> set.seed(1001)
-> f = factor(rep(letters[1:4],each=20))
-> x = runif(80)
-> u = rnorm(4)
-> y = rnorm(80,mean=2+x*(3+u[f]),sd=0.1)
-> dat = data.frame(f,x,y)
-> 
-> ## fit a model ... could easily do by lm() but want to
-> ##   demonstrate the problem
-> 
 > library(bbmle)
 Loading required package: stats4
 Loading required package: numDeriv
 Loading required package: lattice
-> m1 = mle2(y~dnorm(a+b*x,sd=exp(logs)),parameters=list(b~f),data=dat,
-+   start=list(a=0,b=2,logs=-3))
 > 
-> ## data frame for prediction
-> pp0 = expand.grid(x=seq(0,1,length=11),
-+   f=levels(dat$f))
+> set.seed(101)
+> z = rpois(100,lambda=5)
 > 
-> ## combine frame and model data: have to keep the model data
-> ##  around, because it contain other information needed for
-> ##  prediction.
+> m1 = mle2(z~dpois(lambda=L),start=list(L=4),data=data.frame(z))
 > 
-> nrow(predict(m1,pp0))
-[1] 44
+> ICtab(m1,type="qAICc",dispersion=1.2,nobs=100)
+   dqAICc df
+m1 0      1 
 > 
-> 
-> 
+> m2 = glm(z~1,family=poisson)
+> qAICc(m2,nobs=100,dispersion=2)
+[1] 226.1823
 > 
 > proc.time()
    user  system elapsed 
-  1.260   0.300   1.546 
+  0.740   0.232   0.903 

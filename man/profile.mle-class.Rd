@@ -86,8 +86,9 @@ Objects can be created by calls of the form \code{new("profile.mle2",
 \examples{
 x <- 0:10
 y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
+d <- data.frame(x,y)
 fit1 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),start=list(ymax=1,xhalf=1),
-   method="L-BFGS-B",lower=c(ymax=0.001,xhalf=0.001))
+   method="L-BFGS-B",lower=c(ymax=0.001,xhalf=0.001),data=d)
 p1 <- profile(fit1)
 plot(p1,main=c("first","second"),
      xlab=c(~y[max],~x[1/2]),ylab="Signed square root deviance")
