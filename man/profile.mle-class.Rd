@@ -2,6 +2,7 @@
 \docType{class}
 \alias{profile.mle2-class}
 \alias{confint,profile.mle2-method}
+\alias{confint.mle2}  %% bogus but good ref link
 \alias{plot,profile.mle2-method}
 \alias{plot,profile.mle2,missing-method}
 \alias{show,profile.mle2-method}

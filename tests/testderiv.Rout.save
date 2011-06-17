@@ -1,0 +1,65 @@
+
+R version 2.12.1 (2010-12-16)
+Copyright (C) 2010 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: i486-pc-linux-gnu (32-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library(bbmle)
+Loading required package: stats4
+Loading required package: numDeriv
+Loading required package: lattice
+> ## source("../R/dists.R")
+> ## source("../R/mle.R")
+> 
+> ## an attempt to sketch out by hand
+> ##  how one would derive an analytic
+> ##  gradient function for a formula-specified
+> ##  likelihood and use it ...
+> set.seed(1001)
+> x <- rbinom(50,size=10,prob=0.4)
+> mle2(x~dbinom(prob=p,size=10),start=list(p=0.3),data=data.frame(x))
+
+Call:
+mle2(minuslogl = x ~ dbinom(prob = p, size = 10), start = list(p = 0.3), 
+    data = data.frame(x))
+
+Coefficients:
+        p 
+0.3960003 
+
+Log-likelihood: -97.19 
+Warning messages:
+1: In dbinom(x, size, prob, log) : NaNs produced
+2: In dbinom(x, size, prob, log) : NaNs produced
+3: In dbinom(x, size, prob, log) : NaNs produced
+4: In dbinom(x, size, prob, log) : NaNs produced
+> 
+> f <- sbinom(prob=0.1,size=1)$formula
+> deriv(parse(text=f),"prob")
+expression({
+    .expr3 <- size - x
+    .expr4 <- 1 - prob
+    .value <- x * log(prob) + .expr3 * log(.expr4)
+    .grad <- array(0, c(length(.value), 1L), list(NULL, c("prob")))
+    .grad[, "prob"] <- x * (1/prob) - .expr3 * (1/.expr4)
+    attr(.value, "gradient") <- .grad
+    .value
+})
+> 
+> proc.time()
+   user  system elapsed 
+  0.724   0.188   0.860 

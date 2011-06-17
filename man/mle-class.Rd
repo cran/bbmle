@@ -10,6 +10,9 @@
 \alias{vcov,mle2-method}
 \alias{deviance,mle2-method}
 \alias{coerce,mle,mle2-method}
+\alias{formula,mle2-method}
+\alias{stdEr}
+\alias{stdEr,mle2-method}
 \title{Class "mle2". Result of Maximum Likelihood Estimation.}
 \description{This class encapsulates results of a generic maximum
   likelihood procedure.}
@@ -50,7 +53,9 @@
     \item{update}{\code{signature(object = "mle2")}:  Update fit.}
     \item{vcov}{\code{signature(object = "mle2")}: Extract
       variance-covariance matrix.}
-    \item{plot}{\code{signature(object="profile.mle2,missing")}: Plot profile. }
+    \item{formula}{\code{signature(object="mle2")}: Extract formula}
+    \item{plot}{\code{signature(object="profile.mle2,missing")}: Plot
+      profile. }
   }
 }
 \keyword{classes}

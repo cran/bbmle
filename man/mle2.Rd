@@ -21,7 +21,7 @@ browse_obj=FALSE,
 transform=NULL,
 gr,
 optimfun,\dots)
-calc_mle2_function(formula,parameters,start,
+calc_mle2_function(formula,parameters, links, start,
    parnames, use.deriv=FALSE, data=NULL,trace=FALSE)
 }
 \arguments{
@@ -31,7 +31,9 @@ calc_mle2_function(formula,parameters,start,
   \item{method}{Optimization method to use. See \code{\link{optim}}.}
   \item{optimizer}{Optimization function to use. Currently available
     choices are "optim" (the default), "nlm", "nlminb", "constrOptim",
-    "optimx", and "optimize". (\emph{Warning:} Options other than the
+    "optimx", and "optimize". If "optimx" is used, (1) the \code{optimx}
+    package must be explicitly loaded with \code{\link{load}} or
+    \code{\link{require}}(\emph{Warning:} Options other than the
     default may be poorly tested, use with caution.)
   }
   \item{fixed}{Named list.  Parameter values to keep fixed during
@@ -44,11 +46,15 @@ calc_mle2_function(formula,parameters,start,
   \item{eval.only}{Logical: return value of \code{minuslogl(start)}
     rather than optimizing}
   \item{vecpar}{Logical: is first argument a vector of all parameters?
-    (For compatibility with \code{\link{optim}}.)}
+    (For compatibility with \code{\link{optim}}.)
+  If \code{vecpar} is \code{TRUE}, then you should use
+  \code{\link{parnames}} to define the parameter names for the
+  negative log-likelihood function.}
   \item{parameters}{List of linear models for parameters.
     \emph{MUST BE SPECIFIED IN THE SAME ORDER as the start vector
       (this is a bug/restriction that I hope to fix soon, but in
       the meantime beware)}}
+  \item{links}{(unimplemented) specify transformations of parameters}
   \item{parnames}{List (or vector?) of parameter names}
   \item{gr}{gradient function}
   \item{\dots}{Further arguments to pass to optimizer}
@@ -106,8 +112,12 @@ calc_mle2_function(formula,parameters,start,
   is failing if you use \code{method="Nelder-Mead"} and still
   get a finite-difference error.)
   
-  If convergence fails, see \code{\link{optim}}
-  for the meanings of the error codes.
+  If convergence fails, see the manual page of the
+  relevant optimizer (\code{\link{optim}} by default,
+  but possibly \code{\link{nlm}}, \code{\link{nlminb}},
+  \code{\link[optimx]{optimx}}, or \code{\link{constrOptim}}
+  if you have set the value of \code{optimizer})
+  for the meanings of the error codes/messages.
 }
 \value{
   An object of class \code{"mle2"}.
@@ -135,7 +145,16 @@ calc_mle2_function(formula,parameters,start,
   the names of its arguments as column names by default, it
   is probably the easiest way to package objects that are
   lying around in the global workspace for use in \code{mle2}
-  (provided they are all of the same length). 
+  (provided they are all of the same length).
+
+  When \code{optimizer} is set to "optimx" and multiple
+  optimization methods are used (i.e. the \code{methods}
+  argument has more than one element, or \code{all.methods=TRUE}
+  is set in the control options), the best (minimum
+  negative log-likelihood) solution will be saved,
+  regardless of reported convergence status
+  (and future operations such as profiling on the fit
+  will only use the method that found the best result).
   
 }
 \seealso{
@@ -145,6 +164,9 @@ calc_mle2_function(formula,parameters,start,
 x <- 0:10
 y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
 d <- data.frame(x,y)
+
+## in general it is best practice to use the `data' argument,
+##  but variables can also be drawn from the global environment
 LL <- function(ymax=15, xhalf=6)
     -sum(stats::dpois(y, lambda=ymax/(1+x/xhalf), log=TRUE))
 ## uses default parameters of LL

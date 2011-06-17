@@ -1,6 +1,6 @@
 
-R version 2.12.1 (2010-12-16)
-Copyright (C) 2010 The R Foundation for Statistical Computing
+R version 2.12.2 (2011-02-25)
+Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: i486-pc-linux-gnu (32-bit)
 
@@ -23,9 +23,11 @@ Type 'q()' to quit R.
 Loading required package: stats4
 Loading required package: numDeriv
 Loading required package: lattice
+Loading required package: MASS
 > f <- function(x=2,a=1) x^2 - a
 > f.g <- function(x,a) 2*x
-> mle2(f,fixed=list(a=1)) #works
+> f.g2 <- function(x,a) c(2*x,0)
+> mle2(f,fixed=list(a=1))
 
 Call:
 mle2(minuslogl = f, fixed = list(a = 1))
@@ -35,7 +37,7 @@ Coefficients:
 1.092459e-13 1.000000e+00 
 
 Log-likelihood: 1 
-> mle2(f,gr=f.g,fixed=list(a=1)) #fails 
+> mle2(f,gr=f.g,fixed=list(a=1))
 
 Call:
 mle2(minuslogl = f, fixed = list(a = 1), gr = f.g)
@@ -45,11 +47,17 @@ x a
 0 1 
 
 Log-likelihood: 1 
-Warning messages:
-1: In gr(par, ...) : gradient functions untested with profiling
-2: In gr(par, ...) : gradient functions untested with profiling
-3: In gr(par, ...) : gradient functions untested with profiling
+> mle2(f,gr=f.g2,fixed=list(a=1))
+
+Call:
+mle2(minuslogl = f, fixed = list(a = 1), gr = f.g2)
+
+Coefficients:
+x a 
+0 1 
+
+Log-likelihood: 1 
 > 
 > proc.time()
    user  system elapsed 
-  0.676   0.204   0.824 
+  0.764   0.244   0.961 
