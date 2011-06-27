@@ -1,4 +1,10 @@
 0.9.8
+ * gradient functions work better with fixed parameters, hence with profiling
+ * profile plot reverts to linear for non-monotonic profile
+ * added warning in confint for non-monotonic profile; revert
+    from spline+linear to linear approximation in this case
+ * documentation improvements
+ * optimx improvements
  * require data= argument when using formula interface
  * turn off hessian computation in profile
  * allow use of MASS::ginv

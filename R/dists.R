@@ -15,7 +15,8 @@ sbinom <- function(size,prob) {
        median=qbinom(0.5,size,prob),
        mode=NA,
        variance=size*prob*(1-prob),
-       sd=sqrt(size*prob*(1-prob)))
+       sd=sqrt(size*prob*(1-prob)),
+       formula="x*log(prob)+(size-x)*log(1-prob)")
 }
 
 sbeta <- function(shape1,shape2) {

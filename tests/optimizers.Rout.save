@@ -1,6 +1,6 @@
 
-R version 2.12.1 (2010-12-16)
-Copyright (C) 2010 The R Foundation for Statistical Computing
+R version 2.12.2 (2011-02-25)
+Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: i486-pc-linux-gnu (32-bit)
 
@@ -22,6 +22,7 @@ Type 'q()' to quit R.
 Loading required package: stats4
 Loading required package: numDeriv
 Loading required package: lattice
+Loading required package: MASS
 > x <- 0:10
 > y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
 > d <- data.frame(x,y)
@@ -32,7 +33,7 @@ Loading required package: lattice
 +        method="Nelder-Mead") ## 'method' is ignored by nlm()/nlminb()
 Warning messages:
 1: In dpois(x, lambda, log) : NaNs produced
-2: In nlm(f = objectivefunction, p = start, hessian = !skip.hessian,  :
+2: In nlm(f = objectivefunction, p = start, hessian = FALSE, ...) :
   NA/Inf replaced by maximum positive value
 > sapply(fits,coef)
            [,1]      [,2]      [,3]
@@ -63,4 +64,4 @@ Log-likelihood: -28.6
 > 
 > proc.time()
    user  system elapsed 
-  0.828   0.164   0.934 
+  0.900   0.204   1.075 

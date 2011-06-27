@@ -2,17 +2,19 @@
 \docType{methods}
 \alias{profile-methods}
 \alias{profile,mle2-method}
+\alias{profile.mle2}
 \title{Likelihood profiles }
 \description{
   Create likelihood profiles for a fitted model
 }
 
-\usage{\S4method{profile}{mle2}(fitted, which = 1:p, maxsteps = 100,
+\usage{
+\S4method{profile}{mle2}(fitted, which = 1:p, maxsteps = 100,
                     alpha = 0.01, zmax = sqrt(qchisq(1 - alpha/2, p)),
                     del = zmax/5, trace = FALSE, skiperrs=TRUE,
                     std.err, 
                     tol.newmin = 0.001, debug=FALSE,
-                    prof.lower, prof.upper, \dots)
+                    prof.lower, prof.upper, try_harder=FALSE, \dots)
 }
 \arguments{
   \item{fitted}{A fitted maximum likelihood model of class
@@ -38,10 +40,13 @@ value of the negative log-likelihood}
   \item{debug}{(logical) debugging output?}
   \item{prof.lower}{optional vector of lower bounds for profiles}
   \item{prof.upper}{optional vector of upper bounds for profiles}
+  \item{try_harder}{(logical) ignore \code{NA} and flat spots in the
+profile, try to continue anyway?}
   \item{\dots}{additional arguments (not used)}
 }
 \details{
-   The profiling process starts out by \dots
+  See the vignette (\code{vignette("mle2",package="bbmle")})
+  for more technical details of how profiling is done.
  }
  \seealso{\code{\link{profile.mle-class}}}
 \keyword{methods}

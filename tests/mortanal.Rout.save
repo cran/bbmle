@@ -1,8 +1,8 @@
 
-R version 2.12.1 (2010-12-16)
-Copyright (C) 2010 The R Foundation for Statistical Computing
+R version 2.13.0 alpha (2011-03-18 r54865)
+Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
-Platform: i486-pc-linux-gnu (32-bit)
+Platform: i686-pc-linux-gnu (32-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -22,6 +22,7 @@ Type 'q()' to quit R.
 Loading required package: stats4
 Loading required package: numDeriv
 Loading required package: lattice
+Loading required package: MASS
 > 
 > ## goby data in dump format
 > 
@@ -99,7 +100,7 @@ Model 1: Bm0w, lifespan~dweibull(scale=exp(llambda),shape=alpha)
 Model 2: Bm1w, lifespan~dweibull(scale=exp(llambda),shape=alpha): llambda~group
   Tot Df Deviance  Chisq Df Pr(>Chisq)    
 1      2   1043.5                         
-2      6   1015.5 27.945  4  1.280e-05 ***
+2      6   1015.5 27.945  4   1.28e-05 ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
 > anova(Bm0w,Bm1w,Bm2w)
@@ -110,7 +111,7 @@ Model 3: Bm2w, lifespan~dweibull(scale=exp(llambda),shape=alpha):
           llambda~group, alpha~group
   Tot Df Deviance  Chisq Df Pr(>Chisq)    
 1      2   1043.5                         
-2      6   1015.5 27.945  4  1.280e-05 ***
+2      6   1015.5 27.945  4   1.28e-05 ***
 3     10   1008.8  6.736  4     0.1505    
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
@@ -136,4 +137,4 @@ Bm3w 23.0  6
 > 
 > proc.time()
    user  system elapsed 
-  1.800   0.284   2.030 
+  1.556   0.144   1.688 

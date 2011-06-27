@@ -2,8 +2,10 @@ exportPattern("^[^\\.]")
 ## import(stats4)
 importClassesFrom(stats4,mle)
 importMethodsFrom(stats4,coef,confint,logLik,BIC,summary,profile)
-importFrom(stats, AIC, profile, update, vcov,
-           anova,deviance,residuals,simulate,predict)
+importFrom(stats,
+           AIC,profile, update, vcov,
+           anova,deviance,residuals,
+           simulate,predict,formula)
 importFrom(graphics, plot)
 
 
