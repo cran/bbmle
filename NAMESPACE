@@ -1,9 +1,19 @@
-exportPattern("^[^\\.]")
+##exportPattern("^[^\\.]")
+export(mle2,call.to.char,namedrop,parnames,"parnames<-",relist2)
+export(sbinom,snorm,sbeta,snbinom,spois,sbetabinom)
+export(ICtab,AICtab,BICtab,AICctab)
+export(stdEr)
+export(vcov)
+exportClasses(mle2)
+exportMethods(AIC, AICc, qAICc, qAIC, BIC,
+              profile,
+              update, vcov, anova, deviance, residuals,
+              simulate, predict, formula, slice, plot, stdEr)
 ## import(stats4)
 importClassesFrom(stats4,mle)
-importMethodsFrom(stats4,coef,confint,logLik,BIC,summary,profile)
+importMethodsFrom(stats4,coef,confint,logLik,BIC,summary,profile,vcov)
 importFrom(stats,
-           AIC,profile, update, vcov,
+           AIC,profile, update,vcov,
            anova,deviance,residuals,
            simulate,predict,formula)
 importFrom(graphics, plot)
@@ -13,3 +23,5 @@ importFrom(graphics, plot)
 ## to do: export methods etc.
 ## import mle from stats4
 ## ??
+S3method(as.data.frame,profile.mle2)
+S3method(print,ICtab)
