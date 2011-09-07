@@ -42,6 +42,7 @@ calc_mle2_function <- function(formula,
     } else {
       models <- as.character(parameters)
     }
+    models <- gsub(" ","",models)
     parameters <- parameters[models!="1"]
     npars <- length(parameters)
     if (npars==0) { ## no non-constant parameters
@@ -63,7 +64,7 @@ calc_mle2_function <- function(formula,
         vposvals <- cumsum(sapply(parnames,length))
         ## fill out start vectors with zeros or replicates as appropriate
         if (length(start[[vname]])==1) {
-            if (length(grep("- 1",models[i])>0)) {
+            if (length(grep("-1",models[i])>0)) {
                 start[[vname]] <- rep(start[[vname]],length(pnames))
             } else {
                 start[[vname]] <- c(start[[vname]],rep(0,length(pnames)-1))
@@ -450,10 +451,12 @@ mle2 <- function(minuslogl,
   ## FIXME: worry about boundary violations?
   ## (if we're on the boundary then the Hessian may not be useful anyway)
   ##
-  if ((!is.null(call$upper) || !is.null(call$lower)) &&
-      any(oout$par==call$upper) || any(oout$par==call$lower))
-    warning("some parameters are on the boundary: variance-covariance calculations may be unreliable")
   if (length(oout$par)==0) skip.hessian <- TRUE
+  if (!skip.hessian) {
+    if ((!is.null(call$upper) || !is.null(call$lower)) &&
+        any(oout$par==call$upper) || any(oout$par==call$lower))
+      warning("some parameters are on the boundary: variance-covariance calculations based on Hessian may be unreliable")
+  }
   namatrix <- matrix(NA,nrow=length(start),ncol=length(start))
   if (!skip.hessian) {
     psc <- call$control$parscale
@@ -492,7 +495,21 @@ mle2 <- function(minuslogl,
   ##  if (named)
   fullcoef[nstart[order(oo)]] <- coef
   ## else fullcoef <- coef
-  m = new("mle2", call=call, call.orig=call.orig, coef=coef, fullcoef=unlist(fullcoef), vcov=tvcov,
+  ## compute termination info
+  ## FIXME: should we worry about parscale here??
+  if (length(coef)) {
+    gradvec <- if (!missing(gr)) {
+      objectivefunctiongr(coef)
+    } else {
+      grad(objectivefunction,coef)
+    }
+    oout$maxgrad <-  max(abs(gradvec))
+    if (!skip.hessian) {
+      ev <- eigen(oout$hessian)$value
+      oout$eratio <- min(ev)/max(ev)
+    }
+  }
+  m <- new("mle2", call=call, call.orig=call.orig, coef=coef, fullcoef=unlist(fullcoef), vcov=tvcov,
       min=min, details=oout, minuslogl=minuslogl, method=method,
     optimizer=optimizer,
       data=as.list(data),formula=formula)
