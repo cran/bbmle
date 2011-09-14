@@ -43,7 +43,7 @@ Various ways to get around this are:
     \item{only fit the regular model; extract
       the overdispersion parameter manually
       with
-<<>>=
+<<dfun>>=
 dfun <- function(object) {
   with(object,sum((weights * residuals^2)[weights > 0])/df.residual)
 }
@@ -59,7 +59,7 @@ dfun <- function(object) {
 Example: use the values from one of the examples
 in \code{?glm}:
 
-<<keep.source=TRUE>>=
+<<dobdata,keep.source=TRUE>>=
 ## Dobson (1990) Page 93: Randomized Controlled Trial :
 counts <- c(18,17,15,20,10,20,25,13,12)
 outcome <- gl(3,1,9)
@@ -69,7 +69,7 @@ treatment <- gl(3,3)
 Fit Poisson and quasi-Poisson models with all combinations
 of predictors:
 
-<<>>=
+<<fitdob>>=
 glmOT.D93 <- glm(counts ~ outcome + treatment, family=poisson)
 glmO.D93  <- update(glmOT.D93, . ~ . - treatment)
 glmT.D93  <- update(glmOT.D93, . ~ . - outcome)
@@ -82,7 +82,7 @@ glmQX.D93 <- update(glmX.D93, family=quasipoisson)
 
 
 Extract log-likelihoods:
-<<keep.source=TRUE>>=
+<<dobll,keep.source=TRUE>>=
 (sum(dpois(counts,
           lambda=exp(predict(glmOT.D93)),log=TRUE))) ## by hand
 (logLik(glmOT.D93))  ## from Poisson fit
@@ -93,7 +93,7 @@ is not the same as $-2L$ (\code{-2*logLik(glmOT.D93)}=\Sexpr{round(-2*c(logLik(g
 but the calculated differences in deviance are consistent,
 and are also extractable from the quasi- fit even though
 the log-likelihood is \code{NA}:
-<<keep.source>>=
+<<dobll2,keep.source=TRUE>>=
 (-2*(logLik(glmT.D93)-logLik(glmOT.D93)))  ## Poisson fit
 (deviance(glmT.D93)-deviance(glmOT.D93))   ## Poisson fit
 (deviance(glmQT.D93)-deviance(glmQOT.D93)) ## quasi-fit
@@ -104,7 +104,7 @@ Compare hand-computed dispersion (in two ways)
 with the dispersion computed by \code{summary.glm()}
 on a quasi- fit:
 
-<<>>=
+<<dobdisp>>=
 (dfun(glmOT.D93))
 (sum(residuals(glmOT.D93,"pearson")^2)/glmOT.D93$df.residual)
 (summary(glmOT.D93)$dispersion)
@@ -116,7 +116,7 @@ on a quasi- fit:
 
 \subsection*{\code{bbmle} package (Ben Bolker), CRAN/R-forge}
 
-<<>>=
+<<bbmle>>=
 library(bbmle)
 (qAIC(glmOT.D93,dispersion=dfun(glmOT.D93)))
 (qAICc(glmOT.D93,dispersion=dfun(glmOT.D93),nobs=length(counts)))
@@ -130,7 +130,7 @@ detach("package:bbmle")
 
 \subsection*{\code{AICcmodavg} package (Marc Mazerolle), CRAN}
 
-<<>>=
+<<AICcmodavg>>=
 library(AICcmodavg)
 aictab(list(glmOT.D93,glmT.D93,glmO.D93,glmX.D93), 
        modnames=c("OT","T","O","X"),
@@ -140,22 +140,17 @@ detach("package:AICcmodavg")
 
 \subsection*{\code{MuMIn} package (Kamil Barto{\'n}), r-forge}
 
-<<keep.source=TRUE>>=
+<<MuMin,keep.source=TRUE>>=
 library(MuMIn)
-## MuMIn has only QAIC, not QAICc -- add it
-QAICc <- function(object,...,chat,nobs) {
-  df <- attr(logLik(object),"df")+1
-  QAIC(object,...,chat=chat)+2*df*(df+1)/(nobs-df-1)
-}
-(gg <- dredge(glmOT.D93,rank="QAIC",chat=dfun(glmOT.D93)))
-(ggc <- dredge(glmOT.D93,rank="QAICc",nobs=length(counts),chat=dfun(glmOT.D93)))
+(gg <-  dredge(glmOT.D93,rank="QAIC", chat=dfun(glmOT.D93)))
+(ggc <- dredge(glmOT.D93,rank="QAICc",chat=dfun(glmOT.D93)))
 detach("package:MuMIn")
 @ 
 
 Since \code{dredge} is clever, can work with quasi- models as well by
 using \code{deviance()}:
 <<eval=FALSE>>=
-(ggqc <- dredge(glmQOT.D93,rank="QAICc",nobs=length(counts),
+(ggqc <- dredge(glmQOT.D93,rank="QAICc",
                 chat=summary(glmQOT.D93)$dispersion))
 @ 
 gives identical results to the previous table.
