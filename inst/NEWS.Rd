@@ -4,21 +4,33 @@
 \title{bbmle News}
 \encoding{UTF-8}
 
+\section{CHANGES IN VERSION 1.0.3}{
+  \itemize{
+    \item modified starting value code and documentation slightly:
+    now allows per-parameter lists.  Updated docs.
+    \item Fixed bug that would screw things up if 'i' were used
+    as a parameter.
+    \item Update vignette to conform to MuMIn changes
+  }
+}
+
 \section{CHANGES IN VERSION 1.0.2 (2011-09-07)}{
   \itemize{
     \item fixed buglet in detection of no-intercept models when setting
-  starting values
+    starting values
   }
 }
+
 \section{CHANGES IN VERSION 1.0.1 (2011-08-04)}{
   \itemize{
     \item Turned off some warnings when skip.hessian=TRUE (e.g. in profile)
     \item Calculate max grad and Hessian eigenval ratio, add to "details"
     \item (Should add accessor methods)
     \item Fixed NAMESPACE to export methods etc etc properly; removed
-  universal exportPattern directive
+    universal exportPattern directive
   }
 }
+
 \section{CHANGES IN VERSION 1.0.0 (2011-06-17)}{
   \itemize{
     \item mainly just a version bump for CRAN
@@ -285,14 +297,15 @@
   \itemize{
     \item enhanced anova method, works with print.anova
     \item tweaked namedrop() code -- ??
-    }}
+}}
 
-    \section{CHANGES IN VERSION 0.2}{
-      \itemize{
-	\item added parnames, parnames<-
-	\item minor fix to allow "profiles" of 1-parameter models
-	(skip fdHess call)
-	\item minor change to print method for mle results
-	\item tweaking "vecpar" (to allow parameter vectors in objective function)
-	\item removed fdHess/nlme dependency
-	}}
+\section{CHANGES IN VERSION 0.2}{
+  \itemize{
+    \item added parnames, parnames<-
+    \item minor fix to allow "profiles" of 1-parameter models
+    (skip fdHess call)
+    \item minor change to print method for mle results
+    \item tweaking "vecpar" (to allow parameter vectors in objective function)
+    \item removed fdHess/nlme dependency
+  }
+}

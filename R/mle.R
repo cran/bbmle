@@ -54,8 +54,8 @@ calc_mle2_function <- function(formula,
       pnames0 <- parnames
       names(parnames) <- parnames
       for (i in seq(along=parameters)) {
-        vname <- vars[i]
-        p <- parameters[[i]]
+        vname <- vars[i]      ## name of variable
+        p <- parameters[[i]]  ## formula for variable
         p[[2]] <- NULL
         mmat <- model.matrix(p,data=data)     
         pnames <- paste(vname,colnames(mmat),sep=".")
@@ -93,8 +93,8 @@ calc_mle2_function <- function(formula,
     ## is there a better way to do this?
     pars <- unlist(as.list(match.call())[-1])
     if (!is.null(parameters)) {
-      for (i in seq(along=parameters)) {
-        assign(vars[i],mmats[[i]] %*% pars[vpos[[i]]])
+      for (.i in seq(along=parameters)) {
+        assign(vars[.i],mmats[[.i]] %*% pars[vpos[[.i]]])
       }
     }
     ## if (is.null(data) || !is.list(data))
