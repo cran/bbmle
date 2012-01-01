@@ -4,6 +4,11 @@
 \title{bbmle News}
 \encoding{UTF-8}
 
+\section{CHANGES IN VERSION 1.0.4}{
+  \itemize{
+    \item fix imports for latest version of R-devel
+  }
+}
 \section{CHANGES IN VERSION 1.0.3}{
   \itemize{
     \item modified starting value code and documentation slightly:
@@ -20,7 +25,6 @@
     starting values
   }
 }
-
 \section{CHANGES IN VERSION 1.0.1 (2011-08-04)}{
   \itemize{
     \item Turned off some warnings when skip.hessian=TRUE (e.g. in profile)

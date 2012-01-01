@@ -11,12 +11,10 @@ exportMethods(AIC, AICc, qAICc, qAIC, BIC,
               simulate, predict, formula, slice, plot, stdEr)
 ## import(stats4)
 importClassesFrom(stats4,mle)
-importMethodsFrom(stats4,coef,confint,logLik,BIC,summary,profile,vcov)
+importFrom(stats4,coef,confint,logLik,BIC,summary,profile,vcov,AIC, update, plot)
 importFrom(stats,
-           AIC,profile, update,vcov,
            anova,deviance,residuals,
            simulate,predict,formula)
-importFrom(graphics, plot)
 
 
 ## importMethodsFrom(stats, anova)

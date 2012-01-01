@@ -1,0 +1,203 @@
+0.9.8
+ * gradient functions work better with fixed parameters, hence with profiling
+ * profile plot reverts to linear for non-monotonic profile
+ * added warning in confint for non-monotonic profile; revert
+    from spline+linear to linear approximation in this case
+ * documentation improvements
+ * optimx improvements
+ * require data= argument when using formula interface
+ * turn off hessian computation in profile
+ * allow use of MASS::ginv
+
+0.9.7
+ * bug fix in calc_mle2_function for no-intercept models
+  (thanks to Colin Kremer)
+ * fixed optimx, added 'user' option
+
+0.9.6
+ * changed hessian calculation to use numDeriv code (causes tiny
+changes to hessian results that could matter in edge cases)
+  too lazy to provide a backward compatibility mode ...
+ * documented optimizer= choices in ?mle2
+
+0.9.5.1
+ * fixed bug in AICc (David Harris)
+
+
+0.9.5 
+
+  too many changes!
+ * added NAMESPACE, various fixes to go with that
+ * beginnings of an RUnit testing framework
+ * tweaked vignette
+ * added prof.lower, prof.upper to profile()
+ * added "optimize" to list of allowed optimizers, some
+   bug fixes
+
+0.9.4.1
+
+ * tweaked par() resetting in profile plots
+
+0.9.4
+
+ * more qAICc fixing
+
+0.9.3 (version bump from previous) 18/09/2009
+
+* tweaked handling of bounds: profile now succeeds
+  on some 1D problems where it didn't before
+
+15/08/2009
+
+* added deviance, residuals methods
+* added newparams argument to predict, simulate;
+   newdata argument to simulate
+* added vignette (stub)
+* added explicit params argument, to help sort out
+  full parameter specifications when parameters is
+  non-NULL
+
+0.9.2 10/08/2009
+* fixed predict() for case with parameters
+* added snorm
+* changed ICtab defaults to weight=TRUE, base=FALSE, sort=TRUE
+
+0.9.1 
+  added simulate method (formula interface only)
+  fix AICctab bug
+  remove spurious cat/print in profile
+  fix qAIC bug
+
+0.9.0 26/08/2008
+*  fix Tom Hobbs bug: named lower/upper/parscale/ndeps
+get rearranged properly, otherwise rearrange in order
+of "start" and issue a warning
+* documentation tweak for S4 as.data.frame
+* added sbeta to list of known distributions
+* removed nlme requirement & auto-loading
+
+0.8.9 04/08/2008
+* version bump, submit to CRAN
+* added predict method
+
+0.8.8  10/07/2008
+* added flexibility for profile plotting (main, x labels etc.);
+    added examples
+* added an instance of "namedrop" to fix naming problem
+* added tol.newmin to slice etc.
+* added check for numeric return from profile within confint
+* fixed bugs in profile plotting when profile is restricted
+   to a subset of variables
+* added tests for par() to reset to original on exit
+* improved profile documentation
+* replicate std.err if specified in profile
+* add as.data.frame 
+* tweak tol.newmin (better fit found during profile) code
+
+0.8.7  12/05/2008
+* version bump, moved to R-forge.
+* reordered NEWS file (most recent first)
+     
+0.8.6.1 22/03/2008:
+   tweaked stop-on-better-fit code
+   fixed (?) qAIC(c) methods
+
+   26/03/2008:
+   tweak/fix to ICtab documentation (thanks to Tom Hobbs)
+
+0.8.6 added qAIC(c) methods (not working yet!)
+
+0.8.5.1 oops. Fixed infelicity (bug?) in new 
+  environment manipulation
+
+0.8.5 tweaked environment/data assignment to preserve
+    original minuslogl environment better
+
+0.8.4 changed  plot.profile.mle2 options (added onepage etc.,
+   made plot.confstr=TRUE by default)
+
+0.8.3 added warning about too-short lower/upper 
+      added documentation
+
+0.8.2 fixed bug in AICctab
+      cosmetic change to printing -- save call.orig
+      moved ChangeLog to NEWS
+
+0.8.1 fixed (?) environment bug
+      tried to use built-in relist, but failed: renamed relist
+	  to "relist2" (try again later)
+      documented get.mnames (auxiliary function for ICtabs)
+      started to add gr (gradient) capability -- NOT TESTED
+
+0.8  changed ICtab to allow either ICtab(x,y,z) or ICtab(list(x,y,z))
+	  (L <- list(...); if is.list(L[[1]]) && length(L)==1)
+
+0.7.7 fix bug in profiling: all optim() methods EXCEPT L-BFGS-B
+     return the value of the objective function if given a function
+     with no arguments/zero-length starting parameter vector
+     (this is the situation with "profiling" a 1-D function).
+     L-BFGS-B gives funky answers.  added a check for this case.
+     (may need to check behavior for alternate optimizers (nlm etc))
+    [this behavior triggered a "found better fit" error when profiling
+     1D functions with L-BFGS-B]
+
+     changed behavior when finding better fit during profiling
+     to return new parameters
+
+
+0.7.6 tweak vignette
+    fixed second major AICc bug (was fixed in mle2 method,
+	 but not in logLik method)
+
+0.7.5 change "ll" to "LL" in examples for clarity
+    tweaked anova reporting of models (wrap instead of truncating)
+    added (undocumented) show.points option to profile plot
+	to display actual locations of profile evaluation
+    tweaked profile to behave better when profiling variables
+	with constraints (upper, lower)
+    moved vignette to inst/doc where it belongs
+    ICtab hack to protect against package:aod definition of AIC(logLik)
+    added submit stub
+    tweaked slice.mle2-class docs for consistency
+    fiddled with vignette
+    preliminary code to allow non-monotonic profiles
+    preliminary add nlm to list of optimizers (untested)
+    add aod, Hmisc, emdbook to VignetteDepends and Suggests:
+
+0.7 better df extraction in ICtab
+    minor bug fix for AICc (allows AICc of nls objects)
+    handle models with -1 in formula better:
+	starting values set "all equal"
+    made ANOVA formula line-length accessible
+    added skip.hessian and trace arguments to mle2
+    messed around with BIC definition -- attempt at consistency with nlme
+    added rudimentary support for nlminb, constrOptim
+    nlme now required for fdHess (which is required for
+	nlminb since it doesn't compute a finite-diff
+	Hessian)
+
+0.6 add experimental formula interface
+    change all names from mle to mle2 to avoid confusion/conflicts
+       with stats4 version of mle
+    change internal structure of data evaluation
+    worked on vignette
+    added optimizer slot (stub)
+
+0.5 fix AICc bug!  (was deviance+2*k*(k+1)/(n-k-1), not AIC+2*k*(k+1)/(n-k-1)
+
+0.4 change AIC to AICc for corrections
+    add AICtab for weights, delta, sort ... options
+
+    expose error messages occuring within profile()
+    uniroot tries harder to find a valid endpoint
+    truncate terms in anova.mle at 80 characters
+
+0.3: enhanced anova method, works with print.anova
+tweaked namedrop() code -- ??
+
+0.2: added parnames, parnames<-
+minor fix to allow "profiles" of 1-parameter models
+  (skip fdHess call)
+minor change to print method for mle results
+tweaking "vecpar" (to allow parameter vectors in objective function)
+removed fdHess/nlme dependency

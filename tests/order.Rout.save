@@ -1,8 +1,8 @@
 
-R version 2.13.1 (2011-07-08)
-Copyright (C) 2011 The R Foundation for Statistical Computing
+R Under development (unstable) (2012-01-01 r58032)
+Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
-Platform: i486-pc-linux-gnu (32-bit)
+Platform: i686-pc-linux-gnu (32-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -17,7 +17,6 @@ Type 'contributors()' for more information and
 Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
-
 
 > set.seed(1001)
 > x <- runif(10)
@@ -60,4 +59,4 @@ Warning messages:
 > 
 > proc.time()
    user  system elapsed 
-  0.808   0.336   1.150 
+  0.948   0.956   1.789 

@@ -1,8 +1,8 @@
 
-R version 2.12.1 (2010-12-16)
-Copyright (C) 2010 The R Foundation for Statistical Computing
+R Under development (unstable) (2012-01-01 r58032)
+Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
-Platform: i486-pc-linux-gnu (32-bit)
+Platform: i686-pc-linux-gnu (32-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -34,6 +34,7 @@ Type 'q()' to quit R.
 Loading required package: stats4
 Loading required package: numDeriv
 Loading required package: lattice
+Loading required package: MASS
 > m1 = mle2(y~dnorm(a+b*x,sd=exp(logs)),parameters=list(b~f),data=dat,
 +   start=list(a=0,b=2,logs=-3))
 > 
@@ -53,4 +54,4 @@ Loading required package: lattice
 > 
 > proc.time()
    user  system elapsed 
-  1.260   0.300   1.546 
+  1.088   0.936   1.887 

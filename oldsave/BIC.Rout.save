@@ -1,0 +1,45 @@
+
+R Under development (unstable) (2012-01-01 r58032)
+Copyright (C) 2012 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: i686-pc-linux-gnu (32-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> require(bbmle)
+Loading required package: bbmle
+Loading required package: stats4
+Loading required package: numDeriv
+Loading required package: lattice
+Loading required package: MASS
+Warning message:
+Functions for exporting methods must have been made generic, explicitly or implicitly; not true when loading ‘bbmle’ for ‘AIC’, ‘plot’, ‘update’ 
+> x <- 0:10
+> y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
+> d <- data.frame(x,y)
+> fit <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)), start=list(ymax=25,xhalf=3),data=d)
+> fit2 <- mle2(y~dpois(lambda=(x+1)*slope), start=list(slope=1),data=d)
+> BIC(fit,nobs=length(x))
+[1] 62.0039
+> BIC(fit,fit2,nobs=length(x))
+       BIC df
+1  62.0039  2
+2 228.2046  1
+> 
+> proc.time()
+   user  system elapsed 
+  0.768   0.912   1.559 

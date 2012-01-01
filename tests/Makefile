@@ -13,3 +13,6 @@ test: # Run unit tests
 	export RCMDCHECK=FALSE;\
 	cd ${TOP}/tests;\
 	${R} --vanilla --slave < ${SUITE}
+
+savefiles:
+	./makesavefiles
