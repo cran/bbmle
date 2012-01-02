@@ -1,0 +1,121 @@
+
+R Under development (unstable) (2012-01-01 r58032)
+Copyright (C) 2012 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: i686-pc-linux-gnu (32-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+During startup - Warning message:
+Functions for exporting methods must have been made generic, explicitly or implicitly; not true when loading ‘bbmle’ for ‘AIC’, ‘plot’, ‘update’ 
+> library(bbmle)
+Loading required package: stats4
+Loading required package: numDeriv
+Loading required package: lattice
+Loading required package: MASS
+> require(optimx)
+Loading required package: optimx
+Loading required package: BB
+Loading required package: quadprog
+Loading required package: ucminf
+Loading required package: Rcgmin
+Loading required package: Rvmmin
+Loading required package: optfntools
+
+Attaching package: ‘Rvmmin’
+
+The following object(s) are masked from ‘package:Rcgmin’:
+
+    optansout
+
+Loading required package: minqa
+Loading required package: Rcpp
+Loading required package: int64
+Loading required package: setRNG
+
+Attaching package: ‘optimx’
+
+The following object(s) are masked from ‘package:Rvmmin’:
+
+    optansout
+
+The following object(s) are masked from ‘package:Rcgmin’:
+
+    optansout
+
+> x <- 0:10
+> y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
+> d <- data.frame(x,y)
+> 
+> ## breaks, don't try this
+> ## optimx(fn=Lfn,par=c(15,6),method="Rvmmin")
+> 
+> m1 <- mle2(minuslogl=y~dpois(lambda=ymax/(1+x/xhalf)),
++      start=list(ymax=15,xhalf=6),data=d,
++      optimizer="optimx",
++            method=c("BFGS","Nelder-Mead","CG"))
+Warning message:
+In dpois(x, lambda, log) : NaNs produced
+> 
+> profile(m1)
+Likelihood profile:
+
+$ymax
+            z par.vals.ymax par.vals.xhalf
+1  -3.3769529     13.992620       9.990210
+2  -2.3408063     16.743642       6.538591
+3  -1.4582055     19.494664       4.793137
+4  -0.6872010     22.245686       3.747885
+5   0.0000000     24.996708       3.056382
+6   0.6199914     27.747730       2.567515
+7   1.1878557     30.498752       2.205222
+8   1.7126008     33.249774       1.926962
+9   2.2014957     36.000796       1.707197
+10  2.6601382     38.751818       1.529684
+11  3.0929208     41.502840       1.383620
+12  3.5033471     44.253863       1.261549
+
+$xhalf
+            z par.vals.ymax par.vals.xhalf
+1  -3.6930563     41.342691       1.035627
+2  -2.6386042     36.082806       1.372419
+3  -1.8618252     32.494490       1.709212
+4  -1.2549229     29.876407       2.046004
+5  -0.7619491     27.873796       2.382797
+6   0.0000000     24.996708       3.056382
+7   0.5712027     23.018949       3.729967
+8   1.0191658     21.567789       4.403552
+9   1.3826755     20.454247       5.077137
+10  1.6849383     19.570763       5.750721
+11  1.9410472     18.851524       6.424306
+12  2.1613313     18.253883       7.097891
+13  2.3531454     17.748929       7.771476
+14  2.5218946     17.316332       8.445061
+15  2.6716557     16.941359       9.118646
+16  2.8055706     16.613060       9.792231
+17  2.9261059     16.323121      10.465816
+18  3.0352289     16.065108      11.139401
+19  3.1345299     15.833962      11.812986
+20  3.2253106     15.625647      12.486571
+21  3.3086476     15.436906      13.160156
+
+There were 14 warnings (use warnings() to see them)
+> 
+> 
+> proc.time()
+   user  system elapsed 
+  8.144  18.341  26.488 

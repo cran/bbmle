@@ -1,6 +1,6 @@
 
-R version 2.13.0 alpha (2011-03-18 r54865)
-Copyright (C) 2011 The R Foundation for Statistical Computing
+R Under development (unstable) (2012-01-01 r58032)
+Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: i686-pc-linux-gnu (32-bit)
 
@@ -137,4 +137,4 @@ Bm3w 23.0  6
 > 
 > proc.time()
    user  system elapsed 
-  1.556   0.144   1.688 
+  1.460   0.960   2.311 

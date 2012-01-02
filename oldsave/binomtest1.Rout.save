@@ -1,7 +1,8 @@
 
-R version 2.11.1 (2010-05-31)
-Copyright (C) 2010 The R Foundation for Statistical Computing
+R Under development (unstable) (2012-01-01 r58032)
+Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
+Platform: i686-pc-linux-gnu (32-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -17,10 +18,16 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+[Previously saved workspace restored]
+
+During startup - Warning message:
+Functions for exporting methods must have been made generic, explicitly or implicitly; not true when loading ‘bbmle’ for ‘AIC’, ‘plot’, ‘update’ 
 > 
 > library(bbmle)
 Loading required package: stats4
 Loading required package: numDeriv
+Loading required package: lattice
+Loading required package: MASS
 > 
 > funcresp <-
 + structure(list(Initial = as.integer(c(5, 5, 10, 10, 15, 15, 20, 
@@ -111,4 +118,4 @@ h 0.006987227 0.02638541
 > 
 > proc.time()
    user  system elapsed 
-  4.572   0.048   4.676 
+  1.992   0.944   2.847 

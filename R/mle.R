@@ -8,6 +8,7 @@ call.to.char <- function(x) {
     paste(sapply(x,as.character),collapse="")
 }
 
+## FIXME: problem with bounds and formulae!
 calc_mle2_function <- function(formula,
                                parameters,
                                links,
@@ -206,9 +207,11 @@ mle2 <- function(minuslogl,
   call$data <- eval.parent(call$data)
   call$upper <- eval.parent(call$upper)
   call$lower <- eval.parent(call$lower)
-  call$control$parscale <- eval.parent(call$control$parscale)
-  call$control$ndeps <- eval.parent(call$control$ndeps)
-  call$control$maxit <- eval.parent(call$control$maxit)
+  ## FIX based on request from Mark Clements
+  ## call$control$parscale <- eval.parent(call$control$parscale)
+  ## call$control$ndeps <- eval.parent(call$control$ndeps)
+  ## call$control$maxit <- eval.parent(call$control$maxit)
+  call$control <- eval.parent(call$control)
   if(!missing(start))
     if (!is.list(start)) {
       if (is.null(names(start)) || !is.vector(start))
@@ -289,6 +292,7 @@ mle2 <- function(minuslogl,
   names(args.in.data) <- argnames.in.data
   args.in.data  ## codetools kluge
   objectivefunction <- function(p){
+    if (browse_obj) browser()
     l <- relist2(p,template) ## redo list structure
     ## if (named)
     names(p) <- nstart[order(oo)] ## make sure to reorder
@@ -308,7 +312,6 @@ mle2 <- function(minuslogl,
     ## doesn't help, environment(minuslogl) is empty by this time
     ## cat("e3:",length(ls(envir=environment(minuslogl))),"\n")
     ## hack to remove unwanted names ...
-    if (browse_obj) browser()
     do.call("minuslogl",namedrop(args))
   } ## end of objective function
   objectivefunctiongr <-
