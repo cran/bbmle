@@ -4,7 +4,12 @@
 \title{bbmle News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.0.4}{
+\section{CHANGES IN VERSION 1.0.4.1 (2012-01-27)}{
+  \itemize{
+    \item remove a bit of installed junk; vignette fix
+  }
+}
+\section{CHANGES IN VERSION 1.0.4 (2012-01-02)}{
   \itemize{
     \item fix imports for latest version of R-devel
   }
