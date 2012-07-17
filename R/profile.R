@@ -1,3 +1,10 @@
+## FIXME: abstract to general-purpose code?  (i.e. replace 'fitted' by
+#    objective function, parameter vector, optimizer, method, control settings,
+##   min val, standard error/Hessian, ...
+##
+## allow starting values to be set by "mle" (always use mle), "prevfit"
+##  (default?), and "extrap" (linear extrapolation from previous two fits)
+## 
 
 setMethod("profile", "mle2",
           function (fitted, which = 1:p, maxsteps = 100,
@@ -64,16 +71,16 @@ setMethod("profile", "mle2",
                           ## HACK for non-monotonic profiles? z <- -sgn*sqrt(abs(zz))
                         } else {
                           ## cat() instead of warning(); FIXME use message() instead???
-                            cat("Profiling has found a better solution,",
+                          message("Profiling has found a better solution,",
                                 "so original fit had not converged:\n")
-                            cat(sprintf("(new deviance=%1.4g, old deviance=%1.4g, diff=%1.4g)",
+                          message(sprintf("(new deviance=%1.4g, old deviance=%1.4g, diff=%1.4g)",
                                         2*pfit@min,2*fitted@min,2*(pfit@min-fitted@min)),"\n")
-                            cat("Returning better fit ...\n")
-                            ## need to return parameters all the way up
-                            ##   to top level
-                            newpars_found <<- TRUE
-                            ## return(pfit@fullcoef)
-                            return(pfit) ## return full fit
+                          message("Returning better fit ...\n")
+                          ## need to return parameters all the way up
+                          ##   to top level
+                          newpars_found <<- TRUE
+                          ## return(pfit@fullcoef)
+                          return(pfit) ## return full fit
                         }
                     } else {
                       z <- sgn * sqrt(zz)
@@ -97,13 +104,14 @@ setMethod("profile", "mle2",
                   std.err[is.na(std.err)] <- summ@coef[is.na(std.err)]
             }
             if (any(is.na(std.err))) {
-              std.err <- sqrt(1/diag(fitted@details$hessian))
-              if (any(is.na(std.err))) {
-                stop("Hessian is ill-behaved or missing,",
-                     "can't find an initial estimate of std. error",
+              std.err[is.na(std.err)] <- sqrt(1/diag(fitted@details$hessian))[is.na(std.err)]
+              if (any(is.na(std.err))) {  ## still bad
+                stop("Hessian is ill-behaved or missing, ",
+                     "can't find an initial estimate of std. error ",
                      "(consider specifying std.err in profile call)")
               }
-              warning("Non-positive-definite Hessian,",
+              ## warn anyway ...
+              warning("Non-positive-definite Hessian, ",
                       "attempting initial std err estimate from diagonals")
             }
             Pnames <- names(B0 <- fitted@coef)
@@ -116,8 +124,18 @@ setMethod("profile", "mle2",
             call$minuslogl <- fitted@minuslogl
             ndeps <- eval.parent(call$control$ndeps)
             parscale <- eval.parent(call$control$parscale)
-            upper <- unlist(eval.parent(call$upper))
-            lower <- unlist(eval.parent(call$lower))
+            nc <- length(fitted@coef)
+            xf <- function(x) rep(x,length.out=nc) ## expand to length
+            upper <- xf(unlist(eval.parent(call$upper)))
+            lower <- xf(unlist(eval.parent(call$lower)))
+            if (all(upper==Inf & lower==-Inf)) {
+                lower <- upper <- NULL
+                ## kluge: lower/upper may have been set to +/- Inf
+                ##   in previous rounds, 
+                ##  but we don't want them in that case
+            }
+            if (!missing(prof.lower)) prof.lower <- xf(prof.lower)
+            if (!missing(prof.upper)) prof.upper <- xf(prof.upper)
             ## cat("upper\n")
             ## print(upper)
             stop_msg <- list()
@@ -171,7 +189,7 @@ setMethod("profile", "mle2",
                     break
                   }
                   z <- onestep(step)
-                  ## experimental: DON'T STOP on flat spot or NA
+                  ## stop on flat spot, unless try_harder
                   if (step>1 && (identical(oldcurval,curval) || identical(oldz,z))) {
                     stop_flat <- TRUE
                     stop_msg[[i]][[dir_ind]] <- paste(stop_msg[[i]][[dir_ind]],wfun("hit flat spot"),

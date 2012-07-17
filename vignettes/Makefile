@@ -93,6 +93,6 @@ default:
 	$(FC) $(FFLAGS) $*.f $(LDLIBS) -o $*
 
 clean:
-	$(RM) *.o *.tex *.log *.aux *.toc *.blg *.bbl *.out *-???.pdf Rplots.ps
+	$(RM) *.o *.tex *.log *.aux *.toc *.blg *.bbl *.out *-*.pdf Rplots.ps
 
 .SECONDARY:

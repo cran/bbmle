@@ -19,3 +19,5 @@ predict(mfit0)  ## FIXME: doesn't expand properly (need implicit lambda~1 formul
 set.seed(1001)
 simulate(mfit0)
 anova(mfit0,mfit1)
+summary(mfit0)
+summary(mfit1)

@@ -3,7 +3,37 @@
 \name{NEWS}
 \title{bbmle News}
 \encoding{UTF-8}
+\section{CHANGES IN VERSION 1.0.5.1 (2012-07-17)}{
+  \itemize{
+     \item remove spurious .RData file; version bump
+   }
+}
 
+\section{CHANGES IN VERSION 1.0.5 (2012-05-15)}{
+  \itemize{
+    \item wrapped eigen() call to prevent failure of eigenvalue ratio
+    summary when hessian is bad
+    \item fix bug: forgot to export summary method for mle2
+    \item add \code{exclude.fixed} argument to \code{coef} method
+    \item fix bug: single lower/upper parameter, or
+    prof.lower/prof.upper parameter, not interpreted properly in
+    profile/confint
+    \item add and document \code{slice} methods: change from old
+    (profile-like) behavior, old version is available as \code{sliceOld}
+    \item DESCRIPTION/NAMESPACE fixes, move most Depends: to Imports:
+    instead (except methods package)
+  }
+}
+
+\section{CHANGES IN VERSION 1.0.4.2 (2012-02-25)}{
+  \itemize{
+    \item fix bug in gradient/vecpar/profiling interaction (Daniel
+    Kaschek)
+    \item improve (and document) uniroot method for confint: now
+    respects box constraints
+    \item fix issue where bobyqa (optimx) strips parameter names from result
+  }
+}
 \section{CHANGES IN VERSION 1.0.4.1 (2012-01-27)}{
   \itemize{
     \item remove a bit of installed junk; vignette fix

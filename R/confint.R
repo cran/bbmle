@@ -81,13 +81,16 @@ function (object, parm, level = 0.95, method,
       call <- object@call
       if (!isTRUE(call$vecpar))
         call$start <- as.list(B0) ## added
+      upper <- rep(unlist(eval.parent(call$upper)),length.out=length(pnames))
+      lower <- rep(unlist(eval.parent(call$lower)),length.out=length(pnames))
       for (pm in parm) {
-        critfun <- function(step)
+        critfun <- function(bi)
           {
-            bi <- B0[pm] + sgn * step * std.err[pm]
             fix <- list(bi)
             names(fix) <- pnames[pm]
             call$fixed <- c(fix,eval(call$fixed))
+            if (!is.null(upper) && length(upper)>1) call$upper <- upper[-pm]
+            if (!is.null(lower) && length(lower)>1) call$lower <- lower[-pm]
             pfit <- try(eval(call), silent=TRUE)
             if(inherits(pfit, "try-error")) {
               warning(paste("Error encountered in profile (uniroot):",pfit))
@@ -104,15 +107,27 @@ function (object, parm, level = 0.95, method,
             if (trace) cat(bi, z, "\n")
             z
           }
+        stepfun <- function(step) {
+          B0[pm] + sgn * step * std.err[pm]
+        }
+        invstepfun <- function(out) {
+          (out - B0[pm])/(sgn * std.err[pm])
+        }
         sgnvec=c(-1,1)
         for (i in 1:2) {
-          sgn = sgnvec[i]
-          c0 <- critfun(0)
-          ctry <- 5
+          sgn <- sgnvec[i]
+          bnd <- if (sgn<0) {
+            if (is.null(lower)) -Inf else lower[pm]
+          } else {
+            if (is.null(upper)) Inf else upper[pm]
+          }
+          c0 <- critfun(B0[pm])
+          bi <- 
+          ctry <- pmin(5,invstepfun(bnd))
           cdel <- -0.25
           c5 <- NA
-          while (is.na(c5) && ctry>0) {
-            c5 <- critfun(ctry)
+          while (is.na(c5) && ctry>0 ) {
+            c5 <- critfun(stepfun(ctry))
             if (is.na(c5)) {
               if (trace) cat("encountered NA, reducing ctry to",ctry+cdel,"\n")
               ctry <- ctry+cdel
@@ -125,7 +140,7 @@ function (object, parm, level = 0.95, method,
             curci <- NA
             ## FIXME: could try harder!
           } else {
-            curci <- B0[pm]+sgn*std.err[pm]*uniroot(critfun,c(0,ctry))$root
+            curci <- uniroot(critfun,c(stepfun(0),stepfun(ctry)))$root
           }
           ci[pnames[pm],i] <- curci
         }

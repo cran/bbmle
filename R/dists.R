@@ -68,3 +68,12 @@ sbetabinom <- function(size,prob,theta) {
        variance=size*prob*(1-prob)/theta,
        sd=sqrt(size*prob*(1-prob)))
 }
+
+sgamma <- function(shape,rate=1,scale=1/rate) {
+    if (missing(rate)) rate <- 1/scale
+    list(title="Gamma",
+         mean=shape/rate,sd=sqrt(shape)/rate,
+         median=NA,
+         mode=NA,
+         variance=shape/rate^2)
+}
