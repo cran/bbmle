@@ -541,20 +541,20 @@ computed.
 
 \textbf{To do:}
 \begin{itemize}
-  \item{use \code{predict}, \code{simulate} etc.
+\item{use \code{predict}, \code{simulate} etc.
     to demonstrate different parametric bootstrap approaches
     to confidence and prediction intervals
     \begin{itemize}
-      \item use \code{predict} to get means and standard
-        deviations, use delta method?
-      \item use \code{vcov}, assuming quadratic profiles,
-        with \code{predict(\ldots,newparams=\ldots)}
-      \item prediction intervals assuming no parameter uncertainty
-        with \code{simulate}
-      \item both together \ldots
-      \end{itemize}
-    }
-  \end{itemize}
+    \item use \code{predict} to get means and standard
+      deviations, use delta method?
+    \item use \code{vcov}, assuming quadratic profiles,
+      with \code{predict(\ldots,newparams=\ldots)}
+    \item prediction intervals assuming no parameter uncertainty
+      with \code{simulate}
+    \item both together \ldots
+    \end{itemize}
+  }
+\end{itemize}
 
 
 \section{Technical details}
@@ -590,97 +590,97 @@ is a good guess.
   the user to specify the values with \code{std.err}
 \end{itemize}
   
-  There may be further tricks that would help guess the appropriate scale:
-  for example, one could guess on the basis of a comparison between the
-  parameter values and negative log-likelihoods at the starting and ending points
-  of the fits.  On the other hand, (a) this would take some effort and
-  still be subject to failure for sufficiently pathological fits and (b) there
-  is some value to forcing the user to take explicit, manual steps to remedy
-  such problems, as they may be signs of poorly defined or buggy log-likelihood
-  functions.
+There may be further tricks that would help guess the appropriate scale:
+for example, one could guess on the basis of a comparison between the
+parameter values and negative log-likelihoods at the starting and ending points
+of the fits.  On the other hand, (a) this would take some effort and
+still be subject to failure for sufficiently pathological fits and (b) there
+is some value to forcing the user to take explicit, manual steps to remedy
+such problems, as they may be signs of poorly defined or buggy log-likelihood
+functions.
 
-  \subsubsection{Profiling}
+\subsubsection{Profiling}
   
-  Profiling is done on the basis of a constructed function that minimizes
-  the negative log-likelihood for a fixed value of the focal parameter and
-  returns the signed square-root of the deviance difference from the 
-  minimum (denoted by $z$).  At the MLE $z=0$ by definition; it should never
-  be $<0$ unless something has gone wrong with the original fit. The LRT significance
-  cutoffs for $z$ are equal to the usual two-tailed normal distribution cutoffs
-  (e.g. $\pm \approx 1.96$ for 95\% confidence regions).
+Profiling is done on the basis of a constructed function that minimizes
+the negative log-likelihood for a fixed value of the focal parameter and
+returns the signed square-root of the deviance difference from the 
+minimum (denoted by $z$).  At the MLE $z=0$ by definition; it should never
+be $<0$ unless something has gone wrong with the original fit. The LRT significance
+cutoffs for $z$ are equal to the usual two-tailed normal distribution cutoffs
+(e.g. $\pm \approx 1.96$ for 95\% confidence regions).
   
-  In each direction (decreasing and increasing from the MLE for the focal parameter):
+In each direction (decreasing and increasing from the MLE for the focal parameter):
 \begin{itemize}
-  \item fix the focal parameter
-  \item adjust control parameters etc. accordingly (e.g. remove the
-    entry for the focal parameter so that the remaining control
-    parameters match the non-fixed parameters)
-  \item{controls on the profiling (which can be set manually, but for which there
+\item fix the focal parameter
+\item adjust control parameters etc. accordingly (e.g. remove the
+  entry for the focal parameter so that the remaining control
+  parameters match the non-fixed parameters)
+\item{controls on the profiling (which can be set manually, but for which there
     is not much guidance in the documentation):
     \begin{itemize}
-      \item \code{zmax} Maximum $z$ to aim for. (Default: \code{sqrt(qchisq(1-alpha/2, p))})
-        The default maximum $\alpha$ (type~I error) is 0.01.
-        \bbnote{I don't understand this
-          criterion. It seems to expand the size of the univariate profile
-          to match a cutoff for the multivariate confidence region of
-          the model.  The $\chi^2$ cutoff for deviance to get the $(1-\alpha)$ 
-          multivariate confidence region (i.e.,
-          on all $p$ of the parameters) would be \code{qchisq(1-alpha,p)} --- %
-          representing a one-tailed test on the deviance.  Taking the square root
-          makes sense, since we are working with the square root of the deviance,
-          but I don't understand (1) why we are expanding the region to allow
-          for the multivariate confidence region (since we are computing univariate
-          profiles) [you could at least argue that this is conservative, making
-          the region a little bigger than it needs to be]; (2) why we are
-          using $1-\alpha/2$ rather than $1-\alpha$.
-        }
-        For comparison, \code{MASS::profile.glm} (written by Bates and Venables in
-        1996, ported to R by BDR in 1998) uses \code{zmax}=\code{sqrt(qchisq(1-alpha,1))}
-        \bbnote{(this makes more sense to me \ldots)}.
-        On the other hand, the profiling code in \code{lme4a} (the \code{profile}
-        method for \code{merMod}, in \code{profile.R}) uses
-        \code{qchisq(1-alphamax, nptot)} \ldots
-      \item \code{del} Step size (scaled by standard error) (Default: \code{zmax}/5.)
-        Presumably (?) copied from \code{MASS::profile.glm}, 
-        which says (in \code{?profile.glm}):
-        ``[d]efault value chosen to allow profiling at about 10 parameter
-        values.''
-      \item \code{maxsteps} Maximum number of profiling steps to try in each direction. (Default: 100)
-      \end{itemize}
+    \item \code{zmax} Maximum $z$ to aim for. (Default: \code{sqrt(qchisq(1-alpha/2, p))})
+      The default maximum $\alpha$ (type~I error) is 0.01.
+      \bbnote{I don't understand this
+        criterion. It seems to expand the size of the univariate profile
+        to match a cutoff for the multivariate confidence region of
+        the model.  The $\chi^2$ cutoff for deviance to get the $(1-\alpha)$ 
+        multivariate confidence region (i.e.,
+        on all $p$ of the parameters) would be \code{qchisq(1-alpha,p)} --- %
+        representing a one-tailed test on the deviance.  Taking the square root
+        makes sense, since we are working with the square root of the deviance,
+        but I don't understand (1) why we are expanding the region to allow
+        for the multivariate confidence region (since we are computing univariate
+        profiles) [you could at least argue that this is conservative, making
+        the region a little bigger than it needs to be]; (2) why we are
+        using $1-\alpha/2$ rather than $1-\alpha$.
       }
-    \item While \verb+step<maxsteps+ and \verb+abs(z) < zmax+, set the value of the focal
-      parameter to its MLE + \code{sgn*step*del*std.err} where \code{sgn} represents
-      the direction, \code{step} is the current (integer) step, and \code{del} and 
-      \code{std.err} are the step size scaling factor and standard error estimate
-      discussed above (i.e. take steps of size (\code{del*std.err}) in the appropriate direction);
-      evaluate $z$
-    \item{Stop the profiling: 
-      \begin{itemize}
-        \item if $z$ doesn't change from the previous step (\verb+stop_flat+)
-        \item * stop if $z$ is less than \code{tol.newmin} (default: 0.001) units 
-          \emph{better} than the MLE fit, i.e. $z<-\mbox{\code{tol.newmin}}$
-          (if $-\mbox{\code{tol.newmin}}<z<0$, set $z$ to zero) (\verb+newpars_found+)
-        \item if $z$ is \code{NA} (\verb+stop_na+) \bbnote{(for greater robustness, should
-          we try to keep going anyway?)}
-        \item if $z$ is beyond \code{zmax} (i.e., we have reached our goal: \verb+stop_cutoff+)
-        \item if \code{step==maxsteps}
-        \item if the focal parameter has hit its upper/lower bound (\verb+stop_bound+)
-          \end{itemize}}
-      \item if we have hit the maximum number of steps but not reached the cutoff
-        (\verb+stop_maxstep+ but not \verb+stop_cutoff+), ``try a bit harder'':
-        go \emph{almost} one more \code{del*std.err} unit out (in intervals
-        of 0.2, 0.4, 0.6, 0.8, 0.9) (\bbnote{also seems reasonable but don't
-          know where it comes from})
-      \item * if we violated the boundary but did not reach the cutoff
-        (\verb+!stop_cutoff && stop_bound+), evaluate $z$ at the boundary
-      \item if we got to the cutoff in $<5$ steps, try smaller steps:
-        start at \code{step=0.5} and proceed to
-        \code{mxstep-0.5} in unit increments
-        (rather than the original scale which went from 0 to \code{mxstep}).
-@ 
-(\bbnote{
-  Again, it seems reasonable, but I don't know what the original justification
- was \ldots})
+      For comparison, \code{MASS::profile.glm} (written by Bates and Venables in
+      1996, ported to R by BDR in 1998) uses \code{zmax}=\code{sqrt(qchisq(1-alpha,1))}
+      \bbnote{(this makes more sense to me \ldots)}.
+      On the other hand, the profiling code in \code{lme4a} (the \code{profile}
+      method for \code{merMod}, in \code{profile.R}) uses
+      \code{qchisq(1-alphamax, nptot)} \ldots
+    \item \code{del} Step size (scaled by standard error) (Default: \code{zmax}/5.)
+      Presumably (?) copied from \code{MASS::profile.glm}, 
+      which says (in \code{?profile.glm}):
+      ``[d]efault value chosen to allow profiling at about 10 parameter
+      values.''
+    \item \code{maxsteps} Maximum number of profiling steps to try in each direction. (Default: 100)
+    \end{itemize}
+  }
+\item While \verb+step<maxsteps+ and \verb+abs(z) < zmax+, set the value of the focal
+  parameter to its MLE + \code{sgn*step*del*std.err} where \code{sgn} represents
+  the direction, \code{step} is the current (integer) step, and \code{del} and 
+  \code{std.err} are the step size scaling factor and standard error estimate
+  discussed above (i.e. take steps of size (\code{del*std.err}) in the appropriate direction);
+  evaluate $z$
+\item{Stop the profiling: 
+    \begin{itemize}
+    \item if $z$ doesn't change from the previous step (\verb+stop_flat+) %
+      --- unless \verb+try_harder+ is \code{TRUE}
+    \item * stop if $z$ is less than \code{tol.newmin} (default: 0.001) units 
+      \emph{better} than the MLE fit, i.e. $z<-\mbox{\code{tol.newmin}}$
+      (if $-\mbox{\code{tol.newmin}}<z<0$, set $z$ to zero) (\verb+newpars_found+)
+    \item if $z$ is \code{NA} (\verb+stop_na+)  --- unless \verb+try_harder+ is \code{TRUE}
+    \item if $z$ is beyond \code{zmax} (i.e., we have reached our goal: \verb+stop_cutoff+)
+    \item if \code{step==maxsteps}
+    \item if the focal parameter has hit its upper/lower bound (\verb+stop_bound+)
+    \end{itemize}
+  }
+\item if we have hit the maximum number of steps but not reached the cutoff
+  (\verb+stop_maxstep+ but not \verb+stop_cutoff+), ``try a bit harder'':
+  go \emph{almost} one more \code{del*std.err} unit out (in intervals
+  of 0.2, 0.4, 0.6, 0.8, 0.9) (\bbnote{also seems reasonable but don't
+    know where it comes from})
+\item * if we violated the boundary but did not reach the cutoff
+  (\verb+!stop_cutoff && stop_bound+), evaluate $z$ at the boundary
+\item if we got to the cutoff in $<5$ steps, try smaller steps:
+  start at \code{step=0.5} and proceed to
+  \code{mxstep-0.5} in unit increments
+  (rather than the original scale which went from 0 to \code{mxstep}).
+  (\bbnote{
+    Again, it seems reasonable, but I don't know what the original justification
+    was \ldots})
 \end{itemize}
 
 \subsubsection{Confidence intervals}
@@ -691,27 +691,59 @@ for a specified $\alpha$ level, e.g. $z=\pm 1.96$ for 95\% confidence
 intervals (this is equivalent to a one-tailed test on the deviance
 difference with the cutoff value for $\chi^2_1$).
 
-\begin{itemize}
-\item If necessary, construct the profile
-\item * If the profile of the signed square root is non-monotonic,
-  warn the user and revert to linear approximation on the profiled points
-  to find the cutoffs:
-\item Otherwise, build an interpolation spline of $z$ (signed square root deviance
-  difference) based on profiled points (the default is $n=3 \times L$
-  where $L$ is the length of the original vector). Then
-  use linear approximation on the $y$ ($z$) and $x$ (focal
-  parameter value) of the spline
-  to find the cutoffs (\bbnote{Why construct a spline and then interpolate linearly?  Why
-    not use \code{backSpline} as in the profile plotting code?})
-\end{itemize}
-
-It is also possible to use \code{method="quad"} (this is obsolete, should
-be replaced by documentation pointing to \code{confint.default}) and
-\code{method="uniroot"} (undocumented for now; rather than approximating
-from the profile, try to use \code{uniroot} with calls to the negative
-log-likelihood function to identify the confidence intervals as precisely
-and robustly as possible (should be more accurate, but slower --- must
-also be computed for each specified $\alpha$ level separately).
+\begin{description}
+\item[Spline method]{(default)
+    \begin{itemize}
+    \item If necessary (i.e. if applied to a fitted object and not 
+      to an existing profile), construct the profile
+    \item * If the profile of the signed square root is non-monotonic,
+      warn the user and revert to linear approximation on the profiled points
+      to find the cutoffs:
+    \item Otherwise, build an interpolation spline of $z$ (signed square root deviance
+      difference) based on profiled points (the default is $n=3 \times L$
+      where $L$ is the length of the original vector). Then
+      use linear approximation on the $y$ ($z$) and $x$ (focal
+      parameter value) of the spline
+      to find the cutoffs (\bbnote{Why construct a spline and then interpolate linearly?  Why
+        not use \code{backSpline} as in the profile plotting code?})
+      \end{itemize}
+    }
+  \item[Quad method]{Use a quadratic approximation based
+      on the estimated curvature (this is almost identical to
+      using \code{confint.default}, and perhaps obsolete/could
+      be replaced by a pointer to \code{confint.default} \ldots)
+    }
+  \item[Uniroot]{
+      For each direction (up and down):
+      \begin{itemize}
+      \item start by stepping 5 $\sigma$ away from the
+        MLE, or to the box constraint on the parameter,
+        whichever is closer (\bbnote{this standard error is based on the
+          curvature; I should allow it, or the intervals themselves,
+          to be overridden via a \code{std.err} or \code{interval}
+          parameter})
+      \item compute the difference between the deviance and
+        the desired deviance cutoff at this point;
+        if it is \code{NA}, reduce the distance in steps
+        of 0.25 $\sigma$ until it is not, until you reduce
+        the distance to zero
+      \item if the product of the deviance differences at the MLE
+        and at the point you stopped at is \code{NA} or positive
+        (indicating that you didn't find a root-crossing in the
+        range $[0,5\sigma]$), quit.
+      \item otherwise, apply \code{uniroot} across this interval
+      \end{itemize}
+      
+      \code{method="uniroot"} should give the most accurate results, 
+      especially when the profile is wonky (it won't care about non-smooth
+      profiles), but it will be the slowest --- and different confidence
+      levels will have to be computed individually, whereas multiple
+      confidence levels can be computed quickly from a single computed
+      profile.  A cruder approach would be to use profiling but decrease
+      \code{std.err} a lot so that the profile points were very closely
+      spaced.
+    }
+  \end{description}
 
 \subsubsection{Profile plotting}
 
@@ -741,9 +773,24 @@ values designated by \code{conf} (default: $\{0.99,0.95,0.9,0.8,0.5\}$).
   better methods for extracting \code{nobs} information
   when possible (e.g. with formula interface)
 \item \textbf{WISH}: better documentation, especially for S4 methods
-\item \textbf{WISH}: variable-length chunks in argument list
+\item \textbf{WISH}: variable-length (and shaped) chunks in argument list -- cleaner division
+  between linear model specs/list of arguments/vector equivalent
 \item \textbf{WISH}: limited automatic differentiation
-    (add capability for common distributions)
+  (add capability for common distributions)
+\item \textbf{WISH}: store \code{objectivefunction}
+  and \code{objectivefunctiongr} (vectorized objective/gradient
+  functions) in the \code{mle2} object (will break backward compatibility!!);
+  add accessors for these and for \code{minuslogl}
+\item \textbf{WISH}: document use of the objective function in \code{MCMCpack}
+  to do {\emph post hoc} MCMC sampling (or write my own Metropolis-Hastings
+  sampler \ldots)
+\item \textbf{WISH}: polish profile plotting, with lattice or ggplot2
+  methods
+\item \textbf{WISH}: add in/document/demonstrate ``slice'' capabilities
+\item \textbf{WISH}: refactor profiling to use stored objective functions
+  rather than re-calling \code{mle2} with \code{fixed} values mucked around
+  with in the calls???  Strip out and make generic for vectorized objective function?
+  (\code{profileModel} package only works for glm-like objects, with a linear predictor)
 \end{itemize}
 
 \bibliography{mle2}

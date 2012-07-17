@@ -2,7 +2,6 @@
 \docType{class}
 \alias{mle2-class}
 \alias{coef,mle2-method}
-\alias{confint,mle2-method}
 \alias{show,mle2-method}
 \alias{slice,mle2-method}
 \alias{summary,mle2-method}
@@ -44,8 +43,12 @@
 }
 \section{Methods}{
   \describe{
+    \item{coef}{\code{signature(object = "mle2")}: Extract coefficients.
+      If \code{exclude.fixed=TRUE} (it is \code{FALSE} by default),
+      only the non-fixed parameter values are returned.}t
     \item{confint}{\code{signature(object = "mle2")}: Confidence
-      intervals from likelihood profiles.}
+      intervals from likelihood profiles, or quadratic approximations,
+      or root-finding.}
     \item{show}{\code{signature(object = "mle2")}: Display object
       briefly.}
     \item{show}{\code{signature(object = "summary.mle2")}: Display object briefly.}
@@ -57,5 +60,32 @@
     \item{plot}{\code{signature(object="profile.mle2,missing")}: Plot
       profile. }
   }
+}
+\details{
+  When the parameters in the original fit are constrained using
+  \code{lower} or \code{upper}, or when \code{prof.lower} or
+  \code{prof.upper} are set, and the confidence intervals lie
+  outside the constraint region, \code{confint} will return \code{NA}.
+  This may be too conservative -- in some cases, the appropriate
+  answer would be to set the confidence limit to the lower/upper
+  bound as appropriate -- but it is the most general answer.
+
+  (If you have a strong opinion about the need for a new
+  option to \code{confint} that sets the bounds to the limits
+  automatically, please contact the package maintainer.)
+  
+}
+\examples{
+x <- 0:10
+y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
+lowerbound <- c(a=2,b=-0.2)
+d <- data.frame(x,y)
+fit1 <- mle2(y~dpois(lambda=exp(a+b*x)),start=list(a=0,b=2),data=d,
+method="L-BFGS-B",lower=c(a=2,b=-0.2))
+(cc <- confint(fit1,quietly=TRUE))
+## to set the lower bounds to the limit
+na_lower <- is.na(cc[,1])
+cc[na_lower,1] <- lowerbound[na_lower]
+cc
 }
 \keyword{classes}

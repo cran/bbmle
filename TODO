@@ -17,6 +17,7 @@ BUGS/ISSUES:
 * move calcslice from emdbook and make it more robust/general
   (different signatures: mle2 fits, numeric vectors)
 
+
 * prettier multi-parameter profiles a la Bates/lme4
 * ggplot2 profiles?
 

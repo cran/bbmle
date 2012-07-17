@@ -22,7 +22,9 @@ setMethod("stdEr","mle2",
 
 ## should this be object@fullcoef or object@coef??? or should
 ## it have an additional argument --- is that possible?
-setMethod("coef", "mle2", function(object) object@fullcoef )
+setMethod("coef", "mle2", function(object,exclude.fixed=FALSE) {
+    if (!exclude.fixed) object@fullcoef else object@coef
+})
 ## fullcoef <- function(object) object@fullcoef  ## this should be a method
 setMethod("coef", "summary.mle2", function(object) { object@coef })
 ## hmmm.  Work on this. 'hessian' conflicts with numDeriv definition. Override?

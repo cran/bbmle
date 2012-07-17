@@ -1,5 +1,5 @@
 ## require(methods,quietly=TRUE)  ## for independence from stats4
-require(numDeriv,quietly=TRUE) ## for hessian()
+## require(numDeriv,quietly=TRUE) ## for hessian()
 
 call.to.char <- function(x) {
     ## utility function
@@ -26,8 +26,8 @@ calc_mle2_function <- function(formula,
   ## should it go according to function/formula,
   ##   not start?
   if (!is.list(data)) stop("must specify data argument",
-                           "(as a list or data frame)",
-                           "when using formula argument")
+                           " (as a list or data frame)",
+                           " when using formula argument")
   vecstart <- (is.numeric(start))
   if (vecstart) start <- as.list(start) ## expand to a list
   if (missing(parnames) || is.null(parnames)) {
@@ -91,18 +91,25 @@ calc_mle2_function <- function(formula,
   arglist1 <- c(list(x=formula[[2]]),arglist,list(log=TRUE))
   arglist1  ## codetools check kluge
   fn <- function() {
-    ## is there a better way to do this?
-    pars <- unlist(as.list(match.call())[-1])
-    if (!is.null(parameters)) {
-      for (.i in seq(along=parameters)) {
-        assign(vars[.i],mmats[[.i]] %*% pars[vpos[[.i]]])
+      ## is there a better way to do this?
+      ## need to look for parameters etc.
+      pars <- unlist(as.list(match.call())[-1])
+      if (!is.null(parameters)) {
+          for (.i in seq(along=parameters)) {
+              assign(vars[.i],mmats[[.i]] %*% pars[vpos[[.i]]])
+          }
       }
-    }
     ## if (is.null(data) || !is.list(data))
     ## stop("data argument must be specified when using formula interface")
     ## BUG/FIXME: data evaluates to 'FALSE' at this point -- regardless of whether
     ## it has been specified
-    arglist2 <- lapply(arglist1,eval,envir=data,enclos=sys.frame(sys.nframe()))
+    ## FIXME: how to make this eval() less fragile???
+    ## sys.frame(sys.nframe()) specifies the number of the *current* frame
+    ## ... envir=data,enclos=parent.frame()
+      ## this actually works OK: fails enigmatically if we
+      ## 
+    arglist2 <- lapply(arglist1,eval,envir=data,
+                       enclos=sys.frame(sys.nframe()))
     if (use.deriv) {
       stop("use.deriv is not yet implemented")
       ## browser()
@@ -131,7 +138,7 @@ calc_mle2_function <- function(formula,
   if (vecstart) start <- unlist(start)
   list(fn=fn,start=start,parameters=parameters,
        fdata=list(vars=vars,mmats=mmats,vpos=vpos,
-         arglist1=arglist1,ddistn=ddistn,parameters=parameters),
+       arglist1=arglist1,ddistn=ddistn,parameters=parameters),
        parnames=parnames)
 }
 
@@ -292,31 +299,33 @@ mle2 <- function(minuslogl,
   names(args.in.data) <- argnames.in.data
   args.in.data  ## codetools kluge
   objectivefunction <- function(p){
-    if (browse_obj) browser()
-    l <- relist2(p,template) ## redo list structure
-    ## if (named)
-    names(p) <- nstart[order(oo)] ## make sure to reorder
-    l[nfix] <- fixed
-    ##    cat("p\n"); print(p)
-    ## cat("l\n"); print(l)
-    ##    cat("data\n"); print(data)
-    if (vecpar) {
+      if (browse_obj) browser()
+      l <- relist2(p,template) ## redo list structure
       ## if (named)
-      l <- namedrop(l[nfull])
-      l <- unlist(l)
-      args <- list(l)
-      args <- c(list(l),args.in.data)
-    } else { args <- c(l,args.in.data)
+      names(p) <- nstart[order(oo)] ## make sure to reorder
+      ## ??? useless, comes after l is constructed ???
+      l[nfix] <- fixed
+      ##    cat("p\n"); print(p)
+      ## cat("l\n"); print(l)
+      ##    cat("data\n"); print(data)
+      if (vecpar) {
+          ## if (named)
+          l <- namedrop(l[nfull])
+          l <- unlist(l)
+          args <- list(l)
+          args <- c(list(l),args.in.data)
+      } else { args <- c(l,args.in.data)
            }
-    ## eval in environment of minuslogl???
-    ## doesn't help, environment(minuslogl) is empty by this time
-    ## cat("e3:",length(ls(envir=environment(minuslogl))),"\n")
-    ## hack to remove unwanted names ...
-    do.call("minuslogl",namedrop(args))
+      ## eval in environment of minuslogl???
+      ## doesn't help, environment(minuslogl) is empty by this time
+      ## cat("e3:",length(ls(envir=environment(minuslogl))),"\n")
+      ## hack to remove unwanted names ...
+      do.call("minuslogl",namedrop(args))
   } ## end of objective function
   objectivefunctiongr <-
     if (missing(gr)) NULL else
-        function(p){
+        function(p) {
+          if (browse_obj) browser()
           l <- relist2(p,template) ## redo list structure
           names(p) <- nstart[order(oo)] ## make sure to reorder
           l[nfix] <- fixed
@@ -328,13 +337,15 @@ mle2 <- function(minuslogl,
           } else { args <- c(l,args.in.data)
                  }
           v <- do.call("gr",args)
-          if (length(v)==length(p)) {
-            ## already adjusted for length
-            names(v) <- names(p)
-          } else {
-            if (is.null(names(v))) {
-              names(v) <- names(formals(minuslogl))
-            }
+          if (is.null(names(v))) {
+            if (length(v)==length(p) && !is.null(tt <- names(p))) {
+              vnames <- tt
+            } else if (!is.null(tt <- parnames(minuslogl))) {
+              vnames <- tt
+            } else vnames <- names(formals(minuslogl))
+            if (length(vnames)!=length(v))
+              stop("name/length mismatch in gradient function")
+            names(v) <- vnames
           }
           v[!names(v) %in% nfix] ## from Eric Weese
         } ## end of gradient function
@@ -448,9 +459,12 @@ mle2 <- function(minuslogl,
     oout$par <- oout$minimum
     oout$convergence <- 0 ## can't detect non-convergence
   }
-  if (optimizer %in% c("nlminb","optimise","optimize")) {
+  if (optimizer %in% c("nlminb","optimise","optimize") ||
+      ## optimizer (bobyqa?) may have stripped names -- try to restore them!
+      is.null(names(oout$par))) {
     names(oout$par) <- names(start)
   }
+
   ## FIXME: worry about boundary violations?
   ## (if we're on the boundary then the Hessian may not be useful anyway)
   ##
@@ -473,7 +487,7 @@ mle2 <- function(minuslogl,
     }
   }
   if (skip.hessian || inherits(oout$hessian,"try-error"))
-    oout$hessian <- namatrix
+      oout$hessian <- namatrix
   coef <- oout$par
   nc <- names(coef)
   if (skip.hessian) {
@@ -481,7 +495,7 @@ mle2 <- function(minuslogl,
   } else {
     if (length(coef)) {
       if (use.ginv) {
-        tmphess <- try(MASS::ginv(oout$hessian))
+        tmphess <- try(MASS::ginv(oout$hessian),silent=TRUE)
       } else {
         tmphess <- try(solve(oout$hessian,silent=TRUE))
       }
@@ -508,14 +522,14 @@ mle2 <- function(minuslogl,
     }
     oout$maxgrad <-  max(abs(gradvec))
     if (!skip.hessian) {
-      ev <- eigen(oout$hessian)$value
-      oout$eratio <- min(ev)/max(ev)
+        if (inherits(ev <- try(eigen(oout$hessian)$value,silent=TRUE),
+                     "try-error")) ev <- NA
+        oout$eratio <- min(ev)/max(ev)
     }
   }
   m <- new("mle2", call=call, call.orig=call.orig, coef=coef, fullcoef=unlist(fullcoef), vcov=tvcov,
-      min=min, details=oout, minuslogl=minuslogl, method=method,
-    optimizer=optimizer,
-      data=as.list(data),formula=formula)
+           min=min, details=oout, minuslogl=minuslogl, method=method,
+           optimizer=optimizer,data=as.list(data),formula=formula)
   attr(m,"df") = length(m@coef)
   if (!missing(data)) attr(m,"nobs") = length(data[[1]])
   ## to work with BIC as well
@@ -563,93 +577,7 @@ if (setvals) invisible(value) else value
 .Mle2.options = list(optim.method="BFGS",confint = "spline",optimizer="optim")
 
 
-.onLoad <- function(lib, pkg) require(methods)
-
-## should probably roll this in as an option to profile
-## include attribute, warning? draw differently (leave off
-## conf. limit lines)
-slice <- function(fitted, ...) UseMethod("slice")
-
-setMethod("slice", "mle2",    
-function (fitted, which = 1:p, maxsteps = 100,
-          alpha = 0.01, zmax = sqrt(qchisq(1 - alpha/2, p)),
-          del = zmax/5, trace = FALSE,
-          tol.newmin=0.001, ...)
-{
-    onestep <- function(step)
-    {
-        bi <- B0[i] + sgn * step * del * std.err[i]
-        fix <- list(bi)
-        names(fix) <- p.i
-        call$fixed <- c(fix,eval(call$fixed))
-        call$eval.only = TRUE
-        pfit <- try(eval(call), silent=TRUE) ##
-        if(inherits(pfit, "try-error")) return(NA)
-        else {
-            zz <- 2*(pfit@min - fitted@min)
-            ri <- pv0
-            ri[, names(pfit@coef)] <- pfit@coef
-            ri[, p.i] <- bi
-            if (zz > -tol.newmin)
-                zz <- max(zz, 0)
-            else stop("profiling has found a better solution, so original fit had not converged")
-            z <- sgn * sqrt(zz)
-            pvi <<- rbind(pvi, ri)
-            zi <<- c(zi, z) ## NB global set!
-        }
-        if (trace) cat(bi, z, "\n")
-        z
-      }
-    ## Profile the likelihood around its maximum
-    ## Based on profile.glm in MASS
-    summ <- summary(fitted)
-    std.err <- summ@coef[, "Std. Error"]
-    Pnames <- names(B0 <- fitted@coef)
-    pv0 <- t(as.matrix(B0))
-    p <- length(Pnames)
-    prof <- vector("list", length = length(which))
-    names(prof) <- Pnames[which]
-    call <- fitted@call
-    call$minuslogl <- fitted@minuslogl
-    for (i in which) {
-        zi <- 0
-        pvi <- pv0
-        p.i <- Pnames[i]
-        for (sgn in c(-1, 1)) {
-          if (trace)
-            cat("\nParameter:", p.i, c("down", "up")[(sgn + 1)/2 + 1], "\n")
-          step <- 0
-          z <- 0
-          ## This logic was a bit frail in some cases with
-          ## high parameter curvature. We should probably at least
-          ## do something about cases where the mle2 call fails
-          ## because the parameter gets stepped outside the domain.
-          ## (We now have.)
-          call$start <- as.list(B0)
-          lastz <- 0
-          while ((step <- step + 1) < maxsteps && abs(z) < zmax) {
-            z <- onestep(step)
-            if(is.na(z)) break
-            lastz <- z
-          }
-          if(abs(lastz) < zmax) {
-            ## now let's try a bit harder if we came up short
-            for(dstep in c(0.2, 0.4, 0.6, 0.8, 0.9)) {
-              z <- onestep(step - 1 + dstep)
-              if(is.na(z) || abs(z) > zmax) break
-            }
-          } else if(length(zi) < 5) { # try smaller steps
-            mxstep <- step - 1
-            step <- 0.5
-            while ((step <- step + 1) < mxstep) onestep(step)
-          }
-        }
-        si <- order(pvi[, i])
-        prof[[p.i]] <- data.frame(z = zi[si])
-        prof[[p.i]]$par.vals <- pvi[si,, drop=FALSE]
-    }
-    new("slice.mle2", profile = prof, summary = summ)
-  })
+## .onLoad <- function(lib, pkg) require(methods)
 
 
 ## (not yet) replaced by relist?

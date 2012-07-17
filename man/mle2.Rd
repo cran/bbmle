@@ -181,7 +181,9 @@ LL <- function(ymax=15, xhalf=6)
     -sum(stats::dpois(y, lambda=ymax/(1+x/xhalf), log=TRUE))
 ## uses default parameters of LL
 (fit <- mle2(LL))
-mle2(LL, fixed=list(xhalf=6))
+fit1F <- mle2(LL, fixed=list(xhalf=6))
+coef(fit1F)
+coef(fit1F,exclude.fixed=TRUE)
 
 (fit0 <- mle2(y~dpois(lambda=ymean),start=list(ymean=mean(y)),data=d))
 anova(fit0,fit)

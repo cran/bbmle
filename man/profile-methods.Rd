@@ -5,7 +5,7 @@
 \alias{profile.mle2}
 \title{Likelihood profiles }
 \description{
-  Create likelihood profiles for a fitted model
+  Compute likelihood profiles for a fitted model
 }
 
 \usage{

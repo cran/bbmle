@@ -1,0 +1,67 @@
+
+R Under development (unstable) (2012-01-01 r58032)
+Copyright (C) 2012 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: i686-pc-linux-gnu (32-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+During startup - Warning message:
+Functions for exporting methods must have been made generic, explicitly or implicitly; not true when loading ‘bbmle’ for ‘AIC’, ‘plot’, ‘update’ 
+> ## from Eric Weese
+> library(bbmle)
+Loading required package: stats4
+Loading required package: numDeriv
+Loading required package: lattice
+Loading required package: MASS
+> f <- function(x=2,a=1) x^2 - a
+> f.g <- function(x,a) 2*x
+> f.g2 <- function(x,a) c(2*x,0)
+> mle2(f,fixed=list(a=1))
+
+Call:
+mle2(minuslogl = f, fixed = list(a = 1))
+
+Coefficients:
+           x            a 
+1.092459e-13 1.000000e+00 
+
+Log-likelihood: 1 
+> mle2(f,gr=f.g,fixed=list(a=1))
+
+Call:
+mle2(minuslogl = f, fixed = list(a = 1), gr = f.g)
+
+Coefficients:
+x a 
+0 1 
+
+Log-likelihood: 1 
+> mle2(f,gr=f.g2,fixed=list(a=1))
+
+Call:
+mle2(minuslogl = f, fixed = list(a = 1), gr = f.g2)
+
+Coefficients:
+x a 
+0 1 
+
+Log-likelihood: 1 
+> 
+> proc.time()
+   user  system elapsed 
+  0.768   1.032   1.655 
