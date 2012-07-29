@@ -12,5 +12,8 @@ m1 <- mle2(minuslogl=y~dpois(lambda=ymax/(1+x/xhalf)),
      optimizer="optimx",
            method=c("BFGS","Nelder-Mead","CG"))
 
+## FIXME!! fails (although not with an error, because
+##  errors are caught by profiling) due to npar now
+## being restricted to >1 in optimx 2012.05.24 ...
 profile(m1)
 

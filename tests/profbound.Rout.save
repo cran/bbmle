@@ -23,21 +23,27 @@ Type 'q()' to quit R.
 > x <- 0:10
 > y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
 > d <- data.frame(x,y)
-> m1 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
-+            start=list(ymax=1,xhalf=1),data=d)
-Warning messages:
-1: In dpois(x = c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8), lambda = c(15.9069797530336,  :
-  NaNs produced
-2: In dpois(x = c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8), lambda = c(33.2333275647578,  :
-  NaNs produced
 > 
-> y2 <- c(26, 17, 10, 15, 20, 5, 9, 8, 5, 4, 8)
-> d2 <- data.frame(x,y=y2)
+> fit0 <- mle2(y~dpois(lambda=ymean),start=list(ymean=mean(y)),data=d,
++              method="L-BFGS-B",lower=10)
 > 
-> m2 <- update(m1,data=d2)
+> stopifnot(is.na(confint(fit0)[1]))
 > 
-> m3 <- update(m1,.~dpois(lambda=c),start=list(c=5))
+> fit1 <- mle2(y~dpois(lambda=exp(a+b*x)),start=list(a=0,b=2),data=d,
++              method="L-BFGS-B",lower=-0.2)
+> 
+> confint(fit1)
+     2.5 %      97.5 %
+a 2.814052  3.35794624
+b       NA -0.09444112
+> 
+> fit2 <- mle2(y~dpois(lambda=exp(a+b*x)),start=list(a=0,b=2),data=d,
++              method="L-BFGS-B")
+> 
+> pp <- profile(fit2,prof.lower=-0.2)
+> stopifnot(min(subset(as.data.frame(pp),param=="b")$par.vals.b)==-0.2)
+> ## note that b does go below -0.2 when profiling a ...
 > 
 > proc.time()
    user  system elapsed 
-  0.784   1.028   1.661 
+  1.444   0.988   2.278 

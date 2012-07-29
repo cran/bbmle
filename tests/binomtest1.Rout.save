@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2012-01-01 r58032)
+R Under development (unstable) (2012-07-27 r60013) -- "Unsuffered Consequences"
 Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: i686-pc-linux-gnu (32-bit)
@@ -20,10 +20,6 @@ Type 'q()' to quit R.
 
 > 
 > library(bbmle)
-Loading required package: stats4
-Loading required package: numDeriv
-Loading required package: lattice
-Loading required package: MASS
 > 
 > funcresp <-
 + structure(list(Initial = as.integer(c(5, 5, 10, 10, 15, 15, 20, 
@@ -114,4 +110,4 @@ h 0.006987227 0.02638541
 > 
 > proc.time()
    user  system elapsed 
-  2.008   0.984   3.466 
+  2.364   1.124   3.345 

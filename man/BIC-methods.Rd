@@ -1,6 +1,6 @@
 \name{BIC-methods}
 \docType{methods}
-\alias{BIC}
+%\alias{BIC}
 \alias{BIC-methods}
 \alias{AIC-methods}
 \alias{AICc-methods}
@@ -21,10 +21,10 @@
 \alias{qAIC,ANY-method}
 \alias{qAIC,mle2-method}
 \alias{qAIC,logLik-method}
-\alias{BIC,logLik-method}
-\alias{BIC,ANY-method}
-\alias{BIC,mle2-method}
-\alias{BIC,ANY,mle2,logLik-method}
+%\alias{BIC,logLik-method}
+%\alias{BIC,ANY-method}
+%\alias{BIC,mle2-method}
+%\alias{BIC,ANY,mle2,logLik-method}
 \alias{qAIC,ANY,mle2,logLik-method}
 \alias{qAICc,ANY,mle2,logLik-method}
 \alias{logLik,mle2-method}
@@ -42,18 +42,18 @@
       Akaike Information Criterion}
     \item{AICc}{\code{signature(object = "mle2")}: Calculate
       small-sample corrected Akaike Information Criterion}
-    \item{BIC}{\code{signature(object = "mle2")}: Calculate
-      Bayesian (Schwarz) Information Criterion}
-    \item{BIC}{\code{signature(object = "logLik")}: Calculate
-      Bayesian (Schwarz) Information Criterion}
-    \item{BIC}{\code{signature(object = "ANY")}: Calculate
-      Bayesian (Schwarz) Information Criterion}
+    %\item{BIC}{\code{signature(object = "mle2")}: Calculate
+    %Bayesian (Schwarz) Information Criterion}
+    %\item{BIC}{\code{signature(object = "logLik")}: Calculate
+    %Bayesian (Schwarz) Information Criterion}
+    %\item{BIC}{\code{signature(object = "ANY")}: Calculate
+    %Bayesian (Schwarz) Information Criterion}
     \item{anova}{\code{signature(object="mle2")}: Likelihood Ratio Test
       comparision of different models}
   }
 }
 \usage{
-\S4method{BIC}{ANY,mle2,logLik}(object,...)
+%\S4method{BIC}{ANY,mle2,logLik}(object,...)
 \S4method{AICc}{ANY,mle2,logLik}(object,...,nobs,k=2)
 \S4method{qAIC}{ANY,mle2,logLik}(object,...,k=2)
 \S4method{qAICc}{ANY,mle2,logLik}(object,...,nobs,k=2)
@@ -86,7 +86,7 @@
       start=list(ymax=25,xhalf=3),data=d))
   (fit2 <- mle2(y~dpois(lambda=(x+1)*slope),
       start=list(slope=1),data=d))
-  BIC(fit,nobs=nrow(d))
-  BIC(fit,fit2,nobs=nrow(d))
+  BIC(fit)
+  BIC(fit,fit2)
   }
 \keyword{methods}

@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2012-01-01 r58032)
+R Under development (unstable) (2012-07-27 r60013) -- "Unsuffered Consequences"
 Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: i686-pc-linux-gnu (32-bit)
@@ -29,4 +29,4 @@ Loading required package: RUnit
 > 
 > proc.time()
    user  system elapsed 
-  0.300   0.488   0.645 
+  0.372   0.596   0.846 

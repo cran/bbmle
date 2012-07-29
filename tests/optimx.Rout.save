@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2012-01-01 r58032)
+R Under development (unstable) (2012-07-27 r60013) -- "Unsuffered Consequences"
 Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: i686-pc-linux-gnu (32-bit)
@@ -19,40 +19,9 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > library(bbmle)
-Loading required package: stats4
-Loading required package: numDeriv
-Loading required package: lattice
-Loading required package: MASS
 > require(optimx)
 Loading required package: optimx
-Loading required package: BB
-Loading required package: quadprog
-Loading required package: ucminf
-Loading required package: Rcgmin
-Loading required package: Rvmmin
-Loading required package: optfntools
-
-Attaching package: ‘Rvmmin’
-
-The following object(s) are masked from ‘package:Rcgmin’:
-
-    optansout
-
-Loading required package: minqa
-Loading required package: Rcpp
-Loading required package: int64
-Loading required package: setRNG
-
-Attaching package: ‘optimx’
-
-The following object(s) are masked from ‘package:Rvmmin’:
-
-    optansout
-
-The following object(s) are masked from ‘package:Rcgmin’:
-
-    optansout
-
+Loading required package: numDeriv
 > x <- 0:10
 > y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
 > d <- data.frame(x,y)
@@ -64,8 +33,35 @@ The following object(s) are masked from ‘package:Rcgmin’:
 +      start=list(ymax=15,xhalf=6),data=d,
 +      optimizer="optimx",
 +            method=c("BFGS","Nelder-Mead","CG"))
+Loading required package: BB
+Loading required package: quadprog
+Loading required package: ucminf
+Loading required package: Rcgmin
+Loading required package: optfntools
+
+Attaching package: ‘Rcgmin’
+
+The following object(s) are masked from ‘package:optimx’:
+
+    optansout
+
+Loading required package: Rvmmin
+
+Attaching package: ‘Rvmmin’
+
+The following object(s) are masked from ‘package:Rcgmin’:
+
+    optansout
+
+The following object(s) are masked from ‘package:optimx’:
+
+    optansout
+
+Loading required package: minqa
+Loading required package: Rcpp
 Warning message:
-In dpois(x, lambda, log) : NaNs produced
+In dpois(x = c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8), lambda = c(37.7033783803611,  :
+  NaNs produced
 > 
 > profile(m1)
 Likelihood profile:
@@ -114,4 +110,4 @@ There were 14 warnings (use warnings() to see them)
 > 
 > proc.time()
    user  system elapsed 
-  8.072  18.261  26.515 
+  7.548   3.192  10.604 

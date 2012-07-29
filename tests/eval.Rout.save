@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2012-01-01 r58032)
+R Under development (unstable) (2012-07-27 r60013) -- "Unsuffered Consequences"
 Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: i686-pc-linux-gnu (32-bit)
@@ -28,10 +28,6 @@ Type 'q()' to quit R.
 > ## PART I: mle2()
 > 
 >   library(bbmle)
-Loading required package: stats4
-Loading required package: numDeriv
-Loading required package: lattice
-Loading required package: MASS
 > 
 >   x <- 0:10
 >   y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
@@ -115,4 +111,4 @@ Error in lm.fit(x, y, offset = offset, singular.ok = singular.ok, ...) :
 > 
 > proc.time()
    user  system elapsed 
-  0.728   1.012   1.597 
+  0.728   1.020   1.595 
