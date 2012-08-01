@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2012-01-01 r58032)
+R Under development (unstable) (2012-07-27 r60013) -- "Unsuffered Consequences"
 Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: i686-pc-linux-gnu (32-bit)
@@ -19,10 +19,6 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > library(bbmle)
-Loading required package: stats4
-Loading required package: numDeriv
-Loading required package: lattice
-Loading required package: MASS
 > f <- function() {
 +   maxit <- 1000
 +   d <- data.frame(x=0:10,
@@ -72,4 +68,4 @@ $lhalf
 > 
 > proc.time()
    user  system elapsed 
-  1.020   0.936   1.832 
+  1.048   1.032   1.937 

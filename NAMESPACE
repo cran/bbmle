@@ -4,8 +4,8 @@ export(ICtab,AICtab,BICtab,AICctab)
 export(stdEr,vcov)
 export(slice,sliceOld,slice1D,slice2D)
 exportClasses(mle2)
-exportMethods(AIC, AICc, qAICc, qAIC, BIC,
-              profile, coef, confint, logLik,
+exportMethods(AIC, AICc, qAICc, qAIC, 
+               profile, coef, confint, logLik,
               update, vcov, anova, deviance, residuals,
               simulate, predict, formula, plot, stdEr, summary)
 importClassesFrom(stats4,mle)

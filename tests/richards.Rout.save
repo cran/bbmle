@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2012-01-01 r58032)
+R Under development (unstable) (2012-07-27 r60013) -- "Unsuffered Consequences"
 Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: i686-pc-linux-gnu (32-bit)
@@ -97,17 +97,17 @@ Type 'q()' to quit R.
 > ## matches!
 > 
 > library(bbmle)
-Loading required package: stats4
-Loading required package: lattice
-Loading required package: MASS
 > parnames(likfun) <- names(p0)
 > 
 > m1 <- mle2(likfun,start=p0,gr=gradlikfun,data=list(times=t0,N=N,dat=ddat),
 +            vecpar=TRUE)
 Warning messages:
-1: In dpois(x, lambda, log) : NaNs produced
-2: In dpois(x, lambda, log) : NaNs produced
-3: In dpois(x, lambda, log) : NaNs produced
+1: In dpois(dat, calc_mean(p, times, N, incid = incid), log = TRUE) :
+  NaNs produced
+2: In dpois(dat, calc_mean(p, times, N, incid = incid), log = TRUE) :
+  NaNs produced
+3: In dpois(dat, calc_mean(p, times, N, incid = incid), log = TRUE) :
+  NaNs produced
 > 
 > plot(t0[-1],ddat)
 > lines(t0[-1],calc_mean(coef(m1),times=t0,N=N))
@@ -118,9 +118,12 @@ There were 50 or more warnings (use warnings() to see the first 50)
 > m0 <- mle2(likfun,start=p0,data=list(times=t0,N=N,dat=ddat),
 +            vecpar=TRUE)
 Warning messages:
-1: In dpois(x, lambda, log) : NaNs produced
-2: In dpois(x, lambda, log) : NaNs produced
-3: In dpois(x, lambda, log) : NaNs produced
+1: In dpois(dat, calc_mean(p, times, N, incid = incid), log = TRUE) :
+  NaNs produced
+2: In dpois(dat, calc_mean(p, times, N, incid = incid), log = TRUE) :
+  NaNs produced
+3: In dpois(dat, calc_mean(p, times, N, incid = incid), log = TRUE) :
+  NaNs produced
 > 
 > pp0 <- profile(m0,which="lambda")
 There were 50 or more warnings (use warnings() to see the first 50)
@@ -133,4 +136,4 @@ In .local(x, ...) :
 > 
 > proc.time()
    user  system elapsed 
-  6.732   1.024   7.687 
+  8.528   1.180   9.627 

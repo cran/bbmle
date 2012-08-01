@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2012-01-01 r58032)
+R Under development (unstable) (2012-07-27 r60013) -- "Unsuffered Consequences"
 Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: i686-pc-linux-gnu (32-bit)
@@ -19,10 +19,6 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > library(bbmle)
-Loading required package: stats4
-Loading required package: numDeriv
-Loading required package: lattice
-Loading required package: MASS
 > ## source("../R/dists.R")
 > ## source("../R/mle.R")
 > 
@@ -51,10 +47,14 @@ Coefficients:
 
 Log-likelihood: -97.19 
 Warning messages:
-1: In dbinom(x, size, prob, log) : NaNs produced
-2: In dbinom(x, size, prob, log) : NaNs produced
-3: In dbinom(x, size, prob, log) : NaNs produced
-4: In dbinom(x, size, prob, log) : NaNs produced
+1: In dbinom(x = c(7, 4, 4, 4, 4, 6, 1, 2, 3, 5, 4, 2, 6, 4, 3, 6,  :
+  NaNs produced
+2: In dbinom(x = c(7, 4, 4, 4, 4, 6, 1, 2, 3, 5, 4, 2, 6, 4, 3, 6,  :
+  NaNs produced
+3: In dbinom(x = c(7, 4, 4, 4, 4, 6, 1, 2, 3, 5, 4, 2, 6, 4, 3, 6,  :
+  NaNs produced
+4: In dbinom(x = c(7, 4, 4, 4, 4, 6, 1, 2, 3, 5, 4, 2, 6, 4, 3, 6,  :
+  NaNs produced
 > 
 > ## step 1: construct gradient function for simplest example
 > f <- sbinom(prob=0.1,size=1)$formula
@@ -110,4 +110,4 @@ logitp
 > 
 > proc.time()
    user  system elapsed 
-  0.752   0.948   1.594 
+  0.716   1.072   1.650 

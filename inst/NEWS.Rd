@@ -3,6 +3,17 @@
 \name{NEWS}
 \title{bbmle News}
 \encoding{UTF-8}
+\section{CHANGES IN VERSION 1.0.5.2 (2012-07-29)}{
+  \itemize{
+     \item remove BIC definitions (now unnecessary/should be adequately
+     defined in core R)
+     \item add explicit Depends: on stats4
+     \item note that development optimx (2012.05.24+) now fails on
+     profiling when reduced model is 1-dimensional (i.e. for a
+     2-parameter model)
+   }
+}
+
 \section{CHANGES IN VERSION 1.0.5.1 (2012-07-17)}{
   \itemize{
      \item remove spurious .RData file; version bump

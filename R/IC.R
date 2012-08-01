@@ -23,7 +23,7 @@ ICtab <- function(...,type=c("AIC","BIC","AICc","qAIC","qAICc"),
   }
   ICs <- switch(type,
                 AIC=sapply(L,AIC),
-                BIC=sapply(L,BIC,nobs=nobs),
+                BIC=sapply(L,BIC),
                 AICc=sapply(L,AICc,nobs=nobs),
                 qAIC=sapply(L,qAIC,dispersion=dispersion),
                 qAICc=sapply(L,qAICc,nobs=nobs,dispersion=dispersion))
@@ -226,37 +226,37 @@ setMethod("qAIC", "mle2",
 ## copied from stats4
 ## setGeneric("BIC", function(object, ...) standardGeneric("BIC"))
 
-setMethod("BIC", signature(object="logLik"),
-          function(object, ...){
-            args = list(...)
-            nobs = args[["nobs"]]
-            args[["nobs"]] <- NULL
-            if (is.null(attr(object,"nobs"))) attr(object,"nobs") <- nobs
-            nobs <- attr(object,"nobs")
-            if (is.null(nobs)) {
-              stop("can't determine number of observations")
-            }
-            -2 * c(object) + attr(object, "df") * log(nobs)
-          })
+## setMethod("BIC", signature(object="logLik"),
+##           function(object, ...){
+##             args = list(...)
+##             nobs = args[["nobs"]]
+##             args[["nobs"]] <- NULL
+##             if (is.null(attr(object,"nobs"))) attr(object,"nobs") <- nobs
+##             nobs <- attr(object,"nobs")
+##             if (is.null(nobs)) {
+##               stop("can't determine number of observations")
+##             }
+##             -2 * c(object) + attr(object, "df") * log(nobs)
+##           })
 
-setMethod("BIC", signature(object="ANY"),
-          function(object, ...){
-            BIC(object=logLik(object, ...))
-          })
+## setMethod("BIC", signature(object="ANY"),
+##           function(object, ...){
+##             BIC(object=logLik(object, ...))
+##           })
 
-setMethod("BIC", "mle2",
-          function (object, ...) {
-            L <- list(...)
-            if ("nobs" %in% names(L)) {
-              nobs = L$nobs
-              L[["nobs"]] <- NULL
-            } else nobs <- NULL
-            if (length(L)) {
-              L <- c(list(object),L)
-              logLiks <- lapply(L, logLik)
-              BICs <- sapply(logLiks,BIC,nobs=nobs)
-              df <- sapply(L,attr,"df")
-              data.frame(BIC=BICs,df=df)
-            }
-            else BIC(logLik(object), nobs = nobs)
-          })
+## setMethod("BIC", "mle2",
+##           function (object, ...) {
+##             L <- list(...)
+##             if ("nobs" %in% names(L)) {
+##               nobs = L$nobs
+##               L[["nobs"]] <- NULL
+##             } else nobs <- NULL
+##             if (length(L)) {
+##               L <- c(list(object),L)
+##               logLiks <- lapply(L, logLik)
+##               BICs <- sapply(logLiks,BIC,nobs=nobs)
+##               df <- sapply(L,attr,"df")
+##               data.frame(BIC=BICs,df=df)
+##             }
+##             else BIC(logLik(object), nobs = nobs)
+##           })

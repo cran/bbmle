@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2012-01-01 r58032)
+R Under development (unstable) (2012-07-27 r60013) -- "Unsuffered Consequences"
 Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: i686-pc-linux-gnu (32-bit)
@@ -19,10 +19,6 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > library(bbmle)
-Loading required package: stats4
-Loading required package: numDeriv
-Loading required package: lattice
-Loading required package: MASS
 > 
 > ## goby data in dump format
 > 
@@ -77,23 +73,30 @@ Loading required package: MASS
 +            parameters=list(llambda~group),
 +            data=x)
 Warning message:
-In dweibull(x, shape, scale, log) : NaNs produced
+In dweibull(x = c(391L, 370L, 346L, 341L, 334L, 320L, 319L, 317L,  :
+  NaNs produced
 > Bm2w <- mle2(lifespan~dweibull(scale=exp(llambda),shape=alpha),
 +              start=list(llambda=mlife,alpha=1),
 +              parameters=list(llambda~group,alpha~group),
 +              data=x)           
 Warning messages:
-1: In dweibull(x, shape, scale, log) : NaNs produced
-2: In dweibull(x, shape, scale, log) : NaNs produced
+1: In dweibull(x = c(391L, 370L, 346L, 341L, 334L, 320L, 319L, 317L,  :
+  NaNs produced
+2: In dweibull(x = c(391L, 370L, 346L, 341L, 334L, 320L, 319L, 317L,  :
+  NaNs produced
 > Bm3w <- mle2(lifespan~dweibull(scale=exp(llambda),shape=alpha),
 +            start=list(llambda=mlife,alpha=3),
 +            parameters=list(alpha~group),
 +            data=x)
 Warning messages:
-1: In dweibull(x, shape, scale, log) : NaNs produced
-2: In dweibull(x, shape, scale, log) : NaNs produced
-3: In dweibull(x, shape, scale, log) : NaNs produced
-4: In dweibull(x, shape, scale, log) : NaNs produced
+1: In dweibull(x = c(391L, 370L, 346L, 341L, 334L, 320L, 319L, 317L,  :
+  NaNs produced
+2: In dweibull(x = c(391L, 370L, 346L, 341L, 334L, 320L, 319L, 317L,  :
+  NaNs produced
+3: In dweibull(x = c(391L, 370L, 346L, 341L, 334L, 320L, 319L, 317L,  :
+  NaNs produced
+4: In dweibull(x = c(391L, 370L, 346L, 341L, 334L, 320L, 319L, 317L,  :
+  NaNs produced
 > anova(Bm0w,Bm1w)
 Likelihood Ratio Tests
 Model 1: Bm0w, lifespan~dweibull(scale=exp(llambda),shape=alpha)
@@ -137,4 +140,4 @@ Bm3w 23.0  6
 > 
 > proc.time()
    user  system elapsed 
-  1.460   0.960   2.311 
+  1.600   1.164   2.632 

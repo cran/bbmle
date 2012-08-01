@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2012-01-01 r58032)
+R Under development (unstable) (2012-07-27 r60013) -- "Unsuffered Consequences"
 Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: i686-pc-linux-gnu (32-bit)
@@ -19,10 +19,6 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > library(bbmle)
-Loading required package: stats4
-Loading required package: numDeriv
-Loading required package: lattice
-Loading required package: MASS
 > 
 > set.seed(101)
 > z = rpois(100,lambda=5)
@@ -39,4 +35,4 @@ m1 0      1
 > 
 > proc.time()
    user  system elapsed 
-  0.712   1.024   1.600 
+  0.704   1.028   1.583 

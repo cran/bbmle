@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2012-01-01 r58032)
+R Under development (unstable) (2012-07-27 r60013) -- "Unsuffered Consequences"
 Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: i686-pc-linux-gnu (32-bit)
@@ -20,10 +20,6 @@ Type 'q()' to quit R.
 
 > require(bbmle)
 Loading required package: bbmle
-Loading required package: stats4
-Loading required package: numDeriv
-Loading required package: lattice
-Loading required package: MASS
 > mle2a <- function(...)
 +   mle2(...)
 > 
@@ -105,4 +101,4 @@ Log-likelihood: -42.73
 > 
 > proc.time()
    user  system elapsed 
-  0.736   0.936   1.538 
+  0.736   1.076   1.638 

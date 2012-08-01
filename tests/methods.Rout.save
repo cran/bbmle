@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2012-01-01 r58032)
+R Under development (unstable) (2012-07-27 r60013) -- "Unsuffered Consequences"
 Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: i686-pc-linux-gnu (32-bit)
@@ -19,10 +19,6 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > library(bbmle)
-Loading required package: stats4
-Loading required package: numDeriv
-Loading required package: lattice
-Loading required package: MASS
 > x <- 0:10
 > y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
 > d <- data.frame(x,y)
@@ -59,7 +55,35 @@ Model 2: mfit1, y~dpois(lambda=exp(loglambda))
   Tot Df Deviance Chisq Df Pr(>Chisq)
 1      1   85.454                    
 2      1   85.454     0  0          1
+> summary(mfit0)
+Maximum likelihood estimation
+
+Call:
+mle2(minuslogl = y ~ dpois(lambda = exp(interc)), start = list(interc = log(mean(y))), 
+    data = d)
+
+Coefficients:
+       Estimate Std. Error z value     Pr(z)    
+interc 2.446292   0.088736  27.568 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
+
+-2 log L: 85.45356 
+> summary(mfit1)
+Maximum likelihood estimation
+
+Call:
+mle2(minuslogl = y ~ dpois(lambda = exp(loglambda)), start = list(loglambda = log(mean(y))), 
+    data = d)
+
+Coefficients:
+          Estimate Std. Error z value     Pr(z)    
+loglambda 2.446292   0.088736  27.568 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
+
+-2 log L: 85.45356 
 > 
 > proc.time()
    user  system elapsed 
-  0.732   1.144   1.814 
+  0.760   1.044   1.656 

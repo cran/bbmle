@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2012-01-01 r58032)
+R Under development (unstable) (2012-07-27 r60013) -- "Unsuffered Consequences"
 Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: i686-pc-linux-gnu (32-bit)
@@ -20,10 +20,6 @@ Type 'q()' to quit R.
 
 > require(bbmle)
 Loading required package: bbmle
-Loading required package: stats4
-Loading required package: numDeriv
-Loading required package: lattice
-Loading required package: MASS
 > x <- 0:10
 > y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
 > d <- data.frame(x,y)
@@ -38,4 +34,4 @@ Loading required package: MASS
 > 
 > proc.time()
    user  system elapsed 
-  0.688   0.956   1.496 
+  0.696   1.036   1.584 

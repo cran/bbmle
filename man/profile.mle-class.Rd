@@ -78,8 +78,7 @@
     when computing profile to get confidence interval?}
   \item{tol.newmin}{see \code{\link{profile-methods}}}
   \item{plot.confstr}{(logical) plot labels showing confidence levels?}
-  \item{confstr}{(character) labels for confidence levels
-    (by default, constructed from conf levels}
+  \item{confstr}{(character) labels for confidence levels (by default, constructed from conf levels)}
   \item{absVal}{(logical) plot absolute values of signed square
     root deviance difference ("V" plot rather than straight-line
     plot)?}
@@ -138,13 +137,17 @@ plot(p2,show.points=TRUE)
 confint(p2)  ## now we get a warning
 confint(fit2,method="uniroot")
 ## bobyqa is a better-behaved bounded optimizer ...
+##  BUT recent (development, 2012.5.24) versions of
+##    optimx no longer allow single-parameter fits!
+\dontrun{
 if (require(optimx)) {
   fit3 <- update(fit1,
       optimizer="optimx",
       method="bobyqa",lower=c(ymax=0.001,xhalf=0.001))
-  p3 <- profile(fit3)
-  plot(p3,show.points=TRUE)
+   p3 <- profile(fit3)
+   plot(p3,show.points=TRUE)
   confint(p3)
+}
 }
 }
 \keyword{classes}

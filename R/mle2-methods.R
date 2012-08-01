@@ -168,3 +168,4 @@ setAs("profile.mle2","data.frame",
           })
 
 
+BIC.mle2 <- stats4:::BIC
