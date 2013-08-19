@@ -6,7 +6,9 @@
   and plus symbols
 }
 \usage{
-strwrapx(x, width = 0.9 * getOption("width"), indent = 0, exdent = 0, prefix = "", simplify = TRUE, parsplit = "\n[ \t\n]*\n", wordsplit = "[ \t\n]")
+strwrapx(x, width = 0.9 * getOption("width"), indent = 0,
+exdent = 0, prefix = "", simplify = TRUE,
+parsplit = "\n[ \t\n]*\n", wordsplit = "[ \t\n]")
 }
 \arguments{
   \item{x}{a character vector, or an object which can be converted to a

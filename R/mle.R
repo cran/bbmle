@@ -214,6 +214,7 @@ mle2 <- function(minuslogl,
   call$data <- eval.parent(call$data)
   call$upper <- eval.parent(call$upper)
   call$lower <- eval.parent(call$lower)
+  call$gr <- eval.parent(call$gr)
   ## FIX based on request from Mark Clements
   ## call$control$parscale <- eval.parent(call$control$parscale)
   ## call$control$ndeps <- eval.parent(call$control$ndeps)
@@ -338,14 +339,19 @@ mle2 <- function(minuslogl,
                  }
           v <- do.call("gr",args)
           if (is.null(names(v))) {
-            if (length(v)==length(p) && !is.null(tt <- names(p))) {
-              vnames <- tt
-            } else if (!is.null(tt <- parnames(minuslogl))) {
-              vnames <- tt
-            } else vnames <- names(formals(minuslogl))
-            if (length(vnames)!=length(v))
-              stop("name/length mismatch in gradient function")
-            names(v) <- vnames
+              if (length(v)==length(l) && !is.null(tt <- names(l))) {
+                  ## try to set names from template
+                  vnames <- tt
+              } else if (length(v)==length(p) && !is.null(tt <- names(p))) {
+                  ## try to set names from params
+                  vnames <- tt
+              } else if (!is.null(tt <- parnames(minuslogl))) {
+                  ## names were set as an attribute of the function
+                  vnames <- tt
+              } else vnames <- names(formals(minuslogl))
+              if (length(vnames)!=length(v))
+                  stop("name/length mismatch in gradient function")
+              names(v) <- vnames
           }
           v[!names(v) %in% nfix] ## from Eric Weese
         } ## end of gradient function
@@ -359,8 +365,9 @@ mle2 <- function(minuslogl,
              MoreArgs=list(envir=newenv))
       environment(minuslogl) <- newenv
       if (!missing(gr)) {
+          newenvgr <- new.env(hash=TRUE,parent=environment(minuslogl))
           mapply(assign,names(d),d,
-                 MoreArgs=list(envir=environment(gr)))
+                 MoreArgs=list(envir=newenvgr))
       }
   }
   if (length(start)==0 || eval.only) {
@@ -437,18 +444,18 @@ mle2 <- function(minuslogl,
                      nlm="minimum",
                      optimize=, optimise=, nlminb="objective")
   if (optimizer=="optimx") {
-    fvals <- unlist(oout$fvalues)
-    conv <- unlist(oout$conv)
+    fvals <- oout[["value"]]
+    conv <- oout[["convcode"]]
     ## best <- if (!any(conv==0)) {
     best <- which.min(fvals)
     ##    } else {
     ## fvals <- fvals[conv==0]
     ## which.min(fvals)
     ## }
-    oout <- list(par=oout$par[[best]],
+    oout <- list(par=as.numeric(unlist(oout[best,1:attr(oout,"npar")])),
                  value=fvals[best],
                  convergence=conv[best],
-                 method.used=oout$method[[best]])
+                 method.used=attr(oout,"details")[,"method"][[best]])
     ## FIXME: should do profiles only with best method for MLE?
   }
   if (optimizer=="nlm") {
@@ -516,9 +523,10 @@ mle2 <- function(minuslogl,
   ## FIXME: should we worry about parscale here??
   if (length(coef)) {
     gradvec <- if (!missing(gr)) {
-      objectivefunctiongr(coef)
+        objectivefunctiongr(coef)
     } else {
-      grad(objectivefunction,coef)
+        if (inherits(tt <- try(grad(objectivefunction,coef),silent=TRUE),
+                     "try-error")) NA else tt
     }
     oout$maxgrad <-  max(abs(gradvec))
     if (!skip.hessian) {
@@ -526,6 +534,23 @@ mle2 <- function(minuslogl,
                      "try-error")) ev <- NA
         oout$eratio <- min(ev)/max(ev)
     }
+  }
+  if (!is.null(conv <- oout$conv) &&
+      ((optimizer=="nlm" && conv>2) ||
+       (optimizer!="nlm" && conv!=0))) {
+      ## warn of convergence failure
+      if (is.null(oout$message)) {
+          cmsg <- "unknown convergence failure: refer to optimizer documentation"
+          if (optimizer=="optim") {
+              if (conv==1) cmsg <- "iteration limit 'maxit' reached"
+              if (conv==10) cmsg <- "degenerate Nelder-Mead simplex"
+          } else if (optimizer=="nlm") {
+              if (conv==3) cmsg <- "last global step failed to locate a point lower than 'estimate': see ?nlm"
+              if (conv==4) cmsg <- "iteration limit exceeded"
+              if (conv==5) cmsg <- "maximum step size 'stepmax' exceeded five consecutive times: see ?nlm"
+          }
+      } else cmsg <- oout$message
+      warning(paste0("convergence failure: code=",conv," (",cmsg,")"))
   }
   m <- new("mle2", call=call, call.orig=call.orig, coef=coef, fullcoef=unlist(fullcoef), vcov=tvcov,
            min=min, details=oout, minuslogl=minuslogl, method=method,

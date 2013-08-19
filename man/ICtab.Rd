@@ -16,7 +16,7 @@ nobs, dispersion = 1, mnames, k = 2)
 AICtab(\dots)
 BICtab(\dots)
 AICctab(\dots)
-\method{print}{ICtab}(x,\dots)
+\method{print}{ICtab}(x,\dots,min.weight)
 }
 \arguments{
   \item{\dots}{a list of (logLik or?) mle objects; in the case of
@@ -35,6 +35,8 @@ AICctab(\dots)
   \item{mnames}{names for table rows: defaults to names of objects passed}
   \item{k}{penalty term (largely unused: left at default of 2)}
   \item{x}{an ICtab object}
+  \item{min.weight}{minimum weight for exact reporting (smaller values
+    will be reported as "<[min.weight]")}
 }
 \value{
   A data frame containing:
@@ -61,4 +63,14 @@ AICctab(\dots)
   sense to report the overall values of information criteria}
 \references{Burnham and Anderson 2002}
 \author{Ben Bolker}
+\examples{
+  set.seed(101)
+  d <- data.frame(x=1:20,y=rpois(20,lambda=2))
+  m0 <- glm(y~1,data=d)
+  m1 <- update(m0,.~x)
+  m2 <- update(m0,.~poly(x,2))
+  AICtab(m0,m1,m2)
+  AICctab(m0,m1,m2,nobs=20,weights=TRUE)
+  print(AICctab(m0,m1,m2,nobs=20,weights=TRUE),min.weight=0.1)
+}
 \keyword{misc}

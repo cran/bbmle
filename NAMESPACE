@@ -13,6 +13,7 @@ importFrom(stats4,coef,confint,logLik,BIC,summary,profile,vcov,AIC, update, plot
 importFrom(stats,
            anova,deviance,residuals,
            simulate,predict,formula)
+importFrom(methods,setMethod)
 importFrom(lattice,xyplot,splom)  ## for slice methods
 importFrom(numDeriv,hessian,grad)
 S3method(as.data.frame,profile.mle2)

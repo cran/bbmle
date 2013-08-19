@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2012-07-27 r60013) -- "Unsuffered Consequences"
+R Under development (unstable) (2012-12-14 r61321) -- "Unsuffered Consequences"
 Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: i686-pc-linux-gnu (32-bit)
@@ -19,13 +19,16 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > library(bbmle)
+Loading required package: stats4
+> old_opt <- options(digits=3)
+> tracelevel <- 0
 > 
 > ## source("~/lib/R/pkgs/bbmle/pkg/R/mle.R
 > 
 > set.seed(1002)
 > X <- rexp(1000, rate = 0.0001)
 > f <- function(X, rate) {
-+   if (rate<0) cat("rate<0: ",rate,"\n")
++   if (tracelevel>0 && rate<0) cat("rate<0: ",rate,"\n")
 +   -sum(dexp(X, rate = rate, log = TRUE))
 + }
 > if (FALSE) {
@@ -34,7 +37,8 @@ Type 'q()' to quit R.
 +             data = list(X = X),
 +             start = list(rate = 0.01),
 +             method = "L-BFGS-B",
-+             control = list(trace = 1, parscale = 1e-4),
++             control = list(trace = tracelevel, 
++                            parscale = 1e-4),
 +             lower = c(rate = 1e-9))
 + 
 +   profile(m, std.err=0.0001) ## finds new optimum
@@ -46,7 +50,7 @@ Type 'q()' to quit R.
 +             data = list(X = X),
 +             start = list(rate = 100),
 +             method = "L-BFGS-B",
-+             control = list(trace = 1),
++             control = list(trace = tracelevel),
 +             lower = c(rate = 1e-5))
 + 
 +   ## does it work if we scale by hand?
@@ -58,17 +62,15 @@ Type 'q()' to quit R.
 +           data = list(X = X),
 +           start = list(rate = 0.001),
 +           method = "L-BFGS-B",
-+           control = list(trace = 1,parscale=1e-4),
++           control = list(trace = tracelevel,
++                          parscale=1e-4),
 +               lower = c(rate = 1e-9))
-iter    0 value 12490.509482
-final  value 10188.014396 
-converged
 > vcov(m)
-             rate
-rate 1.045669e-11
+         rate
+rate 1.05e-11
 > confint(m)
-       2.5 %       97.5 % 
-9.605011e-05 1.087274e-04 
+   2.5 %   97.5 % 
+9.61e-05 1.09e-04 
 > 
 > 
 > ## works OK despite warnings about 1-dimensional opt. with N-M
@@ -76,80 +78,38 @@ rate 1.045669e-11
 +           data = list(X = X),
 +           start = list(rate = 0.01),
 +           method = "Nelder-Mead",
-+           control = list(trace = 1, parscale = 1e-4)))
-  Nelder-Mead direct search function minimizer
-function value for initial parameters = 102397.310635
-  Scaled convergence tolerance is 0.00152584
-Stepsize computed as 10.000000
-BUILD              2 112081.214500 102397.310635
-EXTENSION          4 102397.310635 83062.026096
-EXTENSION          6 83062.026096 44638.317097
-HI-REDUCTION       8 63791.280079 44638.317097
-REFLECTION        10 44638.317097 25773.036188
-HI-REDUCTION      12 35146.785125 25773.036188
-REFLECTION        14 25773.036188 16686.969324
-HI-REDUCTION      16 21171.111238 16686.969324
-REFLECTION        18 16686.969324 12490.509482
-HI-REDUCTION      20 14529.847885 12490.509482
-REFLECTION        22 12490.509482 10738.853151
-HI-REDUCTION      24 11555.789799 10738.853151
-REFLECTION        26 10738.853151 10209.598576
-HI-REDUCTION      28 10415.334346 10209.598576
-LO-REDUCTION      30 10209.598576 10191.680210
-HI-REDUCTION      32 10191.680210 10190.329749
-HI-REDUCTION      34 10190.329749 10188.037612
-HI-REDUCTION      36 10188.497339 10188.037612
-HI-REDUCTION      38 10188.089444 10188.037612
-HI-REDUCTION      40 10188.037612 10188.018175
-HI-REDUCTION      42 10188.018175 10188.016446
-HI-REDUCTION      44 10188.016446 10188.014462
-Exiting from Nelder Mead minimizer
-    46 function evaluations used
++           control = list(trace = tracelevel, parscale = 1e-4)))
 
 Call:
 mle2(minuslogl = f, start = list(rate = 0.01), method = "Nelder-Mead", 
-    data = list(X = X), control = list(trace = 1, parscale = 1e-04))
+    data = list(X = X), control = list(trace = tracelevel, parscale = 1e-04))
 
 Coefficients:
-        rate 
-0.0001022949 
+    rate 
+0.000102 
 
-Log-likelihood: -10188.01 
+Log-likelihood: -10188 
 Warning message:
 In optim(par = 0.01, fn = function (p)  :
-  one-diml optimization by Nelder-Mead is unreliable:
+  one-dimensional optimization by Nelder-Mead is unreliable:
 use "Brent" or optimize() directly
 > vcov(m0)
-             rate
-rate 1.046414e-11
+         rate
+rate 1.05e-11
 > 
 > confint(m0)
-       2.5 %       97.5 % 
-9.604965e-05 1.087271e-04 
+   2.5 %   97.5 % 
+0.000096 0.000109 
 > confint(m0,method="quad")
-       2.5 %       97.5 % 
-9.595477e-05 1.086351e-04 
+   2.5 %   97.5 % 
+0.000096 0.000109 
 > ## very similar (good quadratic surface, not surprising)
 > 
 > m1 <- mle2(minuslogl = f,
 +           data = list(X = X),
 +           start = list(rate = 0.01),
 +           method = "BFGS",
-+           control = list(trace = 1, parscale = 1e-4))
-initial  value 102397.310635 
-rate<0:  -0.08679214 
-rate<0:  -0.009358428 
-rate<0:  -0.5831727 
-rate<0:  -0.1117319 
-rate<0:  -0.01744372 
-rate<0:  -0.07719334 
-rate<0:  -0.01430754 
-rate<0:  -0.001730383 
-rate<0:  -0.08426903 
-rate<0:  -0.01622577 
-rate<0:  -0.002617114 
-final  value 10188.014408 
-converged
++           control = list(trace = tracelevel, parscale = 1e-4))
 There were 11 warnings (use warnings() to see them)
 > 
 > 
@@ -161,9 +121,10 @@ There were 11 warnings (use warnings() to see them)
 +            lower=1e-9,upper=0.1)
 > 
 > vcov(m2)
-             rate
-rate 1.407176e-11
+         rate
+rate 1.41e-11
+> options(old_opt)
 > 
 > proc.time()
    user  system elapsed 
-  0.804   1.104   1.761 
+  0.732   1.348   1.980 

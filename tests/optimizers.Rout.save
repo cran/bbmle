@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2012-07-27 r60013) -- "Unsuffered Consequences"
+R Under development (unstable) (2012-12-14 r61321) -- "Unsuffered Consequences"
 Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: i686-pc-linux-gnu (32-bit)
@@ -19,25 +19,28 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > library(bbmle)
+Loading required package: stats4
+> old_opts <- options(digits=3)
 > x <- 0:10
 > y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
 > d <- data.frame(x,y)
 > fits <- lapply(c("optim","nlm","nlminb"),
-+        mle2,
-+        minuslogl=y~dpois(lambda=ymax/(1+x/xhalf)),
-+        start=list(ymax=15,xhalf=6),data=d,
-+        method="Nelder-Mead") ## 'method' is ignored by nlm()/nlminb()
++                mle2,
++                minuslogl=y~dpois(lambda=ymax/(1+x/xhalf)),
++                start=list(ymax=15,xhalf=6),data=d,
++                method="Nelder-Mead") ## 'method' is ignored by nlm()/nlminb()
 Warning messages:
 1: In dpois(x = c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8), lambda = c(31.4659916032255,  :
   NaNs produced
 2: In nlm(f = objectivefunction, p = start, hessian = FALSE, ...) :
   NA/Inf replaced by maximum positive value
+> 
 > sapply(fits,coef)
-           [,1]      [,2]      [,3]
-ymax  24.999725 24.999387 24.999424
-xhalf  3.055245  3.055784  3.055781
+       [,1]  [,2]  [,3]
+ymax  25.00 25.00 25.00
+xhalf  3.06  3.06  3.06
 > sapply(fits,logLik)
-[1] -28.60406 -28.60405 -28.60405
+[1] -28.6 -28.6 -28.6
 > 
 > (fit2 <-  mle2(y~dpois(lambda=25/(1+x/xhalf)),
 +               start=list(xhalf=5),data=d,
@@ -49,8 +52,8 @@ mle2(minuslogl = y ~ dpois(lambda = 25/(1 + x/xhalf)), start = list(xhalf = 5),
     optimizer = "optimize", data = d, lower = 2, upper = 8)
 
 Coefficients:
-   xhalf 
-3.055659 
+xhalf 
+ 3.06 
 
 Log-likelihood: -28.6 
 > 
@@ -58,7 +61,8 @@ Log-likelihood: -28.6
 > ## (fit2 <-  mle2(y~dpois(lambda=25/(1+x/xhalf)),
 > ##              start=list(xhalf=5),
 > ##              optimizer="optimize"))
+> options(old_opts)
 > 
 > proc.time()
    user  system elapsed 
-  0.788   1.016   1.661 
+  0.696   1.356   2.000 

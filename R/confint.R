@@ -51,14 +51,14 @@ function (object, parm, level = 0.95, method,
   if (is.character(parm)) parm <- match(parm,Pnames)
   if (any(is.na(parm))) stop("parameters not found in model coefficients")
   if (method=="spline") {
-    if (!quietly) cat("Profiling...\n")
+    if (!quietly) message("Profiling...\n")
     newpars_found <- FALSE
     prof = try(profile(object,which=parm,tol.newmin=tol.newmin,...))
     if (inherits(prof,"try-error")) stop(paste("Problem with profiling:",prof))
     if (class(prof)=="mle2") newpars_found <- TRUE
     if (newpars_found) {
         ## profiling found a better fit
-        cat("returning better fit\n")
+        message("returning better fit\n")
         return(prof)
     }
     return(confint(prof, parm, level, ...))

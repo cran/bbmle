@@ -1,11 +1,13 @@
 library(bbmle)
+old_opt <- options(digits=3)
+tracelevel <- 0
 
 ## source("~/lib/R/pkgs/bbmle/pkg/R/mle.R
 
 set.seed(1002)
 X <- rexp(1000, rate = 0.0001)
 f <- function(X, rate) {
-  if (rate<0) cat("rate<0: ",rate,"\n")
+  if (tracelevel>0 && rate<0) cat("rate<0: ",rate,"\n")
   -sum(dexp(X, rate = rate, log = TRUE))
 }
 if (FALSE) {
@@ -14,7 +16,8 @@ if (FALSE) {
             data = list(X = X),
             start = list(rate = 0.01),
             method = "L-BFGS-B",
-            control = list(trace = 1, parscale = 1e-4),
+            control = list(trace = tracelevel, 
+                           parscale = 1e-4),
             lower = c(rate = 1e-9))
 
   profile(m, std.err=0.0001) ## finds new optimum
@@ -26,7 +29,7 @@ if (FALSE) {
             data = list(X = X),
             start = list(rate = 100),
             method = "L-BFGS-B",
-            control = list(trace = 1),
+            control = list(trace = tracelevel),
             lower = c(rate = 1e-5))
 
   ## does it work if we scale by hand?
@@ -38,7 +41,8 @@ m <- mle2(minuslogl = f,
           data = list(X = X),
           start = list(rate = 0.001),
           method = "L-BFGS-B",
-          control = list(trace = 1,parscale=1e-4),
+          control = list(trace = tracelevel,
+                         parscale=1e-4),
               lower = c(rate = 1e-9))
 vcov(m)
 confint(m)
@@ -49,7 +53,7 @@ confint(m)
           data = list(X = X),
           start = list(rate = 0.01),
           method = "Nelder-Mead",
-          control = list(trace = 1, parscale = 1e-4)))
+          control = list(trace = tracelevel, parscale = 1e-4)))
 vcov(m0)
 
 confint(m0)
@@ -60,7 +64,7 @@ m1 <- mle2(minuslogl = f,
           data = list(X = X),
           start = list(rate = 0.01),
           method = "BFGS",
-          control = list(trace = 1, parscale = 1e-4))
+          control = list(trace = tracelevel, parscale = 1e-4))
 
 
 ## gets stuck? will have to investigate ...
@@ -71,3 +75,4 @@ m2 <- mle2(minuslogl = f,
            lower=1e-9,upper=0.1)
 
 vcov(m2)
+options(old_opt)
