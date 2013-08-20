@@ -66,14 +66,14 @@ ICtab <- function(...,type=c("AIC","BIC","AICc","qAIC","qAICc"),
   tab
 }
 
-print.ICtab <- function(x,...) {
-  chtab <- format(do.call("cbind",lapply(x,round,1)))
-  rownames(chtab) <- attr(x,"row.names")
-  chtab[,"df"] <- as.character(x$df)
-  if (!is.null(x$weight))
-    chtab[,"weight"] <- format.pval(x$weight,eps=0.001,
-                                    digits=3)
-  print(chtab,quote=FALSE)
+print.ICtab <- function(x,...,min.weight=0.001) {
+    chtab <- format(do.call("cbind",lapply(x,round,1)))
+    rownames(chtab) <- attr(x,"row.names")
+    chtab[,"df"] <- as.character(x$df)
+    if (!is.null(x$weight))
+        chtab[,"weight"] <- format.pval(x$weight,eps=min.weight,
+                                        digits=2)
+    print(chtab,quote=FALSE)
 }
 
 AICtab <- function(...) {

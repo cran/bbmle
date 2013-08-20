@@ -6,14 +6,14 @@ set.seed(1001)
 x <- 0:10
 y <- c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8)
 d <- data.frame(x,y)
-m1 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
+suppressWarnings(m1 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
            parameters=list(ymax~1,xhalf~1),
-           start=list(ymax=1,xhalf=1),data=d)
+           start=list(ymax=1,xhalf=1),data=d))
 
-p1 <- profile(m1)
+suppressWarnings(p1 <- profile(m1))
 
-m2 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
-           start=list(ymax=1,xhalf=1),data=d)
+suppressWarnings(m2 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
+           start=list(ymax=1,xhalf=1),data=d))
 
 ## should be able to omit parameters (?) or
 ## have them taken from 
@@ -25,9 +25,6 @@ structure(list(TBL = as.integer(c(9, 9, 9, 12, 12, 12, 21, 21,
 4, 5, 0, 0, 0, 0, 1, 0, 0, 0, 0))), .Names = c("TBL", "Kill"), class = "data.frame", row.names = c("1", 
 "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", 
 "14", "15"))
-
-attach(ReedfrogSizepred)
-on.exit(detach(ReedfrogSizepred))
 
 VBlogist <- function(x,sizep1,sizep2,sizep3) {
   exp(sizep1*(sizep3-x))/(1+exp(sizep2*sizep1*(sizep3-x)))
@@ -55,9 +52,9 @@ d <- data.frame(x,y)
              parameters=list(ymax~f,xhalf~f),
              start=list(ymax=1,xhalf=1),data=d)
 
-  m5 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
+  suppressWarnings(m5 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
              parameters=list(ymax~f),
-             start=list(ymax=1,xhalf=1),data=d)
+             start=list(ymax=1,xhalf=1),data=d))
 
   anova(m2,m3,m4)
   anova(m2,m5,m4)

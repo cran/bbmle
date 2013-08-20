@@ -211,8 +211,8 @@ setMethod("profile", "mle2",
                 stop_maxstep <- (step==maxsteps)
                 if (stop_maxstep) stop_msg[[i]][[dir_ind]] <- paste(stop_msg[[i]][[dir_ind]],wfun("max steps"),sep=";")
                 if (debug) {
-                  if (stop_na) cat(wfun("encountered NA"),"\n")
-                  if (stop_cutoff) cat(wfun("above cutoff"),"\n")
+                  if (stop_na) message(wfun("encountered NA"),"\n")
+                  if (stop_cutoff) message(wfun("above cutoff"),"\n")
                 }
                 if (stop_flat) {
                   warning(wfun("stepsize effectively zero/flat profile"))

@@ -1,4 +1,5 @@
 library(bbmle)
+old_opt <- options(digits=3)
 ## source("../R/dists.R")
 ## source("../R/mle.R")
 
@@ -15,7 +16,7 @@ library(bbmle)
 
 set.seed(1001)
 x <- rbinom(50,size=10,prob=0.4)
-mle2(x~dbinom(prob=p,size=10),start=list(p=0.3),data=data.frame(x))
+suppressWarnings(mle2(x~dbinom(prob=p,size=10),start=list(p=0.3),data=data.frame(x)))
 
 ## step 1: construct gradient function for simplest example
 f <- sbinom(prob=0.1,size=1)$formula
@@ -55,3 +56,4 @@ colSums(apply(a1,2,"*",a2))
 ## objective function and gradient to be computed
 ## *separately*.  Not worth worrying about this in the
 ## first pass!
+options(old_opt)

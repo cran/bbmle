@@ -2,6 +2,7 @@
 %\VignettePackage{mle2}
 %\VignetteIndexEntry{quasi: notes on quasi-likelihood/qAIC analysis inR}
 %\VignetteDepends{MuMIn,AICcmodavg}
+%\VignetteEngine{knitr::knitr}
 
 \usepackage{graphicx}
 \usepackage{url}
@@ -21,6 +22,9 @@ Please share \& remix noncommercially,
 mentioning its origin.}
 \end{minipage}
 
+<<opts,echo=FALSE>>=
+if (require("knitr")) opts_chunk$set(tidy=FALSE)
+@ 
 Computing ``quasi-AIC'' (QAIC), in R is a minor
 pain, because  the R Core team (or at least the ones who wrote \code{glm},
 \code{glmmPQL}, etc.) 
@@ -56,10 +60,20 @@ dfun <- function(object) {
     fine for model comparisons)}
 \end{itemize}
 
+The whole problem is worse for \code{MASS::glmmPQL}, where (1) the
+authors have gone to greater efforts to make sure that the (quasi-)deviance
+is no longer preserved anywhere in the fitted model, and (2) they
+may have done it for good reason --- it is not clear whether the
+number that would get left in the 'deviance' slot at the end of
+\code{glmmPQL}'s alternating \code{lme} and \code{glm} fits is
+even meaningful to the extent that regular QAICs are.  (For 
+discussion of a similar situation, see the \code{WARNING}
+section of \code{?gamm} in the \code{mgcv} package.)
+
 Example: use the values from one of the examples
 in \code{?glm}:
 
-<<dobdata,keep.source=TRUE>>=
+<<dobdata>>=
 ## Dobson (1990) Page 93: Randomized Controlled Trial :
 counts <- c(18,17,15,20,10,20,25,13,12)
 outcome <- gl(3,1,9)
@@ -82,7 +96,7 @@ glmQX.D93 <- update(glmX.D93, family=quasipoisson)
 
 
 Extract log-likelihoods:
-<<dobll,keep.source=TRUE>>=
+<<dobll>>=
 (sum(dpois(counts,
           lambda=exp(predict(glmOT.D93)),log=TRUE))) ## by hand
 (logLik(glmOT.D93))  ## from Poisson fit
@@ -93,7 +107,7 @@ is not the same as $-2L$ (\code{-2*logLik(glmOT.D93)}=\Sexpr{round(-2*c(logLik(g
 but the calculated differences in deviance are consistent,
 and are also extractable from the quasi- fit even though
 the log-likelihood is \code{NA}:
-<<dobll2,keep.source=TRUE>>=
+<<dobll2>>=
 (-2*(logLik(glmT.D93)-logLik(glmOT.D93)))  ## Poisson fit
 (deviance(glmT.D93)-deviance(glmOT.D93))   ## Poisson fit
 (deviance(glmQT.D93)-deviance(glmQOT.D93)) ## quasi-fit
@@ -140,7 +154,7 @@ detach("package:AICcmodavg")
 
 \subsection*{\code{MuMIn} package (Kamil Barto{\'n}), r-forge}
 
-<<MuMin,keep.source=TRUE>>=
+<<MuMin>>=
 library(MuMIn)
 (gg <-  dredge(glmOT.D93,rank="QAIC", chat=dfun(glmOT.D93)))
 (ggc <- dredge(glmOT.D93,rank="QAICc",chat=dfun(glmOT.D93)))

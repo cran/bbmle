@@ -1,4 +1,3 @@
-
 library(bbmle)
 
 funcresp <-
@@ -8,8 +7,6 @@ structure(list(Initial = as.integer(c(5, 5, 10, 10, 15, 15, 20,
 "Killed"), class = "data.frame", row.names = c("1", "2", "3", 
 "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", 
 "16"))
-
-attach(funcresp)
 
 binomNLL2 = function(p) {
   a = p[1]
@@ -22,9 +19,9 @@ binomNLL2 = function(p) {
 N=0; k=0
 parnames(binomNLL2) = c("a","h")
 m2a = mle2(binomNLL2,start=c(a=0.5,h=0.0125),
-  data=list(N=Initial,k=Killed))
-p1a = profile(m2a); p1a
-c2a = confint(p1a); c2a
+      data=with(funcresp,list(N=Initial,k=Killed)))
+p1a = profile(m2a)
+c2a = print(confint(p1a),digits=3)
 
 binomNLL2b = function(p,N,k) {
   a = p[1]
@@ -35,12 +32,11 @@ binomNLL2b = function(p,N,k) {
 }
 parnames(binomNLL2b) = c("a","h")
 m2b = mle2(binomNLL2,start=c(a=0.5,h=0.0125),
-  data=list(N=Initial,k=Killed))
+  data=with(funcresp,list(N=Initial,k=Killed)))
 c2b = confint(m2b)
 
-N=Initial; k=Killed
+N=funcresp$Initial; k=funcresp$Killed
 m2c = mle2(binomNLL2,start=c(a=0.5,h=0.0125))
-c2c = confint(m2c); c2c
-
-detach(funcresp)
+c2c = confint(m2c)
+print(c2c,digits=3)
 
