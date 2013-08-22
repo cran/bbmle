@@ -1,72 +1,73 @@
 
-## @knitr knitropts,echo=FALSE
-if (require("knitr")) opts_chunk$set(fig.width=5,fig.height=5,tidy=FALSE)
+## ----knitropts,echo=FALSE------------------------------------------------
+if (require("knitr")) opts_chunk$set(fig.width=5,fig.height=5,tidy=FALSE,
+                                     warning=FALSE)
 
 
-## @knitr setup,results="hide",echo=FALSE
+## ----setup,results="hide",echo=FALSE-------------------------------------
 library(Hmisc)
 
 
-## @knitr emdbook
+## ----emdbook,message=FALSE-----------------------------------------------
 library(emdbook)
 
 
-## @knitr bbsim
+## ----bbsim---------------------------------------------------------------
 set.seed(1001)
 x1 <- rbetabinom(n=1000,prob=0.1,size=50,theta=10)
 
 
-## @knitr bbmle
+## ----bbmle,message=FALSE-------------------------------------------------
 library("bbmle")
 
 
-## @knitr likfun1
+## ----likfun1-------------------------------------------------------------
 mtmp <- function(prob,size,theta) {
   -sum(dbetabinom(x1,prob,size,theta,log=TRUE))
 }
 
 
-## @knitr fit1
+## ----fit1----------------------------------------------------------------
 (m0 <- mle2(mtmp,start=list(prob=0.2,theta=9),data=list(size=50)))
 
 
-## @knitr sum1
+## ----sum1----------------------------------------------------------------
 summary(m0)
 
 
-## @knitr prof1,cache=TRUE
+## ----prof1,cache=TRUE----------------------------------------------------
 p0 <- profile(m0)
 
 
-## @knitr confint1
+## ----confint1------------------------------------------------------------
 confint(p0)
 confint(m0,method="quad")
 confint(m0,method="uniroot")
 
 
-## @knitr profplot1,fig.height=5,fig.width=10,out.width="\\textwidth"
+## ----profplot1,fig.height=5,fig.width=10,out.width="\\textwidth"---------
 par(mfrow=c(1,2))
 plot(p0,plot.confstr=TRUE)
 
 
-## @knitr fit2
+## ----fit2----------------------------------------------------------------
 m0f <- mle2(x1~dbetabinom(prob,size=50,theta),
             start=list(prob=0.2,theta=9),data=data.frame(x1))
 
 
-## @knitr fit2f
+## ----fit2f---------------------------------------------------------------
 m0cf <- mle2(x1~dbetabinom(prob=plogis(lprob),size=50,theta=exp(ltheta)),
             start=list(lprob=0,ltheta=2),data=data.frame(x1))
 confint(m0cf,method="uniroot")
 confint(m0cf,method="spline")
 
 
-## @knitr orobdata
+## ----orobdata------------------------------------------------------------
 load(system.file("vignetteData","orob1.rda",package="bbmle"))
 summary(orob1)
 
 
-## @knitr aodlikfun
+## ----aodlikfun-----------------------------------------------------------
 ML1 <- function(prob1,prob2,prob3,theta,x) {
   prob <- c(prob1,prob2,prob3)[as.numeric(x$dilution)]
   size <- x$n
@@ -74,7 +75,7 @@ ML1 <- function(prob1,prob2,prob3,theta,x) {
 }
 
 
-## @knitr crowdertab,echo=FALSE,results="asis"
+## ----crowdertab,echo=FALSE,results="asis"--------------------------------
 crowder.results <- matrix(c(0.132,0.871,0.839,78.424,0.027,0.028,0.032,-34.991,
                             rep(NA,7),-34.829,
                             rep(NA,7),-56.258),
@@ -84,12 +85,12 @@ crowder.results <- matrix(c(0.132,0.871,0.839,78.424,0.027,0.028,0.032,-34.991,
 latex(crowder.results,file="",table.env=FALSE,title="model")
 
 
-## @knitr aodfit1,cache=TRUE
+## ----aodfit1,cache=TRUE--------------------------------------------------
 (m1 <- mle2(ML1,start=list(prob1=0.5,prob2=0.5,prob3=0.5,theta=1),
             data=list(x=orob1)))
 
 
-## @knitr eval=FALSE
+## ----eval=FALSE----------------------------------------------------------
 ## ## would prefer ~dilution-1, but problems with starting values ...
 ## (m1B <- mle2(m~dbetabinom(prob,size=n,theta),
 ##              param=list(prob~dilution),
@@ -97,34 +98,34 @@ latex(crowder.results,file="",table.env=FALSE,title="model")
 ##     data=orob1))
 
 
-## @knitr suppWarn,echo=FALSE
+## ----suppWarn,echo=FALSE-------------------------------------------------
 opts_chunk$set(warning=FALSE)
 
 
-## @knitr aodfit2,cache=TRUE
+## ----aodfit2,cache=TRUE--------------------------------------------------
 (m2 <- mle2(ML1,start=as.list(coef(m1)),
           control=list(parscale=coef(m1)),
           data=list(x=orob1)))
 
 
-## @knitr aodprof2,cache=TRUE
+## ----aodprof2,cache=TRUE-------------------------------------------------
 p2 <- profile(m2,prof.upper=c(Inf,Inf,Inf,theta=2000))
 
 
-## @knitr aodstderr
+## ----aodstderr-----------------------------------------------------------
 round(stdEr(m2),3)
 
 
-## @knitr aodvar
+## ----aodvar--------------------------------------------------------------
 sqrt(1/(1+coef(m2)["theta"]))
 
 
-## @knitr deltavar
+## ----deltavar------------------------------------------------------------
 sqrt(deltavar(sqrt(1/(1+theta)),meanval=coef(m2)["theta"],
          vars="theta",Sigma=vcov(m2)[4,4]))
 
 
-## @knitr sigma3
+## ----sigma3--------------------------------------------------------------
 m2b <- mle2(m~dbetabinom(prob,size=n,theta=1/sigma^2-1),
             data=orob1,
             parameters=list(prob~dilution,sigma~1),
@@ -134,23 +135,23 @@ round(stdEr(m2b)["sigma"],3)
 p2b <- profile(m2b,prof.lower=c(-Inf,-Inf,-Inf,0))
 
 
-## @knitr compquad
+## ----compquad------------------------------------------------------------
 r1 <- rbind(confint(p2)["theta",],
             confint(m2,method="quad")["theta",])
 rownames(r1) <- c("spline","quad")
 r1
 
 
-## @knitr profplottheta
+## ----profplottheta-------------------------------------------------------
 plot(p2,which="theta",plot.confstr=TRUE)
 
 
-## @knitr profplotsigma
+## ----profplotsigma-------------------------------------------------------
 plot(p2b,which="sigma",plot.confstr=TRUE,
      show.points=TRUE)
 
 
-## @knitr homogmodel
+## ----homogmodel----------------------------------------------------------
 ml0 <- function(prob,theta,x) {
   size <- x$n
   -sum(dbetabinom(x$m,prob,size,theta,log=TRUE))
@@ -159,11 +160,11 @@ m0 <- mle2(ml0,start=list(prob=0.5,theta=100),
           data=list(x=orob1))
 
 
-## @knitr logLikcomp
+## ----logLikcomp----------------------------------------------------------
 logLik(m0)
 
 
-## @knitr formulafit
+## ----formulafit----------------------------------------------------------
 m0f <- mle2(m~dbetabinom(prob,size=n,theta),
             parameters=list(prob~1,theta~1),
             data=orob1,
@@ -176,65 +177,65 @@ m3f <- update(m0f,
               start=list(prob=0.5,theta=78.424))
 
 
-## @knitr anovafit
+## ----anovafit------------------------------------------------------------
 anova(m0f,m2f,m3f)
 
 
-## @knitr ICtabfit
+## ----ICtabfit------------------------------------------------------------
 AICtab(m0f,m2f,m3f,weights=TRUE,delta=TRUE,sort=TRUE)
 BICtab(m0f,m2f,m3f,delta=TRUE,nobs=nrow(orob1),sort=TRUE,weights=TRUE)
 AICctab(m0f,m2f,m3f,delta=TRUE,nobs=nrow(orob1),sort=TRUE,weights=TRUE)
 
 
-## @knitr reWarn,echo=FALSE
+## ----reWarn,echo=FALSE---------------------------------------------------
 opts_chunk$set(warning=TRUE)
 
 
-## @knitr frogsetup
+## ----frogsetup-----------------------------------------------------------
 frogdat <- data.frame(
   size=rep(c(9,12,21,25,37),each=3),
   killed=c(0,2,1,3,4,5,rep(0,4),1,rep(0,4)))
 frogdat$initial <- rep(10,nrow(frogdat))
 
 
-## @knitr getgg
+## ----getgg---------------------------------------------------------------
 library(ggplot2)
 
 
-## @knitr gg1
+## ----gg1-----------------------------------------------------------------
 gg1 <- ggplot(frogdat,aes(x=size,y=killed))+geom_point()+
       stat_sum(aes(size=factor(..n..)))+
       labs(size="#")+scale_x_continuous(limits=c(0,40))
 
 
-## @knitr frogfit1,cache=TRUE
+## ----frogfit1,cache=TRUE,warning=FALSE-----------------------------------
 m3 <- mle2(killed~dbinom(prob=c*(size/d)^g*exp(1-size/d),
   size=initial),data=frogdat,start=list(c=0.5,d=5,g=1))
 pdat <- data.frame(size=1:40,initial=rep(10,40))
 pdat1 <- data.frame(pdat,killed=predict(m3,newdata=pdat))
 
 
-## @knitr frogfit2,cache=TRUE
+## ----frogfit2,cache=TRUE,warning=FALSE-----------------------------------
 m4 <- mle2(killed~dbinom(prob=c*((size/d)*exp(1-size/d))^g,
   size=initial),data=frogdat,start=list(c=0.5,d=5,g=1))
 pdat2 <- data.frame(pdat,killed=predict(m4,newdata=pdat))
 
 
-## @knitr gg1plot
+## ----gg1plot-------------------------------------------------------------
 gg1 + geom_line(data=pdat1,colour="red")+
       geom_line(data=pdat2,colour="blue")
 
 
-## @knitr frogfit2anal
+## ----frogfit2anal,warning=FALSE------------------------------------------
 coef(m4)
 prof4 <- profile(m4)
 
 
-## @knitr basegraphprofplot
+## ----basegraphprofplot---------------------------------------------------
 plot(prof4)
 
 
-## @knitr latticeprof,fig.height=5,fig.width=10,out.width="\\textwidth"
+## ----latticeprof,fig.height=5,fig.width=10,out.width="\\textwidth"-------
 prof4_df <- as.data.frame(prof4)
 library(lattice)
 xyplot(abs(z)~focal|param,data=prof4_df,
@@ -247,7 +248,7 @@ xyplot(abs(z)~focal|param,data=prof4_df,
              layout=c(3,1))
 
 
-## @knitr ggplotprof,fig.height=5,fig.width=10
+## ----ggplotprof,fig.height=5,fig.width=10--------------------------------
 ss <-subset(prof4_df,abs(z)<3)
 ggplot(ss,
        aes(x=focal,y=abs(z)))+geom_line()+
@@ -255,12 +256,12 @@ ggplot(ss,
       facet_grid(.~param,scale="free_x")
 
 
-## @knitr oldargs,eval=FALSE
+## ----oldargs,eval=FALSE--------------------------------------------------
 ## function (x, levels, conf = c(99, 95, 90, 80, 50)/100, nseg = 50,
 ##           absVal = TRUE, ...) {}
 
 
-## @knitr newargs,eval=FALSE
+## ----newargs,eval=FALSE--------------------------------------------------
 ## function (x, levels, which=1:p, conf = c(99, 95, 90, 80, 50)/100, nseg = 50,
 ##           plot.confstr = FALSE, confstr = NULL, absVal = TRUE, add = FALSE,
 ##           col.minval="green", lty.minval=2,
