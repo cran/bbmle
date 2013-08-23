@@ -12,7 +12,7 @@ stopifnot(is.na(confint(fit0)[1]))
 fit1 <- mle2(y~dpois(lambda=exp(a+b*x)),start=list(a=0,b=2),data=d,
              method="L-BFGS-B",lower=-0.2)
 
-confint(fit1)
+suppressWarnings(confint(fit1))
 
 fit2 <- mle2(y~dpois(lambda=exp(a+b*x)),start=list(a=0,b=2),data=d,
              method="L-BFGS-B")

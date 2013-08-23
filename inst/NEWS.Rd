@@ -4,6 +4,18 @@
 \title{bbmle News}
 \encoding{UTF-8}
 
+\section{Changes in version 1.0.13 (2013-08-22)}{
+  \itemize{
+    \item .Rbuildignore tweaks for CRAN
+  }
+}
+
+\section{Changes in version 1.0.12 (2013-08-22)}{
+  \itemize{
+    \item vignette tweaks
+    \item add Depends: R>=3.0.0
+  }
+}
 \section{Changes in version 1.0.11 (2013-08-19)}{
   \itemize{
     \item add .Rbuildignore for CRAN tests
