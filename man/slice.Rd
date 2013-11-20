@@ -17,7 +17,8 @@ sliceOld(fitted, which = 1:p, maxsteps = 100,
 slice1D(params,fun,nt=101,lower=-Inf,
                     upper=Inf,verbose=TRUE,\dots)
 slice2D(params,fun,nt=31,lower=-Inf,
-                    upper=Inf,verbose=TRUE,\dots)
+                    upper=Inf,
+                    cutoff=10,verbose=TRUE,\dots)
 slicetrans(params, params2, fun, extend=0.1, nt=401,
                        lower=-Inf, upper=Inf)
 }
@@ -30,6 +31,8 @@ slicetrans(params, params2, fun, extend=0.1, nt=401,
   \item{nt}{(integer) number of slice-steps to take}
   \item{lower}{lower bound(s) (stub?)}
   \item{upper}{upper bound(s) (stub?)}
+  \item{cutoff}{maximum increase in objective function to allow
+    when computing ranges}
   \item{extend}{(numeric) fraction by which to extend range beyond specified points}
   \item{verbose}{print verbose output?}
   \item{fitted}{A fitted maximum likelihood model of class

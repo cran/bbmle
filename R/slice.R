@@ -19,14 +19,23 @@ mkpar <- function(params,p,i) {
 ## more robust approaches;
 ## try not to assume anything about signs of parameters
 ## inherit bounds from fitted value
-get_trange <- function(pars,i,fun,
-                       lower=-Inf,upper=Inf,
-                       cutoff=10,maxit=200,step=0.9) {
+get_trange <- function(pars,  ## baseline parameter values
+                       i,     ## focal parameter
+                       fun,   ## objective function
+                       lower=-Inf, ## lower bound 
+                       upper=Inf,  ## upper bound
+                       cutoff=10,  ## increase above min z-value
+                       maxit=200,  ## max number of iterations
+                       steptype="mult",
+                       step=0.1) {
+    ## step possibilities: multiplicative
+    ## additive (proportional scale) [not yet implemented]
+    ## additive (absolute scale)     [not yet implemented]
     v <- v0 <- fun(pars)
     lowval <- pars[i]
     it <- 1
     while (it<maxit && lowval>lower && v<(v0+cutoff)) {
-      lowval <- lowval*step
+      lowval <- lowval*(1-step)
       v <- fun(mkpar(pars,lowval,i))
       it <- it+1
     }
@@ -37,7 +46,7 @@ get_trange <- function(pars,i,fun,
     v <- v0 <- fun(pars)
     if (upval==0) upval <- 1e-4
     while (it<maxit && v<(v0+cutoff)) {
-      upval <- upval/step
+      upval <- upval*(1+step)
       v <- fun(mkpar(pars,upval,i))
       ## cat(it,upper,v,"\n")
       it <- it+1
@@ -48,8 +57,8 @@ get_trange <- function(pars,i,fun,
       low_it=lowit,up_it=upit)
   }
 
-get_all_trange <- function(params,fun,lower,upper,...) {
-  arglist <- c(list(pars=params,fun=fun),list(...))
+get_all_trange <- function(params,fun,lower,upper,cutoff=10,...) {
+  arglist <- c(list(pars=params,fun=fun,cutoff=cutoff),list(...))
   tranges <- t(mapply(FUN=get_trange,
                       seq(length(params)),
                       lower,
@@ -230,14 +239,19 @@ sliceOld <- function (fitted, which = 1:p, maxsteps = 100,
 
 ## * is it possible to set up the 2D vectors so they include
 ##   the baseline value? maybe not easily ...
-slice2D <- function(params,fun,nt=31,
+slice2D <- function(params,
+                    fun,
+                    nt=31,
                     lower=-Inf,
-                    upper=Inf,verbose=TRUE,...) {
+                    upper=Inf,
+                    cutoff=10,
+                    verbose=TRUE,...) {
   npv <- length(params)
   if (is.null(pn <- names(params))) pn <- seq(npv)
   tranges <- get_all_trange(params,fun,
                             rep(lower,length.out=npv),
                             rep(upper,length.out=npv),
+                            cutoff=cutoff,
                             ...)
   slices <- list()
   for (i in 1:(npv-1)) {
@@ -299,8 +313,11 @@ xyplot.slice <- function(x,data,type="l",scale.min=TRUE,...) {
          panel=pfun,...)
 }
 
-splom.slice <- function(x,data,scale.min=TRUE,
-                        at=NULL,dstep=4,
+splom.slice <- function(x,
+                        data,
+                        scale.min=TRUE,
+                        at=NULL,
+                        dstep=4,
                         contour=FALSE,...) {
   if (x$dim==1) stop("can't do splom on 1D slice object")
   smat <- t(x$ranges[,1:2])
@@ -325,9 +342,10 @@ splom.slice <- function(x,data,scale.min=TRUE,
     x$slices <- slices_apply(x$slices,scale.z)
   }
   up0 <- function(x1, y, groups, subscripts, i, j, ...) {
+      ## browser()
     sl <- x$slices[[j]][[i]]
-    with(sl,panel.levelplot(x=x1,y=y,z=z,contour=contour,
-                            at=at,
+    with(sl,panel.levelplot(x=x,y=y,z=z,contour=contour,
+                            at=if (!is.null(at)) at else pretty(z),
                             subscripts=seq(nrow(sl))))
     panel.points(x$params[j],x$params[i],pch=16)
     mm <- matrix(sl$z,nrow=length(unique(sl$x)))
