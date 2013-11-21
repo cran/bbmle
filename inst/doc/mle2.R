@@ -1,7 +1,6 @@
 
 ## ----knitropts,echo=FALSE------------------------------------------------
-if (require("knitr")) opts_chunk$set(fig.width=5,fig.height=5,tidy=FALSE,
-                                     warning=FALSE)
+if (require("knitr")) opts_chunk$set(fig.width=5,fig.height=5,tidy=FALSE,warning=FALSE)
 
 
 ## ----setup,results="hide",echo=FALSE-------------------------------------
@@ -17,7 +16,7 @@ set.seed(1001)
 x1 <- rbetabinom(n=1000,prob=0.1,size=50,theta=10)
 
 
-## ----bbmle,message=FALSE-------------------------------------------------
+## ----bbmle---------------------------------------------------------------
 library("bbmle")
 
 
@@ -188,7 +187,7 @@ AICctab(m0f,m2f,m3f,delta=TRUE,nobs=nrow(orob1),sort=TRUE,weights=TRUE)
 
 
 ## ----reWarn,echo=FALSE---------------------------------------------------
-opts_chunk$set(warning=TRUE)
+opts_chunk$set(warning=FALSE)
 
 
 ## ----frogsetup-----------------------------------------------------------

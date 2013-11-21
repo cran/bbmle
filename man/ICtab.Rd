@@ -11,8 +11,9 @@
 }
 \usage{
 ICtab(\dots, type=c("AIC","BIC","AICc","qAIC","qAICc"),
-    weights = FALSE, delta = TRUE, base = FALSE, sort = TRUE,
-nobs, dispersion = 1, mnames, k = 2)
+    weights = FALSE, delta = TRUE, base = FALSE,
+logLik=FALSE, sort = TRUE,
+nobs=NULL, dispersion = 1, mnames, k = 2)
 AICtab(\dots)
 BICtab(\dots)
 AICctab(\dots)
@@ -22,13 +23,14 @@ AICctab(\dots)
   \item{\dots}{a list of (logLik or?) mle objects; in the case of
     \code{AICtab} etc., could also include other arguments to \code{ICtab}}
   \item{type}{specify information criterion to use}
-  \item{base}{(logical) include base IC values?}
+  \item{base}{(logical) include base IC (and log-likelihood) values?}
   \item{weights}{(logical) compute IC weights?}
-  \item{delta}{(logical) compute differences among ICs?}
+  \item{logLik}{(logical) include log-likelihoods in the table?}
+  \item{delta}{(logical) compute differences among ICs (and log-likelihoods)?}
   \item{sort}{(logical) sort ICs in increasing order?}
   \item{nobs}{(integer) number of observations: required for
     \code{type="BIC"} or \code{type="AICc"} unless objects have
-    an \code{"nobs"} attribute}
+    a \code{\link{nobs}} method}
   \item{dispersion}{overdispersion estimate, for computing qAIC:
     required for \code{type="qAIC"} or \code{type="qAICc"} unless
     objects have a \code{"dispersion"} attribute}
@@ -70,7 +72,9 @@ AICctab(\dots)
   m1 <- update(m0,.~x)
   m2 <- update(m0,.~poly(x,2))
   AICtab(m0,m1,m2)
-  AICctab(m0,m1,m2,nobs=20,weights=TRUE)
-  print(AICctab(m0,m1,m2,nobs=20,weights=TRUE),min.weight=0.1)
+  AICtab(m0,m1,m2,base=TRUE,logLik=TRUE)
+  AICtab(m0,m1,m2,logLik=TRUE)
+  AICctab(m0,m1,m2,weights=TRUE)
+  print(AICctab(m0,m1,m2,weights=TRUE),min.weight=0.1)
 }
 \keyword{misc}

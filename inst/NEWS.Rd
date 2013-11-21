@@ -4,6 +4,18 @@
 \title{bbmle News}
 \encoding{UTF-8}
 
+\section{Changes in version 1.0.15 (2013-11-20)}{
+  \itemize{
+    \item add \code{logLik} option to IC tables, more use of \code{nobs} methods
+    \item minor improvements to \code{slice} functionality
+  }
+}
+
+\section{Changes in version 1.0.14 (2013-08-24)}{
+  \itemize{
+    \item more CRAN tweaks
+  }
+}
 \section{Changes in version 1.0.13 (2013-08-22)}{
   \itemize{
     \item .Rbuildignore tweaks for CRAN
@@ -61,6 +73,51 @@
 
 \section{Changes in version 1.0.5.2 (2012-07-29)}{
   \itemize{
+=======
+    \item add .Rbuildignore for CRAN tests
+  }
+}
+\section{Changes in version 1.0.10 (2013-08-18)}{
+  \itemize{
+    \item adapt to updated optimx
+    \item tweaks for CRAN compliance
+  }
+}
+\section{Changes in version 1.0.9 (2013-06-23)}{
+  \itemize{
+    \item switch from aod to aods3 in vignettes
+    \item switch vignette to knitr
+   }
+}
+
+\section{Changes in version 1.0.8 (2013-04-23)}{
+  \itemize{
+     \item tweaks to \code{print.ICtab()}
+   }
+}
+
+\section{Changes in version 1.0.7 }{
+  \itemize{
+     \item warn on convergence failure
+   }
+}
+
+\section{Changes in version 1.0.6 }{
+  \itemize{
+     \item fixed (fairly obscure) bug in assigning data environment to
+  gradient function; replace 'gr' in call with appropriately evaluated version
+   }
+}
+
+\section{Changes in version 1.0.5.3 (2012-09-05)}{
+  \itemize{
+     \item changed some cat() to message()
+   }
+}
+
+\section{Changes in version 1.0.5.2 (2012-07-29)}{
+  \itemize{
+>>>>>>> .r116
      \item remove BIC definitions (now unnecessary/should be adequately
      defined in core R)
      \item add explicit Depends: on stats4
