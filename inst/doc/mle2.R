@@ -1,9 +1,9 @@
 
-## ----knitropts,echo=FALSE------------------------------------------------
+## ----knitropts,echo=FALSE,message=FALSE----------------------------------
 if (require("knitr")) opts_chunk$set(fig.width=5,fig.height=5,tidy=FALSE,warning=FALSE)
 
 
-## ----setup,results="hide",echo=FALSE-------------------------------------
+## ----setup,results="hide",echo=FALSE,message=FALSE-----------------------
 library(Hmisc)
 
 
@@ -16,7 +16,7 @@ set.seed(1001)
 x1 <- rbetabinom(n=1000,prob=0.1,size=50,theta=10)
 
 
-## ----bbmle---------------------------------------------------------------
+## ----bbmle,message=FALSE-------------------------------------------------
 library("bbmle")
 
 
@@ -26,7 +26,7 @@ mtmp <- function(prob,size,theta) {
 }
 
 
-## ----fit1----------------------------------------------------------------
+## ----fit1,warning=FALSE--------------------------------------------------
 (m0 <- mle2(mtmp,start=list(prob=0.2,theta=9),data=list(size=50)))
 
 
@@ -34,11 +34,11 @@ mtmp <- function(prob,size,theta) {
 summary(m0)
 
 
-## ----prof1,cache=TRUE----------------------------------------------------
+## ----prof1,cache=TRUE,warning=FALSE--------------------------------------
 p0 <- profile(m0)
 
 
-## ----confint1------------------------------------------------------------
+## ----confint1,warning=FALSE----------------------------------------------
 confint(p0)
 confint(m0,method="quad")
 confint(m0,method="uniroot")
@@ -49,7 +49,7 @@ par(mfrow=c(1,2))
 plot(p0,plot.confstr=TRUE)
 
 
-## ----fit2----------------------------------------------------------------
+## ----fit2,warning=FALSE--------------------------------------------------
 m0f <- mle2(x1~dbetabinom(prob,size=50,theta),
             start=list(prob=0.2,theta=9),data=data.frame(x1))
 
@@ -84,7 +84,7 @@ crowder.results <- matrix(c(0.132,0.871,0.839,78.424,0.027,0.028,0.032,-34.991,
 latex(crowder.results,file="",table.env=FALSE,title="model")
 
 
-## ----aodfit1,cache=TRUE--------------------------------------------------
+## ----aodfit1,cache=TRUE,warning=FALSE------------------------------------
 (m1 <- mle2(ML1,start=list(prob1=0.5,prob2=0.5,prob3=0.5,theta=1),
             data=list(x=orob1)))
 
@@ -225,7 +225,7 @@ gg1 + geom_line(data=pdat1,colour="red")+
       geom_line(data=pdat2,colour="blue")
 
 
-## ----frogfit2anal,warning=FALSE------------------------------------------
+## ----frogfit2anal,cache=TRUE,warning=FALSE-------------------------------
 coef(m4)
 prof4 <- profile(m4)
 
