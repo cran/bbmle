@@ -14,9 +14,9 @@ ICtab(\dots, type=c("AIC","BIC","AICc","qAIC","qAICc"),
     weights = FALSE, delta = TRUE, base = FALSE,
 logLik=FALSE, sort = TRUE,
 nobs=NULL, dispersion = 1, mnames, k = 2)
-AICtab(\dots)
-BICtab(\dots)
-AICctab(\dots)
+AICtab(\dots,mnames)
+BICtab(\dots,mnames)
+AICctab(\dots,mnames)
 \method{print}{ICtab}(x,\dots,min.weight)
 }
 \arguments{
@@ -71,7 +71,7 @@ AICctab(\dots)
   m0 <- glm(y~1,data=d)
   m1 <- update(m0,.~x)
   m2 <- update(m0,.~poly(x,2))
-  AICtab(m0,m1,m2)
+  AICtab(m0,m1,m2,mnames=LETTERS[1:3])
   AICtab(m0,m1,m2,base=TRUE,logLik=TRUE)
   AICtab(m0,m1,m2,logLik=TRUE)
   AICctab(m0,m1,m2,weights=TRUE)

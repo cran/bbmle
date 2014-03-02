@@ -4,6 +4,11 @@
 \title{bbmle News}
 \encoding{UTF-8}
 
+\section{Changes in version 1.0.16 (2014-01-01)}{
+  \itemize{
+    \item fix \code{mnames} behaviour
+  }
+}
 \section{Changes in version 1.0.15 (2013-11-20)}{
   \itemize{
     \item add \code{logLik} option to IC tables, more use of \code{nobs} methods

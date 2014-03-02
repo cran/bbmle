@@ -563,17 +563,17 @@ mle2 <- function(minuslogl,
 
 
 get.mnames <- function(Call) {
-  xargs <- which(names(Call) %in% names(formals(ICtab))[-1])
-  mnames <- as.character(Call)[c(-1,-xargs)]
-  if (length(mnames)==1) {
-    g <- get(mnames)
-    if (is.list(g) && length(g)>1) {
-      if (is.null(names(g))) mnames <- paste("model",1:length(g),sep="")
-      else mnames <- names(g)
-      if (any(duplicated(mnames))) stop("model names must be distinct")
+    xargs <- which(names(Call) %in% names(formals(ICtab))[-1])
+    mnames <- as.character(Call)[c(-1,-xargs)]
+    if (length(mnames)==1) {
+        g <- get(mnames)
+        if (is.list(g) && length(g)>1) {
+            if (is.null(names(g))) mnames <- paste("model",1:length(g),sep="")
+            else mnames <- names(g)
+            if (any(duplicated(mnames))) stop("model names must be distinct")
+        }
     }
-  }
-  mnames
+    mnames
 }
   
 

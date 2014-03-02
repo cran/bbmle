@@ -26,10 +26,10 @@
 \maketitle
 \tableofcontents
 
-<<knitropts,echo=FALSE>>=
+<<knitropts,echo=FALSE,message=FALSE>>=
 if (require("knitr")) opts_chunk$set(fig.width=5,fig.height=5,tidy=FALSE,warning=FALSE)
 @ 
-<<setup,results="hide",echo=FALSE>>=
+<<setup,results="hide",echo=FALSE,message=FALSE>>=
 library(Hmisc)
 @ 
 
@@ -109,7 +109,7 @@ x1 <- rbetabinom(n=1000,prob=0.1,size=50,theta=10)
 @ 
 
 Load the package:
-<<bbmle>>=
+<<bbmle,message=FALSE>>=
 library("bbmle")
 @ 
 
@@ -123,9 +123,10 @@ mtmp <- function(prob,size,theta) {
 Fit the model --- use \code{data} to pass the \code{size}
 parameter (since it wasn't hard-coded in the \code{mtmp}
 function):
-<<fit1>>=
+<<fit1,warning=FALSE>>=
 (m0 <- mle2(mtmp,start=list(prob=0.2,theta=9),data=list(size=50)))
 @
+(here and below, I'm suppressing lots of warnings about {\tt NaNs produced})
 
 The \code{summary} method for \code{mle2} objects
 shows the parameters; approximate standard
@@ -149,7 +150,7 @@ intervals at several different $\alpha$ values]
 then it is more efficient to compute the profile
 once):
 
-<<prof1,cache=TRUE>>=
+<<prof1,cache=TRUE,warning=FALSE>>=
 p0 <- profile(m0)
 @ 
 
@@ -160,7 +161,7 @@ maximum likelihood estimate; and based on
 root-finding to find the exact point where the
 profile crosses the critical level.
 
-<<confint1>>=
+<<confint1,warning=FALSE>>=
 confint(p0)
 confint(m0,method="quad")
 confint(m0,method="uniroot")
@@ -208,7 +209,7 @@ that returns (at least) the mean and median as
 a function of the parameters
 (currently defined: \code{snorm}, \code{sbinom},
 \code{sbeta}, \code{snbinom}, \code{spois}).
-<<fit2>>=
+<<fit2,warning=FALSE>>=
 m0f <- mle2(x1~dbetabinom(prob,size=50,theta),
             start=list(prob=0.2,theta=9),data=data.frame(x1))
 @ 
@@ -262,7 +263,7 @@ crowder.results <- matrix(c(0.132,0.871,0.839,78.424,0.027,0.028,0.032,-34.991,
 latex(crowder.results,file="",table.env=FALSE,title="model")
 @
 
-<<aodfit1,cache=TRUE>>=
+<<aodfit1,cache=TRUE,warning=FALSE>>=
 (m1 <- mle2(ML1,start=list(prob1=0.5,prob2=0.5,prob3=0.5,theta=1),
             data=list(x=orob1)))
 @ 
@@ -458,7 +459,7 @@ gg1 + geom_line(data=pdat1,colour="red")+
       geom_line(data=pdat2,colour="blue")
 @ 
 
-<<frogfit2anal,warning=FALSE>>=
+<<frogfit2anal,cache=TRUE,warning=FALSE>>=
 coef(m4)
 prof4 <- profile(m4)
 @ 

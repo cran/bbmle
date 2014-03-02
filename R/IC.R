@@ -85,16 +85,19 @@ print.ICtab <- function(x,...,min.weight=0.001) {
     print(chtab,quote=FALSE)
 }
 
-AICtab <- function(...) {
+AICtab <- function(...,mnames) {
     ## fancy footwork to preserve model names
-    ICtab(...,mnames=get.mnames(match.call()),type="AIC")
+    if (missing(mnames)) mnames <- get.mnames(match.call())
+    ICtab(...,mnames=mnames,type="AIC")
 }
-BICtab <- function(...) {
-    ICtab(...,mnames=get.mnames(match.call()),type="BIC")
+BICtab <- function(...,mnames) {
+    if (missing(mnames)) mnames <- get.mnames(match.call())
+    ICtab(...,mnames=mnames,type="BIC")
 }
 
-AICctab <- function(...) {
-    ICtab(...,mnames=get.mnames(match.call()),type="AICc")
+AICctab <- function(...,mnames) {
+    if (missing(mnames)) mnames <- get.mnames(match.call())
+    ICtab(...,mnames=mnames,type="AICc")
 }
 
 setGeneric("AICc", function(object, ..., nobs=NULL, k=2) standardGeneric("AICc"))
