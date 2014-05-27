@@ -152,22 +152,22 @@ aictab(list(glmOT.D93,glmT.D93,glmO.D93,glmX.D93),
 detach("package:AICcmodavg")
 @ 
 
-\subsection*{\code{MuMIn} package (Kamil Barto{\'n}), r-forge}
+\subsection*{\code{MuMIn} package (Kamil Barto{\'n})}
 
 <<MuMin>>=
-library(MuMIn)
-(gg <-  dredge(glmOT.D93,rank="QAIC", chat=dfun(glmOT.D93)))
-(ggc <- dredge(glmOT.D93,rank="QAICc",chat=dfun(glmOT.D93)))
+library(MuMIn); packageVersion("MuMIn")
+## from ?QAIC
+x.quasipoisson <- function(...) {
+    res <- quasipoisson(...)
+    res$aic <- poisson(...)$aic
+    res
+}
+glmQOT2.D93 <- update(glmOT.D93,family="x.quasipoisson",
+                      na.action=na.fail)
+(gg <-  dredge(glmQOT2.D93,rank="QAIC", chat=dfun(glmOT.D93)))
+(ggc <- dredge(glmQOT2.D93,rank="QAICc",chat=dfun(glmOT.D93)))
 detach("package:MuMIn")
 @ 
-
-Since \code{dredge} is clever, can work with quasi- models as well by
-using \code{deviance()}:
-<<eval=FALSE>>=
-(ggqc <- dredge(glmQOT.D93,rank="QAICc",
-                chat=summary(glmQOT.D93)$dispersion))
-@ 
-gives identical results to the previous table.
 
 Notes: ICtab only gives delta-IC, limited decimal places
 (on purpose, but how do you change these defaults if you

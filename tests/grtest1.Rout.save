@@ -1,7 +1,6 @@
 
-R Under development (unstable) (2012-07-27 r60013) -- "Unsuffered Consequences"
-Copyright (C) 2012 The R Foundation for Statistical Computing
-ISBN 3-900051-07-0
+R Under development (unstable) (2014-05-14 r65609) -- "Unsuffered Consequences"
+Copyright (C) 2014 The R Foundation for Statistical Computing
 Platform: i686-pc-linux-gnu (32-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -20,17 +19,19 @@ Type 'q()' to quit R.
 
 > ## from Eric Weese
 > library(bbmle)
+Loading required package: stats4
 > f <- function(x=2,a=1) x^2 - a
 > f.g <- function(x,a) 2*x
 > f.g2 <- function(x,a) c(2*x,0)
+> options(digits=4)
 > mle2(f,fixed=list(a=1))
 
 Call:
 mle2(minuslogl = f, fixed = list(a = 1))
 
 Coefficients:
-           x            a 
-1.092459e-13 1.000000e+00 
+        x         a 
+1.092e-13 1.000e+00 
 
 Log-likelihood: 1 
 > mle2(f,gr=f.g,fixed=list(a=1))
@@ -56,4 +57,4 @@ Log-likelihood: 1
 > 
 > proc.time()
    user  system elapsed 
-  0.736   1.088   1.652 
+  0.672   1.340   1.978 

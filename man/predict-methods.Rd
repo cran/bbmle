@@ -33,6 +33,8 @@
   \item{type}{residuals type}
   \item{\dots}{additional arguments (for generic compatibility)}
 }
+\note{For some models (e.g. constant models), \code{predict} may
+  return a single value rather than a vector of the appropriate length.}
 \examples{
 set.seed(1002)
 lymax <- c(0,2)

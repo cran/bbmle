@@ -4,9 +4,18 @@
 \title{bbmle News}
 \encoding{UTF-8}
 
+\section{Changes in version 1.0.17 (2014-01-01)}{
+  \itemize{
+    \item new warning if ~dnorm is called with sd implicitly ==1
+    \item some internal tweaking to slice functionality
+    \item updated to allow for \code{MuMIn} v 1.10.0 changes
+  }
+}
+
 \section{Changes in version 1.0.16 (2014-01-01)}{
   \itemize{
     \item fix \code{mnames} behaviour
+    \item slight vignette cleanup
   }
 }
 \section{Changes in version 1.0.15 (2013-11-20)}{

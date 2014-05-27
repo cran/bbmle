@@ -1,7 +1,6 @@
 
-R Under development (unstable) (2012-07-27 r60013) -- "Unsuffered Consequences"
-Copyright (C) 2012 The R Foundation for Statistical Computing
-ISBN 3-900051-07-0
+R Under development (unstable) (2014-05-14 r65609) -- "Unsuffered Consequences"
+Copyright (C) 2014 The R Foundation for Statistical Computing
 Platform: i686-pc-linux-gnu (32-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -19,6 +18,7 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > library(bbmle)
+Loading required package: stats4
 > 
 > ## fir data from emdbook package ...
 > firdata <- structure(list(TOTCONES = c(19, 42, 40, 68, 5, 0, 21, 114, 37, 
@@ -186,6 +186,9 @@ Type 'q()' to quit R.
 +            parameters= list(i ~ WAVE_NON-1, slope ~ WAVE_NON-1),
 +            data = firdata,
 +            start = list(i=c(-2,-2),slope=c(2.5,2.5),sd=1))
+Warning message:
+In calc_mle2_function(minuslogl, parameters, start = start, parnames = parnames,  :
+  using dnorm() with sd implicitly set to 1 is rarely sensible
 > 
 > ancovafun = function(i1,i2,slope1,slope2,sigma) {
 +   int = c(i1,i2)[WAVE_NON]
@@ -204,13 +207,15 @@ Type 'q()' to quit R.
 +      data = firdata,
 +      start = list(mu=1,sd=1))
 Warning messages:
-1: In dnorm(x = c(2.99573227355399, 3.76120011569356, 3.71357206670431,  :
-  NaNs produced
+1: In calc_mle2_function(minuslogl, parameters, start = start, parnames = parnames,  :
+  using dnorm() with sd implicitly set to 1 is rarely sensible
 2: In dnorm(x = c(2.99573227355399, 3.76120011569356, 3.71357206670431,  :
   NaNs produced
 3: In dnorm(x = c(2.99573227355399, 3.76120011569356, 3.71357206670431,  :
   NaNs produced
 4: In dnorm(x = c(2.99573227355399, 3.76120011569356, 3.71357206670431,  :
+  NaNs produced
+5: In dnorm(x = c(2.99573227355399, 3.76120011569356, 3.71357206670431,  :
   NaNs produced
 > 
 > stopifnot(all.equal(AIC(m1),AIC(m2),AIC(m3)))
@@ -223,4 +228,4 @@ Warning messages:
 > 
 > proc.time()
    user  system elapsed 
-  1.256   1.252   2.395 
+  1.112   1.364   2.438 

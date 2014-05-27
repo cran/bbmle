@@ -67,14 +67,17 @@ detach("package:AICcmodavg")
 
 
 ## ----MuMin---------------------------------------------------------------
-library(MuMIn)
-(gg <-  dredge(glmOT.D93,rank="QAIC", chat=dfun(glmOT.D93)))
-(ggc <- dredge(glmOT.D93,rank="QAICc",chat=dfun(glmOT.D93)))
+library(MuMIn); packageVersion("MuMIn")
+## from ?QAIC
+x.quasipoisson <- function(...) {
+    res <- quasipoisson(...)
+    res$aic <- poisson(...)$aic
+    res
+}
+glmQOT2.D93 <- update(glmOT.D93,family="x.quasipoisson",
+                      na.action=na.fail)
+(gg <-  dredge(glmQOT2.D93,rank="QAIC", chat=dfun(glmOT.D93)))
+(ggc <- dredge(glmQOT2.D93,rank="QAICc",chat=dfun(glmOT.D93)))
 detach("package:MuMIn")
-
-
-## ----eval=FALSE----------------------------------------------------------
-## (ggqc <- dredge(glmQOT.D93,rank="QAICc",
-##                 chat=summary(glmQOT.D93)$dispersion))
 
 

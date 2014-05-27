@@ -22,6 +22,11 @@ calc_mle2_function <- function(formula,
   ##  returning residuals rather than mle (e.g. for minpack.nls??)
   RHS <- formula[[3]]
   ddistn <- as.character(RHS[[1]])
+  if (ddistn=="dnorm" && !("sd" %in% names(RHS))) {
+      warning("using dnorm() with sd implicitly set to 1 is rarely sensible")
+  }
+  if (ddistn=="dnbinom" && !("mu" %in% names(RHS))) {
+  }
   ## need to check on variable order:
   ## should it go according to function/formula,
   ##   not start?

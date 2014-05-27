@@ -102,6 +102,7 @@ gfun <- function(object,newdata=NULL,location=c("mean","median","variance"),
                      enclos=sys.frame(sys.nframe()))
   ## HACK: need a way to figure out how many data points there
   ##  are, in the *absence* of an explicit data argument
+  ## then replicate constant values to the full length
   if (op=="simulate") {
     if (length(object@data)==0)
       stop("need explicit data argument for simulation")

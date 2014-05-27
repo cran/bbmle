@@ -26,18 +26,23 @@ get_trange <- function(pars,  ## baseline parameter values
                        upper=Inf,  ## upper bound
                        cutoff=10,  ## increase above min z-value
                        maxit=200,  ## max number of iterations
-                       steptype="mult",
+                       steptype=c("mult","addprop"),
                        step=0.1) {
     ## step possibilities: multiplicative
-    ## additive (proportional scale) [not yet implemented]
     ## additive (absolute scale)     [not yet implemented]
+    addabs <- NULL ## fix false positive test
+    steptype <- match.arg(steptype)
     v <- v0 <- fun(pars)
     lowval <- pars[i]
     it <- 1
+    if (steptype=="addprop") step <- step*pars[i]
     while (it<maxit && lowval>lower && v<(v0+cutoff)) {
-      lowval <- lowval*(1-step)
-      v <- fun(mkpar(pars,lowval,i))
-      it <- it+1
+        lowval <- switch(steptype,
+                         addabs,
+                         addpropn=lowval-step,
+                         mult=lowval*(1-step))
+        v <- fun(mkpar(pars,lowval,i))
+        it <- it+1
     }
     lowdev <- v
     lowit <- it
@@ -46,10 +51,13 @@ get_trange <- function(pars,  ## baseline parameter values
     v <- v0 <- fun(pars)
     if (upval==0) upval <- 1e-4
     while (it<maxit && v<(v0+cutoff)) {
-      upval <- upval*(1+step)
-      v <- fun(mkpar(pars,upval,i))
-      ## cat(it,upper,v,"\n")
-      it <- it+1
+        upval <- switch(steptype,
+                        addabs,
+                        addpropn=lowval+step,
+                         mult=lowval*(1+step))
+        v <- fun(mkpar(pars,upval,i))
+        ## cat(it,upper,v,"\n")
+        it <- it+1
     }
     updev <- v
     upit <- it
