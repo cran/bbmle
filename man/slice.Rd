@@ -15,10 +15,11 @@ sliceOld(fitted, which = 1:p, maxsteps = 100,
                        del = zmax/5, trace = FALSE,
                        tol.newmin=0.001, \dots)
 slice1D(params,fun,nt=101,lower=-Inf,
-                    upper=Inf,verbose=TRUE,\dots)
+                    upper=Inf,verbose=TRUE, tranges=NULL,\dots)
 slice2D(params,fun,nt=31,lower=-Inf,
                     upper=Inf,
-                    cutoff=10,verbose=TRUE,\dots)
+                    cutoff=10,verbose=TRUE,
+                    tranges=NULL, \dots)
 slicetrans(params, params2, fun, extend=0.1, nt=401,
                        lower=-Inf, upper=Inf)
 }
@@ -50,6 +51,8 @@ slicetrans(params, params2, fun, extend=0.1, nt=401,
   \item{trace}{(logical) produce tracing output?}
   \item{tol.newmin}{tolerance for diagnosing a new minimum below the
     minimum deviance estimated in initial fit is found}
+  \item{tranges}{a two-column matrix giving lower and upper bounds for
+    each parameter}
   \item{\dots}{additional arguments (not used)}
 }
 \value{

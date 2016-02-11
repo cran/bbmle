@@ -4,6 +4,12 @@
 \title{bbmle News}
 \encoding{UTF-8}
 
+\section{Changes in version 1.0.18 (2016-02-11)}{
+  \itemize{
+    \item update slice functionality; allow for explicit ranges
+    \item CRAN updates (import from base packages)
+  }
+}
 \section{Changes in version 1.0.17 (2014-01-01)}{
   \itemize{
     \item new warning if ~dnorm is called with sd implicitly ==1

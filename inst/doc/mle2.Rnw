@@ -27,7 +27,7 @@
 \tableofcontents
 
 <<knitropts,echo=FALSE,message=FALSE>>=
-if (require("knitr")) opts_chunk$set(fig.width=5,fig.height=5,tidy=FALSE,warning=FALSE)
+if (require("knitr")) opts_chunk$set(fig.width=5,fig.height=5,tidy=FALSE,warning=FALSE,error=TRUE)
 @ 
 <<setup,results="hide",echo=FALSE,message=FALSE>>=
 library(Hmisc)

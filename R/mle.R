@@ -166,12 +166,10 @@ mle2 <- function(minuslogl,
                  use.ginv=TRUE,
                  trace=FALSE,
                  browse_obj=FALSE,
-                 transform=NULL, ## stub
                  gr,
                  optimfun,
                  ...) {
-  if (!missing(transform))
-    stop("parameter transformations not yet implemented")
+
   if (missing(method)) method <- mle2.options("optim.method")
   if (missing(optimizer)) optimizer <- mle2.options("optimizer")
   L <- list(...)

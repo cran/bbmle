@@ -135,21 +135,26 @@ slicetrans <- function(params, params2, fun, extend=0.1, nt=401,
   
 slice1D <- function(params,fun,nt=101,
                     lower=-Inf,
-                    upper=Inf,verbose=TRUE,...) {
+                    upper=Inf,
+                    verbose=TRUE,
+                    tranges=NULL,
+                    ...) {
   npv <- length(params)
   if (is.null(pn <- names(params))) pn <- seq(npv)
-  tranges <- get_all_trange(params,fun,
-                            rep(lower,length.out=npv),
-                            rep(upper,length.out=npv),
-                            ...)
+  if (is.null(tranges)) {
+      tranges <- get_all_trange(params,fun,
+                                rep(lower,length.out=npv),
+                                rep(upper,length.out=npv),
+                                ...)
+  }
   slices <- vector("list",npv)
   for (i in 1:npv) {
-    tvec <- seq(tranges[i,1],tranges[i,2],length=nt)
-    if (verbose) cat(pn[i],"\n")
-    vtmp <- sapply(tvec,
-                   function(t) {
-                     fun(mkpar(params,t,i))})
-    slices[[i]] <- data.frame(var1=pn[i],x=tvec,z=vtmp)
+      tvec <- seq(tranges[i,1],tranges[i,2],length=nt)
+      if (verbose) cat(pn[i],"\n")
+      vtmp <- sapply(tvec,
+                     function(t) {
+                         fun(mkpar(params,t,i))})
+      slices[[i]] <- data.frame(var1=pn[i],x=tvec,z=vtmp)
   }
   r <- list(slices=slices,ranges=tranges,params=params,dim=1)
   class(r) <- "slice"
@@ -253,14 +258,18 @@ slice2D <- function(params,
                     lower=-Inf,
                     upper=Inf,
                     cutoff=10,
-                    verbose=TRUE,...) {
+                    verbose=TRUE,
+                    tranges=NULL,
+                    ...) {
   npv <- length(params)
   if (is.null(pn <- names(params))) pn <- seq(npv)
-  tranges <- get_all_trange(params,fun,
-                            rep(lower,length.out=npv),
-                            rep(upper,length.out=npv),
-                            cutoff=cutoff,
-                            ...)
+  if (is.null(tranges)) {
+      tranges <- get_all_trange(params,fun,
+                                rep(lower,length.out=npv),
+                                rep(upper,length.out=npv),
+                                cutoff=cutoff,
+                                ...)
+  }
   slices <- list()
   for (i in 1:(npv-1)) {
     slices[[i]] <- vector("list",npv)
@@ -325,6 +334,8 @@ splom.slice <- function(x,
                         data,
                         scale.min=TRUE,
                         at=NULL,
+                        which.x=NULL,
+                        which.y=NULL,
                         dstep=4,
                         contour=FALSE,...) {
   if (x$dim==1) stop("can't do splom on 1D slice object")
@@ -337,9 +348,10 @@ splom.slice <- function(x,
                              function(x)
                              if (is.null(x)) NULL else x[["z"]])
                     }))
-    min.z <- min(all.z)
+    min.z <- min(all.z[is.finite(all.z)])
     ## round up to next multiple of 'dstep'
-    max.z <- dstep * ((max(all.z)-min(all.z)) %/% dstep + 1)
+    max.z <- dstep * ((max(all.z[is.finite(all.z)])-
+                       min.z) %/% dstep + 1)
     if (missing(at)) {
       at <- seq(0,max.z,by=dstep)
     }
@@ -367,7 +379,8 @@ splom.slice <- function(x,
   }
   ## FIXME: use ?draw.colorkey to add a legend ...
   ## FIXME: make diagonal panel text smaller ???
-  splom(smat,lower.panel=lp0,diag.panel=diag.panel.splom,upper.panel=up0)
+  splom(smat,lower.panel=lp0,diag.panel=diag.panel.splom,
+        upper.panel=up0,...)
 }
 
   

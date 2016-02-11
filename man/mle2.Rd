@@ -18,7 +18,6 @@ hessian.opts=NULL,
 use.ginv=TRUE,
 trace=FALSE,
 browse_obj=FALSE,
-transform=NULL,
 gr,
 optimfun,\dots)
 calc_mle2_function(formula,parameters, links, start,
@@ -61,8 +60,6 @@ calc_mle2_function(formula,parameters, links, start,
   \item{formula}{a formula for the likelihood (see Details)}
   \item{trace}{Logical: print parameter values tested?}
   \item{browse_obj}{Logical: drop into browser() within the objective function?}
-  \item{transform}{(stub) list of link functions/parameter transformations
-    ("log"=log/exp, "logit"=plogis/qlogis, etc.)}
   \item{skip.hessian}{Bypass Hessian calculation?}
   \item{hessian.opts}{Options for Hessian calculation, passed through to
     the \code{\link[numDeriv]{hessian}} function}
