@@ -40,7 +40,7 @@ setMethod("show", "mle2", function(object){
     if (object@optimizer=="optimx" && length(object@method)>1) {
       cat("Best method:",object@details$method.used,"\n")
     }
-    if (object@details$convergence>0)
+    if (object@details$conv>0)
       cat("\nWarning: optimization did not converge (code ",
           object@details$convergence,": ",object@details$message,")\n",sep="")
   })
@@ -167,5 +167,5 @@ setAs("profile.mle2","data.frame",
           as.data.frame.profile.mle2(from)
           })
 
-
-BIC.mle2 <- stats4:::BIC
+## causes infinite loop, and unnecessary anyway??
+## BIC.mle2 <- stats4:::BIC

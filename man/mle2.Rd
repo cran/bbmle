@@ -18,7 +18,7 @@ hessian.opts=NULL,
 use.ginv=TRUE,
 trace=FALSE,
 browse_obj=FALSE,
-gr,
+gr=NULL,
 optimfun,\dots)
 calc_mle2_function(formula,parameters, links, start,
    parnames, use.deriv=FALSE, data=NULL,trace=FALSE)
@@ -212,6 +212,7 @@ mle2(y~dpois(lambda=exp(lymax)/(1+x/exp(lhalf))),
    data=d,
    parameters=list(lymax~1,lhalf~1))
 
+\dontrun{
 ## try bounded optimization with nlminb and constrOptim
 (fit1B <- mle2(LL, optimizer="nlminb", lower=c(lymax=1e-7, lhalf=1e-7)))
 p1B <- profile(fit1B)
@@ -230,6 +231,7 @@ d2 <- data.frame(x,g,y)
 fit3 <- mle2(y~dnbinom(mu=exp(lymax)/(1+x/exp(lhalf)),size=exp(logk)),
     parameters=list(lymax~g),data=d2,
     start=list(lymax=0,lhalf=0,logk=0))
+}
 }
 \keyword{models}
 

@@ -166,7 +166,7 @@ mle2 <- function(minuslogl,
                  use.ginv=TRUE,
                  trace=FALSE,
                  browse_obj=FALSE,
-                 gr,
+                 gr=NULL,
                  optimfun,
                  ...) {
 
@@ -223,6 +223,7 @@ mle2 <- function(minuslogl,
   ## call$control$ndeps <- eval.parent(call$control$ndeps)
   ## call$control$maxit <- eval.parent(call$control$maxit)
   call$control <- eval.parent(call$control)
+  call$method <- eval.parent(call$method)
   if(!missing(start))
     if (!is.list(start)) {
       if (is.null(names(start)) || !is.vector(start))
@@ -327,7 +328,7 @@ mle2 <- function(minuslogl,
       do.call("minuslogl",namedrop(args))
   } ## end of objective function
   objectivefunctiongr <-
-    if (missing(gr)) NULL else
+    if (!is.null(gr))
         function(p) {
           if (browse_obj) browser()
           l <- relist2(p,template) ## redo list structure
@@ -367,10 +368,11 @@ mle2 <- function(minuslogl,
       mapply(assign,names(d),d,
              MoreArgs=list(envir=newenv))
       environment(minuslogl) <- newenv
-      if (!missing(gr)) {
+      if (!is.null(gr)) {
           newenvgr <- new.env(hash=TRUE,parent=environment(minuslogl))
           mapply(assign,names(d),d,
                  MoreArgs=list(envir=newenvgr))
+          environment(gr) <- newenvgr
       }
   }
   if (length(start)==0 || eval.only) {
@@ -378,7 +380,8 @@ mle2 <- function(minuslogl,
     optimizer <- "none"
     skip.hessian <- TRUE
     oout <- list(par=start, value=objectivefunction(start),
-                 hessian = matrix(NA,nrow=length(start),ncol=length(start)))
+                 hessian = matrix(NA,nrow=length(start),ncol=length(start)),
+                 convergence=0)
   } else {
     oout <- switch(optimizer,
                    optim = {
@@ -475,9 +478,7 @@ mle2 <- function(minuslogl,
     names(oout$par) <- names(start)
   }
 
-  ## FIXME: worry about boundary violations?
-  ## (if we're on the boundary then the Hessian may not be useful anyway)
-  ##
+  ## compute Hessian
   if (length(oout$par)==0) skip.hessian <- TRUE
   if (!skip.hessian) {
     if ((!is.null(call$upper) || !is.null(call$lower)) &&
@@ -487,13 +488,28 @@ mle2 <- function(minuslogl,
   namatrix <- matrix(NA,nrow=length(start),ncol=length(start))
   if (!skip.hessian) {
     psc <- call$control$parscale
-    if (is.null(psc)) {
-      oout$hessian <- try(hessian(objectivefunction,oout$par,method.args=hessian.opts))
-    } else {
-      tmpf <- function(x) {
-        objectivefunction(x*psc)
-      }
-      oout$hessian <- try(hessian(tmpf,oout$par/psc,method.args=hessian.opts))/outer(psc,psc)
+    if (is.null(gr)) {
+        if (is.null(psc)) {
+            oout$hessian <- try(hessian(objectivefunction,oout$par,
+                                        method.args=hessian.opts))
+        } else {
+            tmpf <- function(x) {
+                objectivefunction(x*psc)
+            }
+            oout$hessian <- try(hessian(tmpf,oout$par/psc,
+                                 method.args=hessian.opts))/outer(psc,psc)
+        }
+    } else { ## gradient provided
+        if (is.null(psc)) {
+            oout$hessian <- try(jacobian(objectivefunctiongr,oout$par,
+                                        method.args=hessian.opts))
+        } else {
+            tmpf <- function(x) {
+                objectivefunctiongr(x*psc)
+            }
+            oout$hessian <- try(jacobian(tmpf,oout$par/psc,
+                                 method.args=hessian.opts))/outer(psc,psc)
+        }
     }
   }
   if (skip.hessian || inherits(oout$hessian,"try-error"))
@@ -525,7 +541,7 @@ mle2 <- function(minuslogl,
   ## compute termination info
   ## FIXME: should we worry about parscale here??
   if (length(coef)) {
-    gradvec <- if (!missing(gr)) {
+    gradvec <- if (!is.null(gr)) {
         objectivefunctiongr(coef)
     } else {
         if (inherits(tt <- try(grad(objectivefunction,coef),silent=TRUE),
@@ -535,7 +551,7 @@ mle2 <- function(minuslogl,
     if (!skip.hessian) {
         if (inherits(ev <- try(eigen(oout$hessian)$value,silent=TRUE),
                      "try-error")) ev <- NA
-        oout$eratio <- min(ev)/max(ev)
+        oout$eratio <- min(Re(ev))/max(Re(ev))
     }
   }
   if (!is.null(conv <- oout$conv) &&
@@ -560,6 +576,7 @@ mle2 <- function(minuslogl,
            optimizer=optimizer,data=as.list(data),formula=formula)
   attr(m,"df") = length(m@coef)
   if (!missing(data)) attr(m,"nobs") = length(data[[1]])
+  environment(m) <- parent.frame()
   ## to work with BIC as well
   m
 }

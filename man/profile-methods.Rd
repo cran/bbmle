@@ -1,5 +1,6 @@
 \name{profile-methods}
 \docType{methods}
+\alias{proffun}
 \alias{profile-methods}
 \alias{profile,mle2-method}
 \alias{profile.mle2}
@@ -9,13 +10,16 @@
 }
 
 \usage{
-\S4method{profile}{mle2}(fitted, which = 1:p, maxsteps = 100,
+proffun(fitted, which = 1:p, maxsteps = 100,
                     alpha = 0.01, zmax = sqrt(qchisq(1 - alpha/2, p)),
                     del = zmax/5, trace = FALSE, skiperrs=TRUE,
                     std.err, 
                     tol.newmin = 0.001, debug=FALSE,
                     prof.lower, prof.upper,
-skip.hessian = TRUE, try_harder=FALSE, \dots)
+                    skip.hessian = TRUE,
+                    continuation = c("none","naive","linear"),
+                    try_harder=FALSE, \dots)
+\S4method{profile}{mle2}(fitted, \dots)
 }
 \arguments{
   \item{fitted}{A fitted maximum likelihood model of class
@@ -41,12 +45,20 @@ value of the negative log-likelihood}
   \item{debug}{(logical) debugging output?}
   \item{prof.lower}{optional vector of lower bounds for profiles}
   \item{prof.upper}{optional vector of upper bounds for profiles}
+  \item{continuation}{use continuation method to set starting values?
+    \code{"none"} sets starting values to best fit; \code{"naive"}
+    sets starting values to those of previous profiling fit;
+    \code{"linear"} (not yet implemented) would use linear extrapolation
+    from the previous two profiling fits}
   \item{skip.hessian}{skip hessian (defunct?)}
   \item{try_harder}{(logical) ignore \code{NA} and flat spots in the
 profile, try to continue anyway?}
   \item{\dots}{additional arguments (not used)}
 }
 \details{
+  \code{proffun} is the guts of the profile method, exposed
+  so that other packages can use it directly.
+  
   See the vignette (\code{vignette("mle2",package="bbmle")})
   for more technical details of how profiling is done.
  }

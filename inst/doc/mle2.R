@@ -12,7 +12,7 @@ set.seed(1001)
 x1 <- rbetabinom(n=1000,prob=0.1,size=50,theta=10)
 
 ## ----bbmle,message=FALSE-------------------------------------------------
-library("bbmle")
+library(bbmle)
 
 ## ----likfun1-------------------------------------------------------------
 mtmp <- function(prob,size,theta) {
@@ -133,9 +133,9 @@ m3f <- update(m0f,
 anova(m0f,m2f,m3f)
 
 ## ----ICtabfit------------------------------------------------------------
-AICtab(m0f,m2f,m3f,weights=TRUE,delta=TRUE,sort=TRUE)
-BICtab(m0f,m2f,m3f,delta=TRUE,nobs=nrow(orob1),sort=TRUE,weights=TRUE)
-AICctab(m0f,m2f,m3f,delta=TRUE,nobs=nrow(orob1),sort=TRUE,weights=TRUE)
+AICtab(m0f,m2f,m3f,weights=TRUE)
+BICtab(m0f,m2f,m3f,nobs=nrow(orob1),weights=TRUE)
+AICctab(m0f,m2f,m3f,nobs=nrow(orob1),weights=TRUE)
 
 ## ----reWarn,echo=FALSE---------------------------------------------------
 opts_chunk$set(warning=FALSE)
@@ -151,8 +151,9 @@ library(ggplot2)
 
 ## ----gg1-----------------------------------------------------------------
 gg1 <- ggplot(frogdat,aes(x=size,y=killed))+geom_point()+
-      stat_sum(aes(size=factor(..n..)))+
-      labs(size="#")+scale_x_continuous(limits=c(0,40))
+      stat_sum(aes(size=..n..))+
+      labs(size="#")+scale_x_continuous(limits=c(0,40))+
+scale_size(breaks=1:3)
 
 ## ----gg1plot-------------------------------------------------------------
 gg1 + geom_line(data=pdat1,colour="red")+
