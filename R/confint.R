@@ -33,6 +33,10 @@ function (object, parm, level = 0.95, trace=FALSE, ...)
         if (inherits(tt,"try-error")) tt <- rep(NA,2)
       }
     }
+    if (!any(is.na(tt))) {
+        ## if NAs present, sort() will drop NAs ...
+        tt <- sort(tt)
+    }
     ci[Pnames[pm], ] <- tt
   }
   drop(ci)

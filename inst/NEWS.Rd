@@ -4,6 +4,21 @@
 \title{bbmle News}
 \encoding{UTF-8}
 
+\section{Changes in version 1.0.20 (2017-10-30)}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item fixed buglet: flipped profile plot axes, confint for negative values
+    }
+  }
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item \code{summary.mle2} is now exported, for use by other
+      packages
+      \item small fixes to AIC(c) methods 
+    }
+  }
+}
+
 \section{Changes in version 1.0.19 (2017-04-08)}{
   \itemize{
     \item fixed bug: evaluate \code{call$method} so that

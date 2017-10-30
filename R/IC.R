@@ -108,36 +108,49 @@ setMethod("AICc", "mle2",
           function (object, ..., nobs, k)  {
               L <- list(...)
               if (length(L)) {
-                  L <- c(list(object),L)
+                  L = c(list(object), L)
+                  # First, we attempt to use the "nobs" attribute
                   if (is.null(nobs)) {
-                      nobs <- sapply(L,nobs)
+                      nobs <- unlist(lapply(L, attr,"nobs"))
+                  }
+                  # If that is still null, maybe there's a "nobs" method?
+                  if (is.null(nobs)) {
+                      nobs <- unlist(lapply(L,nobs))
                   }
                   if (length(unique(nobs))>1)
                       stop("nobs different: must have identical data for all objects")
-                  logLiks <- sapply(L, logLik)
-                  df <- sapply(L,attr,"df")
-                  val <- -2*logLiks+k*df*(df+1)/(nobs-df-1)
+                  logLiks <- lapply(L, logLik)
+                  df <- sapply(logLiks,attr,"df")
+                  val <- -2*unlist(logLiks)+k*df+k*df*(df+1)/(nobs-df-1)
                   data.frame(AICc=val,df=df)
               } else {
-                  df <- attr(object,"df")
-                  c(-2*logLik(object)+k*df+k*df*(df+1)/(nobs-df-1))
+                  if (is.null(nobs)) {
+                      nobs <- attr(object,"nobs")
+                  }
+                  if (is.null(nobs)) {
+                      nobs <- nobs(object)
+                  }
+                  AICc(object=logLik(object), nobs=nobs, k=k)
               }
           })
 
 setMethod("AICc", signature(object="logLik"),
-          function(object, ..., nobs=NULL, k){
+          function(object, ..., nobs, k){
+              # Handles the "nobs" argument
               if (missing(nobs)) {
                   if (is.null(attr(object,"nobs")))
                       stop("number of observations not specified")
                   nobs <- attr(object,"nobs")
               }
+              if (length(list(...))>1)
+                  warning("additional parameters ignored")
+
               df <- attr(object,"df")
-              ## FIXME: should second "2" also be k?
-              -2 * c(object) + k*df+2*df*(df+1)/(nobs-df-1)
+              -2*c(object)+k*df+k*df*(df+1)/(nobs-df-1)
           })
 
 setMethod("AICc", signature(object="ANY"),
-          function(object, ..., nobs=NULL, k){
+          function(object, ..., nobs, k){
               AICc(object=logLik(object, ...), nobs=nobs, k=k)
           })
 
@@ -146,10 +159,9 @@ setMethod("AIC", "mle2",
               L <- list(...)
               if (length(L)) {
                   L <- c(list(object),L)
-                  if (!all(sapply(L,class)=="mle2")) stop("all objects in list must be class mle2")
                   logLiks <- lapply(L, logLik)
                   AICs <- sapply(logLiks,AIC,k=k)
-                  df <- sapply(L,attr,"df")
+                  df <- sapply(logLiks,attr,"df")
                   data.frame(AIC=AICs,df=df)
               } else AIC(logLik(object), k = k)
           })
