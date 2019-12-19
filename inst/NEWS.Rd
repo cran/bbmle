@@ -4,6 +4,35 @@
 \title{bbmle News}
 \encoding{UTF-8}
 
+\section{Changes in version 1.0.22}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item intercept-only parameters were handled wrong (GH #8)
+      \item fix error-handling (class vs. inherits) for R 4.0 compatibility
+    }
+  }
+  \subsection{NEW FEATURES}{
+     \itemize{
+       \item \code{pop_pred_samp} to compute population prediction
+       samples, tweaking non-positive-definite covariance matrices and using
+       importance samples if necessary/specified. \strong{This is
+	 still VERY experimental/in flux!}
+       \item added \code{dnorm_n} function for Normal densities
+       with the standard deviation parameter profiled out
+       \item add \code{slnorm} function for log-Normal densities
+       (median and mean only for now)
+       \item IC tables now have an \code{as.data.frame} method (from
+       @iago-pssjd on GitHub)
+     }
+   }
+   \subsection{USER-VISIBLE CHANGES}{
+     \itemize{
+       \item the evaluated
+       \code{start} and \code{fixed} components of the call are now stored
+       in the \code{call} component (Daniel B. Stouffer)
+     } % itemize
+   } % user-visible changes
+ } % section 1.0.22
 \section{Changes in version 1.0.20 (2017-10-30)}{
   \subsection{BUG FIXES}{
     \itemize{

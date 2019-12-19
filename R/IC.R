@@ -80,11 +80,16 @@ ICtab <- function(...,type=c("AIC","BIC","AICc","qAIC","qAICc"),
 print.ICtab <- function(x,...,min.weight=0.001) {
     chtab <- format(do.call("cbind",lapply(x,round,1)))
     rownames(chtab) <- attr(x,"row.names")
-    chtab[,"df"] <- as.character(x$df)
+    chtab[,"df"] <- as.character(round(x$df,1))
     if (!is.null(x$weight))
         chtab[,"weight"] <- format.pval(x$weight,eps=min.weight,
                                         digits=2)
     print(chtab,quote=FALSE)
+}
+
+as.data.frame.ICtab <- function(x, row.names = NULL, optional = FALSE, ...){
+    attr(x,"class") <- "data.frame"
+    as.data.frame(x, row.names = row.names, optional = optional)
 }
 
 AICtab <- function(...,mnames) {
@@ -187,15 +192,17 @@ setMethod("qAICc", "mle2",
                   if (missing(dispersion) && is.null(attr(object,"dispersion")))
                       stop("must specify (over)dispersion coefficient")
                   if (length(unique(nobs))>1)
-                      stop("nobs different: must have identical data for all objects")
+                      stop("nobs different: must have identical data for all obj
+ects")
+                  if (length(nobs)==0) stop("must specify nobs")
                   nobs <- nobs[1]
                   logLiks <- sapply(L, logLik)/dispersion
                   df <- sapply(L,attr,"df")+1 ## add one for scale parameter
-                  val <- logLiks+k*df*(df+1)/(nobs-df-1)
+                  val <- -2*logLiks+k*df+k*df*(df+1)/(nobs-df-1)
                   data.frame(AICc=val,df=df)
               } else {
                   df <- attr(object,"df")
-                  c(-2*logLik(object)/dispersion+2*df+2*df*(df+1)/(nobs-df-1))
+                  c(-2*logLik(object)/dispersion+k*df+k*df*(df+1)/(nobs-df-1))
               }
           })
 
