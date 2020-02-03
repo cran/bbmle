@@ -4,7 +4,13 @@
 \title{bbmle News}
 \encoding{UTF-8}
 
-\section{Changes in version 1.0.22}{
+\section{Changes in version 1.0.23 and 1.0.23.1 (2020-02-02)}{
+  \itemize{
+    \item suppress some warnings in tests for cross-platform/CRAN compatibility
+  }
+}
+
+\section{Changes in version 1.0.22 (2019-12-19)}{
   \subsection{BUG FIXES}{
     \itemize{
       \item intercept-only parameters were handled wrong (GH #8)

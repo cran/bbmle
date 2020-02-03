@@ -1,7 +1,6 @@
-f73fa808943e1cf9113d34de038b54c4 *DESCRIPTION
+7c858fabe09664c23debf08aef3000c5 *DESCRIPTION
 4a1b816656212461184b14d0bc631fb0 *NAMESPACE
 51c80cbebf520b0ab4ff12482aaba1f1 *R/IC.R
-fd11243c6638822be02086af452ff491 *R/TMB.R
 3547798b5af91c95a35a011f2a3bffa4 *R/confint.R
 c9cc17451c8dc1829431e2eccd315188 *R/dists.R
 06a077b7e509b3f63c314031bc0e3b93 *R/impsamp.R
@@ -14,13 +13,13 @@ e826fb38e19883fcd675abc903c369cf *R/profile.R
 28b4b4a714c1beebcc7516b888e1b641 *R/update.R
 5823f8cd791ae8b928578e26674be46f *TODO
 552c67a4dde80416558e696e6c9b3b64 *build/vignette.rds
-8f020d0c2eeefd87373cfeaa7a3ffd45 *inst/NEWS.Rd
+18807b2d1cfaeec743db500f3a628dfb *inst/NEWS.Rd
 4267a22cc46700d620e4cc371a60b6d9 *inst/doc/mle2.R
 e8c369ae9771830ce616d69a1983031b *inst/doc/mle2.Rnw
-1e04730ef236aa8ef30a2fd27ab1e46c *inst/doc/mle2.pdf
+54ad2cfc40c6be033863f8be40841b20 *inst/doc/mle2.pdf
 b337e45ba4de491f49dcc9b67e5b6c0d *inst/doc/quasi.R
 f9f39bc36192d155f6d71dba2f50e560 *inst/doc/quasi.Rnw
-48c81aab383c6f6cf4fa9181316196c0 *inst/doc/quasi.pdf
+6f047536249d6ffc598cc0680eea63eb *inst/doc/quasi.pdf
 a399ce19c47219ea3474978d2f4ecac6 *inst/vignetteData/orob1.rda
 fad7f0284df8a44372565c480f8e4dfb *man/BIC-methods.Rd
 7a309d55019db340dc2b1fa5e662ab32 *man/ICtab.Rd
@@ -85,8 +84,8 @@ adf07c6ff92b4ae6f8ece745a93b1522 *tests/predict.R
 df6f12096d996324b2d19467b9905892 *tests/predict.Rout.save
 a714b957cfd9a8f6148160ae18c56472 *tests/prof_newmin.R
 0b52fc583dc02c9c422cb878ba3d6128 *tests/prof_spec.R
-68edb941f246a47564617d7aea9647bd *tests/profbound.R
-ee5f86f38e1dfc8a69958e5d5b07df08 *tests/profbound.Rout.save
+17ccf28899a9d3221ed27a69affdd5b7 *tests/profbound.R
+e855663462e1a8e4bb5161ff4825aa8f *tests/profbound.Rout.save
 b0f4716aa737b972c5cac4bbf1b6830a *tests/richards.R
 f04921cd98c8a8b476365d92dc5292ed *tests/richards.Rout.save
 c703480c59bde85cdd3c51bd59d83975 *tests/startvals.R
