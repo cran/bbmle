@@ -27,7 +27,7 @@ suppressWarnings(confint(fit1))
 fit2 <- mle2(y~dpois(lambda=exp(a+b*x)),start=list(a=0,b=2),data=d,
              method="L-BFGS-B")
 
-pp <- suppressWarnings(profile(fit2,prof.lower=-0.2))
+pp <- profile(fit2,prof.lower=-0.2)
 stopifnot(min(subset(as.data.frame(pp),param=="b")$par.vals.b)==-0.2)
 ## note that b does go below -0.2 when profiling a ...
 options(old_opt)

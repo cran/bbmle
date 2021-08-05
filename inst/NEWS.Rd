@@ -4,12 +4,21 @@
 \title{bbmle News}
 \encoding{UTF-8}
 
-\section{Changes in version 1.0.23 and 1.0.23.1 (2020-02-02)}{
+\section{Changes in version 1.0.24 (2021-08-06)}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item new \code{namedrop_args} argument to \code{mle2} (don't drop
+      argument names within sub-lists of data)
+      \item allow user-specified covariance matrix for importance
+      sampling
+    }
+  }
+}
+\section{Changes in version 1.0.23 (2020-02-03)}{
   \itemize{
     \item suppress some warnings in tests for cross-platform/CRAN compatibility
   }
 }
-
 \section{Changes in version 1.0.22 (2019-12-19)}{
   \subsection{BUG FIXES}{
     \itemize{

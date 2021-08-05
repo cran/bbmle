@@ -20,13 +20,17 @@ mtmp <- function(prob,size,theta) {
 }
 
 ## ----fit1,warning=FALSE-------------------------------------------------------
-(m0 <- mle2(mtmp,start=list(prob=0.2,theta=9),data=list(size=50)))
+suppressWarnings(
+    m0 <- mle2(mtmp,start=list(prob=0.2,theta=9),data=list(size=50))
+)
 
 ## ----sum1---------------------------------------------------------------------
 summary(m0)
 
 ## ----prof1,cache=TRUE,warning=FALSE-------------------------------------------
-p0 <- profile(m0)
+suppressWarnings(
+    p0 <- profile(m0)
+)
 
 ## ----confint1,warning=FALSE---------------------------------------------------
 confint(p0)
@@ -67,10 +71,6 @@ crowder.results <- matrix(c(0.132,0.871,0.839,78.424,0.027,0.028,0.032,-34.991,
                           byrow=TRUE,nrow=3)
 latex(crowder.results,file="",table.env=FALSE,title="model")
 
-## ----aodfit1,cache=TRUE,warning=FALSE-----------------------------------------
-(m1 <- mle2(ML1,start=list(prob1=0.5,prob2=0.5,prob3=0.5,theta=1),
-            data=list(x=orob1)))
-
 ## ----eval=FALSE---------------------------------------------------------------
 #  ## would prefer ~dilution-1, but problems with starting values ...
 #  (m1B <- mle2(m~dbetabinom(prob,size=n,theta),
@@ -80,14 +80,6 @@ latex(crowder.results,file="",table.env=FALSE,title="model")
 
 ## ----suppWarn,echo=FALSE------------------------------------------------------
 opts_chunk$set(warning=FALSE)
-
-## ----aodfit2,cache=TRUE-------------------------------------------------------
-(m2 <- mle2(ML1,start=as.list(coef(m1)),
-          control=list(parscale=coef(m1)),
-          data=list(x=orob1)))
-
-## ----aodprof2,cache=TRUE------------------------------------------------------
-p2 <- profile(m2,prof.upper=c(Inf,Inf,Inf,theta=2000))
 
 ## ----aodstderr----------------------------------------------------------------
 round(stdEr(m2),3)
@@ -170,24 +162,9 @@ gg1 <- ggplot(frogdat,aes(x=size,y=killed))+geom_point()+
       labs(size="#")+scale_x_continuous(limits=c(0,40))+
 scale_size(breaks=1:3)
 
-## ----frogfit1,cache=TRUE,warning=FALSE----------------------------------------
-m3 <- mle2(killed~dbinom(prob=c*(size/d)^g*exp(1-size/d),
-  size=initial),data=frogdat,start=list(c=0.5,d=5,g=1))
-pdat <- data.frame(size=1:40,initial=rep(10,40))
-pdat1 <- data.frame(pdat,killed=predict(m3,newdata=pdat))
-
-## ----frogfit2,cache=TRUE,warning=FALSE----------------------------------------
-m4 <- mle2(killed~dbinom(prob=c*((size/d)*exp(1-size/d))^g,
-  size=initial),data=frogdat,start=list(c=0.5,d=5,g=1))
-pdat2 <- data.frame(pdat,killed=predict(m4,newdata=pdat))
-
 ## ----gg1plot------------------------------------------------------------------
 gg1 + geom_line(data=pdat1,colour="red")+
       geom_line(data=pdat2,colour="blue")
-
-## ----frogfit2anal,cache=TRUE,warning=FALSE------------------------------------
-coef(m4)
-prof4 <- profile(m4)
 
 ## ----basegraphprofplot--------------------------------------------------------
 plot(prof4)

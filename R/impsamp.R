@@ -10,9 +10,11 @@
 #' @param PDify use Gill and King generalized-inverse procedure to correct non-positive-definite variance-covariance matrix if necessary?
 #' @param PDmethod method for fixing non-positive-definite covariance matrices
 #' @param rmvnorm_method package to use for generating MVN samples
+#' @param Sigma covariance matrix for sampling
 #' @param tol tolerance for detecting small eigenvalues
 #' @param fix_params parameters to fix (in addition to parameters that were fixed during estimation)
 #' @param return_all return a matrix including all values, and weights (rather than taking a sample)
+#' @param ... additional parameters to pass to the negative log-likelihood function
 #' @export
 #' @references Gill, Jeff, and Gary King. "What to Do When Your Hessian Is Not Invertible: Alternatives to Model Respecification in Nonlinear Estimation." Sociological Methods & Research 33, no. 1 (2004): 54-87.
 #' Lande, Russ and Steinar Engen and Bernt-Erik Saether, Stochastic Population Dynamics in Ecology and Conservation. Oxford University Press, 2003.
@@ -24,10 +26,12 @@ pop_pred_samp <- function(object,
                      impsamp=FALSE,
                      PDify=FALSE,
                      PDmethod=NULL,
+                     Sigma=vcov(object),
                      tol = 1e-6,
                      return_all=FALSE,
                      rmvnorm_method=c("mvtnorm","MASS"),
-                     fix_params=NULL) {
+                     fix_params=NULL,
+                     ...) {
 
     rmvnorm_method <- match.arg(rmvnorm_method)
     
@@ -47,19 +51,17 @@ pop_pred_samp <- function(object,
     keep_params <- !names(cc) %in% fix_params
 
     cc <- cc[keep_params]
-    vv <- vcov(object)
-    vv <- vv[keep_params,keep_params]
+    Sigma <- Sigma[keep_params,keep_params]
 
-    Lfun <- object@minuslogl
     fixed_pars <- setdiff(names(object@fullcoef),names(cc))
     res <- matrix(NA,nrow=n,ncol=length(cc_full),
                   dimnames=list(NULL,names(cc_full)))
     if (any(is.na(cc))) return(res)  ## bail out if coefs are NA
 
     ## try to fix bad covariance matrices
-    bad_vcov <- any(is.na(vv))
+    bad_vcov <- any(is.na(Sigma))
     if (!bad_vcov) {
-        min_eig <- min_eval(vv)
+        min_eig <- min_eval(Sigma)
     } else {
         min_eig <- NA
     }
@@ -85,10 +87,10 @@ pop_pred_samp <- function(object,
             ##  we couldn't invert H in the first place ... nearPD
             ##  wants to take a non-pos-def matrix and PDify it.
             ##  (perhaps we could PDify the Hessian and then invert it ???
-            vv <- crossprod(as.matrix(bdsmatrix::gchol(MASS::ginv(hh)),
+            Sigma <- crossprod(as.matrix(bdsmatrix::gchol(MASS::ginv(hh)),
                                       ones = FALSE))
         } else {
-            vv <- as.matrix(Matrix::nearPD(vv)$mat)
+            Sigma <- as.matrix(Matrix::nearPD(Sigma)$mat)
         }
     }
 
@@ -96,8 +98,8 @@ pop_pred_samp <- function(object,
 
     ## draw MVN samples
     res[,names(cc)] <- mv_vals <- switch(rmvnorm_method,
-                                         mvtnorm=mvtnorm::rmvnorm(mv_n, mean=cc, sigma=vv),
-                                         MASS=MASS::mvrnorm(mv_n, mu=cc, Sigma=vv))
+                                         mvtnorm=mvtnorm::rmvnorm(mv_n, mean=cc, sigma=Sigma),
+                                         MASS=MASS::mvrnorm(mv_n, mu=cc, Sigma=Sigma))
     ## fill in fixed parameters as necessary
     if (length(fixed_pars)>0) {
         for (p in fixed_pars) {
@@ -107,15 +109,16 @@ pop_pred_samp <- function(object,
     if (!(impsamp || return_wts)) return(res)  ## done
     
     ## compute MV sampling probabilities
-    mv_wts <- mvtnorm::dmvnorm(mv_vals,mean=cc,sigma=vv,log=TRUE)
+    mv_wts <- mvtnorm::dmvnorm(mv_vals,mean=cc,sigma=Sigma,log=TRUE)
     if (all(is.na(mv_wts)) && length(mv_wts)==1) {
         ## work around emdbook bug
         mv_wts <- rep(NA,length(mv_vals))
         warning("can't compute MV sampling probabilities")
     }
-    
+
     ## compute **log**-likelihoods of each sample point (Lfun is negative LL)
-    L_wts0 <- -1*apply(res,1,Lfun)
+    Lfun <- function(x) -1*do.call(object@minuslogl,c(list(x),list(...)))
+    L_wts0 <- apply(res,1,Lfun)
     ## shift negative log-likelihoods (avoid underflow);
     ## find scaled likelihood
     L_wts <- L_wts0 - mv_wts ## subtract log samp prob
