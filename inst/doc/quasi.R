@@ -50,23 +50,26 @@ ICtab(glmOT.D93,glmT.D93,glmO.D93,glmX.D93,
 detach("package:bbmle")
 
 ## ----AICcmodavg---------------------------------------------------------------
-library(AICcmodavg)
-aictab(list(glmOT.D93,glmT.D93,glmO.D93,glmX.D93), 
-       modnames=c("OT","T","O","X"),
-       c.hat=dfun(glmOT.D93))
-detach("package:AICcmodavg")
+if (require("AICcmodavg")) {
+    aictab(list(glmOT.D93,glmT.D93,glmO.D93,glmX.D93), 
+           modnames=c("OT","T","O","X"),
+           c.hat=dfun(glmOT.D93))
+    detach("package:AICcmodavg")
+}
 
 ## ----MuMin--------------------------------------------------------------------
-library(MuMIn); packageVersion("MuMIn")
-## from ?QAIC
-x.quasipoisson <- function(...) {
-    res <- quasipoisson(...)
-    res$aic <- poisson(...)$aic
-    res
+if (require("MuMIn")) {
+    packageVersion("MuMIn")
+    ## from ?QAIC
+    x.quasipoisson <- function(...) {
+        res <- quasipoisson(...)
+        res$aic <- poisson(...)$aic
+        res
+    }
+    glmQOT2.D93 <- update(glmOT.D93,family="x.quasipoisson",
+                          na.action=na.fail)
+    (gg <-  dredge(glmQOT2.D93,rank="QAIC", chat=dfun(glmOT.D93)))
+    (ggc <- dredge(glmQOT2.D93,rank="QAICc",chat=dfun(glmOT.D93)))
+    detach("package:MuMIn")
 }
-glmQOT2.D93 <- update(glmOT.D93,family="x.quasipoisson",
-                      na.action=na.fail)
-(gg <-  dredge(glmQOT2.D93,rank="QAIC", chat=dfun(glmOT.D93)))
-(ggc <- dredge(glmQOT2.D93,rank="QAICc",chat=dfun(glmOT.D93)))
-detach("package:MuMIn")
 
