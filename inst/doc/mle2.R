@@ -27,7 +27,7 @@ suppressWarnings(
 ## ----sum1---------------------------------------------------------------------
 summary(m0)
 
-## ----prof1,cache=TRUE,warning=FALSE-------------------------------------------
+## ----prof1,warning=FALSE------------------------------------------------------
 suppressWarnings(
     p0 <- profile(m0)
 )
@@ -56,6 +56,7 @@ load(system.file("vignetteData","orob1.rda",package="bbmle"))
 summary(orob1)
 
 ## ----aodlikfun----------------------------------------------------------------
+X <- model.matrix(~dilution, data = orob1)
 ML1 <- function(prob1,prob2,prob3,theta,x) {
   prob <- c(prob1,prob2,prob3)[as.numeric(x$dilution)]
   size <- x$n
@@ -71,8 +72,9 @@ crowder.results <- matrix(c(0.132,0.871,0.839,78.424,0.027,0.028,0.032,-34.991,
                           byrow=TRUE,nrow=3)
 latex(crowder.results,file="",table.env=FALSE,title="model")
 
-## ----aodfit1,cache=TRUE,warning=FALSE-----------------------------------------
-(m1 <- mle2(ML1,start=list(prob1=0.5,prob2=0.5,prob3=0.5,theta=1),
+## ----aodfit1,warning=FALSE,depends.on="aodlikfun"-----------------------------
+(m1 <- mle2(ML1,
+            start=list(prob1=0.5,prob2=0.5,prob3=0.5,theta=1),
             data=list(x=orob1)))
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -85,12 +87,12 @@ latex(crowder.results,file="",table.env=FALSE,title="model")
 ## ----suppWarn,echo=FALSE------------------------------------------------------
 opts_chunk$set(warning=FALSE)
 
-## ----aodfit2,cache=TRUE-------------------------------------------------------
+## ----aodfit2------------------------------------------------------------------
 (m2 <- mle2(ML1,start=as.list(coef(m1)),
           control=list(parscale=coef(m1)),
           data=list(x=orob1)))
 
-## ----aodprof2,cache=TRUE------------------------------------------------------
+## ----aodprof2-----------------------------------------------------------------
 p2 <- profile(m2,prof.upper=c(Inf,Inf,Inf,theta=2000))
 
 ## ----aodstderr----------------------------------------------------------------
@@ -119,11 +121,13 @@ rownames(r1) <- c("spline","quad")
 r1
 
 ## ----profplottheta------------------------------------------------------------
-plot(p2,which="theta",plot.confstr=TRUE)
+plot(p2, which="theta",plot.confstr=TRUE, show.points = TRUE)
 
 ## ----profplotsigma------------------------------------------------------------
-plot(p2b,which="sigma",plot.confstr=TRUE,
-     show.points=TRUE)
+## not working?
+## plot(p2b,which="sigma",plot.confstr=TRUE, show.points=TRUE)
+par(las = 1, bty = "l")
+with(p2b@profile$sigma, plot(par.vals[,"sigma"], abs(z), type = "b"))
 
 ## ----homogmodel---------------------------------------------------------------
 ml0 <- function(prob,theta,x) {
@@ -174,24 +178,9 @@ gg1 <- ggplot(frogdat,aes(x=size,y=killed))+geom_point()+
       labs(size="#")+scale_x_continuous(limits=c(0,40))+
 scale_size(breaks=1:3)
 
-## ----frogfit1,cache=TRUE,warning=FALSE----------------------------------------
-m3 <- mle2(killed~dbinom(prob=c*(size/d)^g*exp(1-size/d),
-  size=initial),data=frogdat,start=list(c=0.5,d=5,g=1))
-pdat <- data.frame(size=1:40,initial=rep(10,40))
-pdat1 <- data.frame(pdat,killed=predict(m3,newdata=pdat))
-
-## ----frogfit2,cache=TRUE,warning=FALSE----------------------------------------
-m4 <- mle2(killed~dbinom(prob=c*((size/d)*exp(1-size/d))^g,
-  size=initial),data=frogdat,start=list(c=0.5,d=5,g=1))
-pdat2 <- data.frame(pdat,killed=predict(m4,newdata=pdat))
-
 ## ----gg1plot------------------------------------------------------------------
 gg1 + geom_line(data=pdat1,colour="red")+
       geom_line(data=pdat2,colour="blue")
-
-## ----frogfit2anal,cache=TRUE,warning=FALSE------------------------------------
-coef(m4)
-prof4 <- profile(m4)
 
 ## ----basegraphprofplot--------------------------------------------------------
 plot(prof4)

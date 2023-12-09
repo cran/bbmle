@@ -1,4 +1,4 @@
-0e745cbb5626e9dc664ff54345a24015 *DESCRIPTION
+47569144439ba365fdb6048e2fc4cc1f *DESCRIPTION
 6dec391a64294f51b91081c108315fbc *NAMESPACE
 5dafe849b9c826ede616ad13b7579061 *R/IC.R
 fd11243c6638822be02086af452ff491 *R/TMB.R
@@ -13,14 +13,14 @@ e826fb38e19883fcd675abc903c369cf *R/profile.R
 bf85786fd72d16fb2d2c5606883fbb95 *R/slice.R
 28b4b4a714c1beebcc7516b888e1b641 *R/update.R
 5823f8cd791ae8b928578e26674be46f *TODO
-f5e63a5d12737536a08c7a0fd736dc3c *build/vignette.rds
-c0332777abea19771c7b598aca8ebf3f *inst/NEWS.Rd
-0657c89bf43b87d74309a32a1c542ff3 *inst/doc/mle2.R
-49717b248d52829925e79701d87870f4 *inst/doc/mle2.Rnw
-0da6ec70cea3b4fbd5c5e71f175f80c1 *inst/doc/mle2.pdf
+c3b0afd77e3ea8cab02e04fb31363b90 *build/vignette.rds
+a537b88c7af608ad98f46f0077afbe5f *inst/NEWS.Rd
+8499ce62c1c74973d8fa07522b02548a *inst/doc/mle2.R
+75d888257b1956be8c5d10786bf50296 *inst/doc/mle2.Rnw
+e89e3401f0fea6c80417c475578d4e4d *inst/doc/mle2.pdf
 77b245c578b24599deb9b3abe90064af *inst/doc/quasi.R
 f87d04cedb4965bfe37e2a736e32bc6c *inst/doc/quasi.Rnw
-ad5ea1bf934464a1f9449e1912eb43cb *inst/doc/quasi.pdf
+a7c72a0f210b53d29ee96b955f17a690 *inst/doc/quasi.pdf
 a399ce19c47219ea3474978d2f4ecac6 *inst/vignetteData/orob1.rda
 fad7f0284df8a44372565c480f8e4dfb *man/BIC-methods.Rd
 7a309d55019db340dc2b1fa5e662ab32 *man/ICtab.Rd
@@ -49,7 +49,6 @@ f86447828516944ac46d328a683e942d *tests/ICtab.R
 9ef41040367d85e5ad53005a9ab7a344 *tests/ICtab.Rout.save
 7e791632cd72a0dab72b6b1059b85273 *tests/RUnit-tests.R
 202d16aa2bf77be5df020bda2240703e *tests/binomtest1.R
-138465684c603e66d87035baabc03f65 *tests/binomtest1.Rout
 de4898499c070e21485ddaed01e73c09 *tests/binomtest1.Rout.save
 bf9cb0badb64c11e22d1b7d15c060a73 *tests/boundstest.R
 055f3f858af92dac796c775fdb6cffe5 *tests/controleval.R
@@ -96,7 +95,6 @@ c703480c59bde85cdd3c51bd59d83975 *tests/startvals.R
 75cd2bbf2e5255c1c3eac7ccfa5765a3 *tests/test-relist1.R
 c118f8284b641d973e449de5afd584f9 *tests/test-relist1.Rout.save
 1dda6925aa3654d83943ddda6412d714 *tests/testbounds.R
-9a4d9c64de4b0d973bbf93715fa3e3f7 *tests/testbounds.Rout
 375be792dbfd82d6d56aeb19006488af *tests/testbounds.Rout.save
 ba254da51e09a22e84f803832382fc11 *tests/testderiv.R
 318b6a073389d6638ba88b2892421af9 *tests/testderiv.Rout.save
@@ -110,6 +108,6 @@ dd885bf956855f37df24d0dbe37ba7bd *tests/tmptest.Rout.save
 d3ed098f4e626138cb1cc68a36e8fbd2 *tests/update.Rout.save
 0a27805bbe6b6d67ef37f760dc991917 *vignettes/cc-attrib-nc.png
 cd2df3f6f14e5d0af434d1aa53b7a0ed *vignettes/chicago.bst
-49717b248d52829925e79701d87870f4 *vignettes/mle2.Rnw
+75d888257b1956be8c5d10786bf50296 *vignettes/mle2.Rnw
 ae21998f0dafa40e30841d4abc02ceed *vignettes/mle2.bib
 f87d04cedb4965bfe37e2a736e32bc6c *vignettes/quasi.Rnw
